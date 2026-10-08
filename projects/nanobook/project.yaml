@@ -1,0 +1,9 @@
+# nanobook: Rust execution engine with a Python binding (crates.io and PyPI). It parses
+# exchange market data (ITCH 5.0), takes responses from broker APIs (IBKR, Binance) and
+# sends live orders, so a parsing or risk-check bug can move real money.
+repo: https://github.com/BoringQuantSystems/nanobook#main
+primary_contact: rasfrantz+oss@gmail.com
+homepage: https://docs.rs/nanobook
+disabled: false
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
