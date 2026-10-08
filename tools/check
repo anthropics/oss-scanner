@@ -25,7 +25,8 @@ Exit codes: 0 if the project builds, 1 if it does not, 2 if projects/<name>/ bre
 
 Requires git, Docker and PyYAML (pip install pyyaml). With --qemu, requires Linux on x86-64 with
 qemu-system-x86_64 and qemu-img instead of Docker (see tools/check_qemu.py). Everything is kept in
-~/.cache/oss-scanner-check, or in --dir if given.
+~/.cache/oss-scanner-check, or in --dir if given. A work directory must be empty or previously initialized
+by this tool; its contents are disposable.
 """
 
 import argparse
@@ -101,17 +102,34 @@ def shell(job, work):
 DOCKER = types.SimpleNamespace(require=require, build=build, shell=shell)
 
 
+def prepare_work(work):
+    """Initialize an empty work directory, or reuse one initialized by this tool."""
+    marker = work / ".oss-scanner-check"
+    identity = "Work directory managed by tools/check.\n"
+    work.mkdir(parents=True, exist_ok=True, mode=0o700)
+    try:
+        if not marker.is_symlink() and marker.is_file() and marker.read_text(encoding="utf-8") == identity:
+            return
+    except (OSError, UnicodeDecodeError):
+        pass
+    if any(work.iterdir()):
+        sys.exit(f"refusing to clean unrecognized work directory {work}; choose an empty directory with --dir")
+    # Exclusive creation avoids overwriting an existing marker.
+    with marker.open("x", encoding="utf-8") as file:
+        file.write(identity)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("project", help="a name under projects/, or the path of a directory with a project.yaml")
     parser.add_argument("--qemu", action=argparse.BooleanOptionalAction, default=False, help="in virtual machines")
     parser.add_argument("--no-shell", action="store_true", help="stop after the build")
-    parser.add_argument("--dir", type=pathlib.Path, help=f"where to work (default: {CACHE}/<name>)")
+    parser.add_argument("--dir", type=pathlib.Path, help=f"empty or previously initialized work directory (default: {CACHE}/<name>)")
     options = parser.parse_args()
 
     directory, job = load(options.project)
     work = (options.dir or CACHE / job.name).absolute()
-    work.mkdir(parents=True, exist_ok=True, mode=0o700)
+    prepare_work(work)
     mode = DOCKER
     if options.qemu:
         import check_qemu as mode  # imported only when needed, because it only works on Linux
