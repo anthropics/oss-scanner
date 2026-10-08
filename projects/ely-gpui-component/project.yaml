@@ -1,0 +1,6 @@
+repo: https://github.com/ZacharyZhang-NY/Ely-GPUI-Components#main
+primary_contact: zhangyanghaha0407@gmail.com
+homepage: https://elygpui.com
+disabled: false
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
