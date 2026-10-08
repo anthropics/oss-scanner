@@ -1,0 +1,10 @@
+# mcp-unifi: safety-first MCP server for self-hosted UniFi gateways.
+repo: https://github.com/pete-builds/mcp-unifi#main
+
+primary_contact: pete@brooksnewmedia.com
+
+homepage: https://pete-builds.github.io/mcp-unifi/
+
+disabled: false
+
+# Dockerfile and threat_model.md live next to this file.
