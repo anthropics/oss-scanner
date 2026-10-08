@@ -1,0 +1,4 @@
+repo: https://github.com/alexylon/ferrocrypt
+primary_contact: git@alexo.io
+homepage: https://www.ferrocrypt.app
+threat_model: THREAT_MODEL.md
