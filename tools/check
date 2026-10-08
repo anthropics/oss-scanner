@@ -21,7 +21,8 @@ Security note: your Dockerfile is built with network access. --qemu builds it in
 it off your files, but it can still reach services on this computer and your local network. Check a project from
 someone you don't trust on a machine with nothing to lose.
 
-Exit codes: 0 if the project builds, 1 if it does not, 2 if projects/<name>/ breaks the enrolment rules.
+Exit codes: 0 on success, 1 if the build or requested shell fails, 2 if projects/<name>/ breaks the enrolment rules.
+Docker mode checks the shell exit status; QEMU mode checks shell setup only.
 
 Requires git, Docker and PyYAML (pip install pyyaml). With --qemu, requires Linux on x86-64 with
 qemu-system-x86_64 and qemu-img instead of Docker (see tools/check_qemu.py). Everything is kept in
@@ -94,8 +95,7 @@ def shell(job, work):
     container = ["--rm", "-i", "--init", "--network", "none", "--cap-add", "SYS_PTRACE", *limits, "-w", "/src"]
     if sys.stdin.isatty():
         container.append("-t")
-    subprocess.call(["docker", "run", *container, image("built", job.name), "bash"])
-    return True
+    return subprocess.call(["docker", "run", *container, image("built", job.name), "bash"]) == 0
 
 
 DOCKER = types.SimpleNamespace(require=require, build=build, shell=shell)
