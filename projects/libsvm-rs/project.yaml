@@ -1,0 +1,8 @@
+# libsvm-rs: pure Rust reimplementation of LIBSVM. It parses LIBSVM model and data
+# files, which users often download from third parties, so the loaders take untrusted input.
+repo: https://github.com/ricardofrantz/libsvm-rs#main
+primary_contact: rasfrantz+oss@gmail.com
+homepage: https://crates.io/crates/libsvm-rs
+disabled: false
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
