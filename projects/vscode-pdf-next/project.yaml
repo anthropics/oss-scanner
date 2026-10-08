@@ -1,0 +1,9 @@
+# vscode-pdf-next (Marketplace: RicardoFrantz.pdf-preview-next): VS Code PDF viewer,
+# the maintained successor to tomoki1207/vscode-pdfviewer. It renders any PDF a user
+# opens, so every PDF is untrusted input to the webview and to the extension host.
+repo: https://github.com/ricardofrantz/vscode-pdf-next#main
+primary_contact: rasfrantz+oss@gmail.com
+homepage: https://marketplace.visualstudio.com/items?itemName=RicardoFrantz.pdf-preview-next
+disabled: false
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
