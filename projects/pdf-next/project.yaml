@@ -1,0 +1,10 @@
+# pdf-next: desktop PDF, image and Markdown viewer (Tauri 2; Rust backend, PDF.js in a
+# webview), shipped through winget, an apt repository and GitHub releases. It opens
+# files from anywhere, and a hostile file that takes over the webview can call the
+# Rust commands that read files and launch programs.
+repo: https://github.com/ricardofrantz/pdf-next#main
+primary_contact: rasfrantz+oss@gmail.com
+homepage: https://github.com/ricardofrantz/pdf-next
+disabled: false
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
