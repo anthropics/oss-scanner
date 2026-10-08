@@ -15,6 +15,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY --from=edge /app/ferrum-edge /usr/local/bin/ferrum-edge
 COPY . /src
 WORKDIR /src
+# The scanner strips the build-context ignore file; policy fixtures need its tracked content.
+RUN git restore --source=HEAD -- .dockerignore
 ENV CARGO_INCREMENTAL=0 \
     CARGO_PROFILE_DEV_DEBUG=1 \
     CARGO_PROFILE_TEST_DEBUG=1
