@@ -1,0 +1,4 @@
+repo: https://github.com/cypherair/cypherair
+primary_contact: security@cypherair.com
+homepage: https://cypherair.com
+dockerfile: .oss-scanner/Dockerfile
