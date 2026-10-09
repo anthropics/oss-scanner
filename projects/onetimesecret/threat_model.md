@@ -85,11 +85,13 @@ built assets under `public/`. Repository content, including `locales/`, is trust
 
 ## How to exercise it
 
-- `ots-test-services` starts Valkey (127.0.0.1:2163) and RabbitMQ (127.0.0.1:2156).
+- `ots-test-services` starts Valkey (127.0.0.1:2163), RabbitMQ (127.0.0.1:2156, management API on 12156) and
+  Postgres (127.0.0.1:2154).
 - Run tests only through `tests/lanes/run`. It clears the environment and points the app at the test services.
   Calling `rspec` or `try` directly inherits the wrong environment.
-- `tests/lanes/run --list` lists the lanes. `unit`, `simple`, `api` and `full-sqlite` run in this image. The Postgres
-  lanes and the `browser` lane (no Playwright browsers installed) do not.
+- `tests/lanes/run --list` lists the lanes. Every lane runs in this image, including the Postgres lanes (`full-pg`,
+  `full-pg-agnostic`, `migrations-pg`) and the `browser` lane (Playwright Chromium, Firefox and WebKit are
+  installed).
 - `tests/lanes/run --only <path>:<line>` runs one example; the lane is inferred from the path. `*_try.rb` files are
   Tryouts, everything else is RSpec. See `tests/lanes/README.md`.
 - The integration specs drive the full Rack middleware stack with rack-test. A new spec in that style is the
@@ -173,7 +175,8 @@ In order of preference:
 3. A shell script of HTTP requests against a server started in the image, for behaviour that only shows end to end.
 
 The reproducer must run offline in this image and must fail on the scanned commit. For browser-only behaviour (script
-execution, cookie handling), reproduce the server side as a spec and state the browser behaviour under "Not
+execution, cookie handling), drive Chromium, Firefox or WebKit with Playwright against a server started in the
+image; `tests/browser/saml_callback_spec.rb` shows the pattern. List any browser left untested under "Not
 demonstrated".
 
 ## Patches
