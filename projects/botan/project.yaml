@@ -1,0 +1,9 @@
+# master is the development branch; releases are cut from it
+repo: https://github.com/randombit/botan#master
+
+# Email of Botan's primary maintainer
+primary_contact: jack.lloyd@gmail.com
+
+homepage: https://botan.randombit.net
+
+disabled: false
