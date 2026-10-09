@@ -1,0 +1,6 @@
+repo: https://github.com/apache/kvrocks#unstable
+primary_contact: security@apache.org
+auto_ccs:
+  - private@kvrocks.apache.org
+homepage: https://kvrocks.apache.org/
+threat_model: THREAT_MODEL.md
