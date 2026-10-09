@@ -1,6 +1,6 @@
 # Scanner image for https://github.com/connectrpc/connect-go (main, which is v2: connectrpc.com/connect/v2).
 #
-# The audit runs offline, so this build fetches every module the repository's four Go modules depend on, builds the
+# The audit runs offline, so this build fetches every module the repository's Go modules depend on, builds the
 # ConnectRPC conformance runner and the reference client and server, and compiles the library, its tests and the
 # example server. threat_model.md, next to this file, says how to run each of them.
 
@@ -17,11 +17,10 @@ RUN sed -i 's|http://deb.debian.org|https://deb.debian.org|g' /etc/apt/sources.l
 COPY . /src
 WORKDIR /src
 
-# Every module that the library, the example, the conformance harness and the migration tool depend on.
+# Every module that the library, the example and the conformance harness depend on.
 RUN go mod download \
     && (cd internal/example && go mod download) \
-    && (cd internal/conformance && go mod download) \
-    && (cd cmd/connect-go-v2-migrate && go mod download)
+    && (cd internal/conformance && go mod download)
 
 # The library and its tests (with and without -race, as `make shorttest` and `make slowtest` run them), the example
 # server and client, and the conformance runner with the reference client and server, as
@@ -29,7 +28,6 @@ RUN go mod download \
 RUN go build ./... \
     && go test -run '^$' ./... \
     && go test -race -run '^$' ./... \
-    && (cd cmd/connect-go-v2-migrate && go build ./... && go test -run '^$' ./...) \
     && mkdir -p .tmp/bin \
     && (cd internal/example && go build -o ../../.tmp/bin/example-server ./server \
           && go build -o ../../.tmp/bin/example-client ./client) \
