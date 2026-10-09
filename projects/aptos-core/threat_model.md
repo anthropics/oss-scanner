@@ -23,6 +23,16 @@ This image has the Rust 1.98.1 toolchain and a cargo registry from `cargo fetch 
 cargo test -p aptos-transactional-test-harness --test tests --offline -- runner::aptos_test_harness/smoke_test.move
 ```
 
-The filter is `runner::` plus the path under `aptos-move/aptos-transactional-test-harness/tests/`. Put a new file there with a matching `.exp`. A Rust test in the e2e suite is `cargo test -p e2e-move-tests --offline --lib <name>`. A small crate is `cargo test -p aptos-crypto --offline --lib`. Do not build `aptos-node`, the smoke tests, or Forge.
+The filter is `runner::` plus the path under `aptos-move/aptos-transactional-test-harness/tests/`. Put a new file there with a matching `.exp`.
+
+Run one Move end-to-end test with:
+
+```
+cargo test -p e2e-move-tests --offline --lib tests::vm::failed_encrypted_transaction_increments_sequence_number
+```
+
+A new test is a `#[test]` under `aptos-move/e2e-move-tests/src/tests/`, registered in `src/tests/mod.rs`. It uses `MoveHarness`. A file in `aptos-move/e2e-move-tests/tests/` is a separate binary: `cargo test -p e2e-move-tests --offline --test view_closure_type_args_oom`.
+
+A small crate is `cargo test -p aptos-crypto --offline --lib`. Do not build `aptos-node`, the smoke tests, or Forge.
 
 One report per root cause. The reproducer is a small test or harness. The patch changes only what the bug requires. Skip style findings, guesses, and a second writeup of the same cause.
