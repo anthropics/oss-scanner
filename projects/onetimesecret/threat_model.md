@@ -230,7 +230,8 @@ left untested under "Not demonstrated".
 
 - The smallest change that removes the root cause, plus a regression spec that fails before the patch and passes
   after it.
-- No refactors, renames, formatting changes or dependency bumps unless the bump is the fix.
+- No unrelated refactors, renames or formatting changes. Restructuring necessary to remove the root cause is
+  allowed; explain why it is needed. No dependency bumps unless the bump is the fix.
 - Say so explicitly when the patch changes a response shape in `apps/api/v1`, `v2` or `v3`, or changes a default in
   `etc/defaults/`. Self-hosted operators and API clients depend on both.
 
