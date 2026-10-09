@@ -21,9 +21,12 @@ Untrusted input:
 - Out of scope: third-party provider services themselves.
 
 ## How to exercise it
-- The full app and its swift-testing suite (Tests/AirTranslateCoreTests) require macOS 26+ and cannot run in the
-  Linux scanner image; review them as source. AirTranslateCore (Foundation-only) may build with `swift build
-  --target AirTranslateCore`. script/tests contains Python unit tests.
+- The full app and its swift-testing suite (Tests/AirTranslateCoreTests, which depends on the app target) require
+  macOS 26+ and cannot run in the Linux scanner image; review them as source.
+- The image builds AirTranslateCore (Foundation-only) with debug info using `swift build --target AirTranslateCore
+  -c debug -Xswiftc -g`. The full checkout remains at /src. The core can be rebuilt with the same command offline.
+- Python unit tests for latency trace tooling run with `python3 -m unittest discover -s script/tests -v` from /src,
+  including offline after setup. Both the core build and these tests must succeed for the Dockerfile to build.
 
 ## How you rate severity
 - Critical: exfiltration of a stored provider API key or captured audio/transcripts to an unintended host, or code
