@@ -1,0 +1,8 @@
+# Robys static cafe storefront and QA demo; enrollment requires Anthropic approval.
+# Keep this dedicated branch available while enrolled.
+repo: https://github.com/safal207/robys-coffee-house-demo#chore/oss-scanner-20261009
+primary_contact: safal0645@gmail.com
+homepage: https://safal207.github.io/robys-coffee-house-demo/
+disabled: false
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
