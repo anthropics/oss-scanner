@@ -1,10 +1,10 @@
-# insider-intel — https://intel.thederpweb.com
+# insider-intel — https://insider-intel.net
 # Dockerfile and threat model live in the project repo (.oss-scanner/),
 # so a build change ships in the same PR as the code it builds.
 
 repo: https://github.com/Scubber/insider-intel#main
 primary_contact: timothycarreira@gmail.com
-homepage: https://intel.thederpweb.com
+homepage: https://insider-intel.net
 disabled: false
 dockerfile: .oss-scanner/Dockerfile
 threat_model: .oss-scanner/threat_model.md
