@@ -1,0 +1,5 @@
+repo: https://github.com/NEEDcreations/Bitcoin_Education_Archive#gh-pages
+primary_contact: info.603btc@gmail.com
+homepage: https://bitcoineducation.quest
+threat_model: .oss-scanner/threat_model.md
+dockerfile: .oss-scanner/Dockerfile
