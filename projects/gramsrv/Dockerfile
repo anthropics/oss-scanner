@@ -4,7 +4,7 @@ FROM golang:1.25-alpine
 
 RUN apk add --no-cache \
     bash build-base ca-certificates curl ffmpeg git jq nodejs npm openssl \
-    postgresql17 postgresql17-client python3 redis
+    postgresql17 postgresql17-client postgresql17-contrib python3 redis
 
 WORKDIR /src
 COPY go.mod go.sum ./
