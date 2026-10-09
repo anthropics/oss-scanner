@@ -1,0 +1,6 @@
+repo: https://github.com/syntropic137/syntropic137#main
+primary_contact: security@syntropic137.com
+homepage: https://syntropic137.com
+disabled: false
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
