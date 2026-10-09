@@ -1,0 +1,8 @@
+# Ekubo MCP server: Cloudflare Worker that prepares unsigned transaction plans for AI agents (TypeScript).
+repo: https://github.com/EkuboProtocol/ekubo-mcp-server#main
+
+primary_contact: security@ekubo.org
+
+homepage: https://ekubo.org
+
+disabled: false
