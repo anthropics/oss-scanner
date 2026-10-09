@@ -1,0 +1,5 @@
+# connect-rust: the Rust implementation of ConnectRPC (Connect, gRPC and gRPC-Web servers and clients).
+# The Dockerfile and threat_model.md sit next to this file, so neither key is set here.
+repo: https://github.com/connectrpc/connect-rust
+primary_contact: iain@anthropic.com
+homepage: https://connectrpc.com
