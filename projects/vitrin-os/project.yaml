@@ -1,0 +1,5 @@
+repo: https://github.com/vitrin-os/vitrin-os#main
+primary_contact: tahaayan@gmail.com
+homepage: https://vitrin-os.github.io/vitrin-os/
+dockerfile: .github/security-review/Dockerfile
+threat_model: docs/security-review.md
