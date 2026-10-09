@@ -133,6 +133,10 @@ Use the promises above to guide discovery; the following checks are starting poi
 
 ## How to rate severity
 
+The examples below are project-specific calibration anchors, not an exhaustive taxonomy or fixed ratings for a
+vulnerability class. Rate the actual impact, affected capabilities and trust boundaries, and exploit preconditions.
+A finding need not match an example; justify departures from these anchors based on the evidence.
+
 **Critical**
 - Reading a secret's contents without its link, or without its passphrase when one is set (other than by guessing
   within the rate limits).
@@ -175,10 +179,12 @@ Use the promises above to guide discovery; the following checks are starting poi
 - Enumeration through timing only.
 - Values stored unencrypted or unhashed where reading them needs Valkey or database access.
 
-Rate what the reproducer demonstrates. If impact depends on a step the reproducer does not perform (a browser
-behaviour, a chained bug, a specific deployment), give the demonstrated rating and list the undemonstrated step under
-"Not demonstrated". Do not raise a rating on an assumed chain. An interaction-dependent account takeover is High,
-not Critical merely because the reproducer completes the victim's action; gaining the colonel role remains Critical.
+Rate impact supported by the evidence, separately from verification status. Distinguish executed reproduction,
+code-established consequences, and speculative steps. List steps not executed under "Not demonstrated", with the
+evidence supporting any assessed consequences. Do not assume missing exploit primitives or raise a rating on a
+speculative chain. If an environmental limitation prevents complete reproduction, describe the limitation rather
+than treating it as proof of lower impact. An interaction-dependent account takeover is not Critical merely because
+the reproducer completes the victim's action; justify its rating using the anchors above.
 
 ## Report format
 
@@ -186,11 +192,11 @@ Start every report with this block, then one sentence of impact, then the detail
 
 ```
 ID:            OTS-<AREA>-<slug>
-Severity:      <level>, per "<the rubric line it matches>"
+Severity:      <level>, with impact and justification; cite a rubric example where applicable
 Attacker:      <party from "Who holds what"> holding <what>
 Preconditions: <auth mode, features, settings; "shipped defaults" if none>
-Demonstrated:  <what the reproducer shows>
-Not demonstrated: <steps assumed, or "none">
+Demonstrated:  <what the reproducer shows, or "not executed" with the blocker>
+Not demonstrated: <steps not executed; distinguish code-supported consequences from speculation, or "none">
 Locations:     <path:line at the scanned commit>
 Introduced:    <commit, if bisected>
 Register:      <RISK-... if it matches docs/security/active-risk-register.md, else "none">
@@ -211,10 +217,14 @@ In order of preference:
 2. A Tryouts `*_try.rb` file, with its command.
 3. A shell script of HTTP requests against a server started in the image, for behaviour that only shows end to end.
 
-The reproducer must run offline in this image and must fail on the scanned commit. For browser-only behaviour (script
-execution, cookie handling), drive Chromium, Firefox or WebKit with Playwright against a server started in the
-image; `tests/browser/saml_callback_spec.rb` shows the pattern. List any browser left untested under "Not
-demonstrated".
+Provide an offline reproducer in this image that demonstrates the weakness on the scanned commit; a regression
+spec must fail before the fix and pass after it. If an environmental limitation blocks reproduction, do not suppress
+a well-supported finding: label it as incompletely verified, include the code evidence and proposed reproduction
+steps, and state the blocker under "Not demonstrated". Do not present an unexecuted reproducer as verified.
+
+For browser-only behaviour (script execution, cookie handling), drive Chromium, Firefox or WebKit with Playwright
+against a server started in the image; `tests/browser/saml_callback_spec.rb` shows the pattern. List any browser
+left untested under "Not demonstrated".
 
 ## Patches
 
