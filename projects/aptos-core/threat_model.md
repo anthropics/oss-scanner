@@ -17,6 +17,12 @@ Use these severity classes:
 
 Report a bytecode-verifier bypass or a paranoid-mode bypass even when a later check rejects the module or transaction. Name the check that catches it.
 
-This image has the Rust 1.98.1 toolchain and a cargo registry from `cargo fetch --locked`. It does not contain a built `aptos-node`. The machine that runs the scan has 2 CPUs and 8 GB of RAM. Exercise a change with `cargo test -p <package> --offline` on a small package such as `aptos-crypto` or `move-vm-runtime`. Unit tests sit next to the crate. Do not build `aptos-node`, the smoke tests, or Forge.
+This image has the Rust 1.98.1 toolchain and a cargo registry from `cargo fetch --locked`. The scan machine has 2 CPUs and 8 GB of RAM. Run one `.move` or `.masm` file through the VM with:
+
+```
+cargo test -p aptos-transactional-test-harness --test tests --offline -- runner::aptos_test_harness/smoke_test.move
+```
+
+The filter is `runner::` plus the path under `aptos-move/aptos-transactional-test-harness/tests/`. Put a new file there with a matching `.exp`. A Rust test in the e2e suite is `cargo test -p e2e-move-tests --offline --lib <name>`. A small crate is `cargo test -p aptos-crypto --offline --lib`. Do not build `aptos-node`, the smoke tests, or Forge.
 
 One report per root cause. The reproducer is a small test or harness. The patch changes only what the bug requires. Skip style findings, guesses, and a second writeup of the same cause.
