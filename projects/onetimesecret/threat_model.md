@@ -50,16 +50,20 @@ Entry points:
 - `lib/`: middleware (sessions, host detection, CSRF, CSP, cookie tossing), models, encryption, rate limiters
 - `src/`: the SPA, which handles bearer identifiers in the browser
 
-## Deployment to assume when rating
+## Configuration to assume when rating
 
-Rate against the hosted service at onetimesecret.com: full authentication mode with MFA, WebAuthn, magic links and
-SSO; organizations, custom domains, regions and Stripe billing enabled; nonce-based CSP on; behind a reverse proxy
-that is configured as a trusted proxy. Self-hosted installs default to simple mode with most of these features off
-(`etc/defaults/*.defaults.yaml`).
+Rate as if every feature is on. A bug in a feature that is off by default is not rated lower for that reason.
 
+- Authentication features: the `env` files of the `full-mfa` and `full-saml-platform` lanes under `tests/lanes/`
+  turn them all on between them (full mode, MFA, WebAuthn, magic links, SAML, organization and platform SSO).
+- Billing: `tests/lanes/overlays/billing.env`.
+- Organizations, custom domains, regions and incoming secrets: no lane enables these. `spec/config.test.yaml` keeps
+  them off, and specs that need organizations or custom domains set `ENABLE_ORGS` or `DOMAINS_ENABLED`. Assume all
+  four are on.
+
+Two further rules:
 - Holds under shipped defaults (`etc/defaults/`) or shipped examples (`etc/examples/`, including
-  `Caddyfile-example`): in scope at full severity. Self-hosters run them unchanged.
-- Needs a non-default setting that the hosted service does not use: one level lower. Name the setting.
+  `Caddyfile-example`): full severity. Self-hosters run them unchanged.
 - Needs the operator to misconfigure something (trust every proxy, disable CSP, set a weak `SECRET`): out of scope.
 
 ## What matters most
