@@ -1,0 +1,6 @@
+# Solidus Protocol: Rust node for the Solidus identity blockchain.
+repo: https://github.com/solidusnetwork/protocol#main
+primary_contact: security@solidus.network
+homepage: https://solidus.network
+disabled: false
+# Dockerfile and threat_model.md sit next to this file, so no dockerfile: or threat_model: key is set.
