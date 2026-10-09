@@ -37,3 +37,13 @@ COPY . /src
 WORKDIR /src
 
 RUN cargo fetch --locked
+
+ENV CARGO_NET_OFFLINE=true
+
+# Binaries for the commands in threat_model.md. The agent machine has 2 CPUs and 8 GB.
+RUN cargo test -p aptos-crypto --offline --lib --no-run \
+    && cargo test -p aptos-safety-rules --offline --lib --no-run \
+    && cargo test -p aptos-consensus-types --offline --lib --no-run \
+    && cargo test -p e2e-move-tests --offline --no-run \
+    && cargo test -p aptos-transactional-test-harness --test tests --offline --no-run \
+    && cargo test -p aptos-consensus --offline --lib --no-run

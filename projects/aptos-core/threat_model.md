@@ -17,7 +17,7 @@ Use these severity classes:
 
 Report a bytecode-verifier bypass or a paranoid-mode bypass even when a later check rejects the module or transaction. Name the check that catches it.
 
-This image has the Rust 1.98.1 toolchain and a cargo registry from `cargo fetch --locked`. The scan machine has 2 CPUs and 8 GB of RAM. Run one `.move` or `.masm` file through the VM with:
+This image has the Rust 1.98.1 toolchain, a cargo registry from `cargo fetch --locked`, and the test binaries for the commands below. The scan machine has 2 CPUs and 8 GB of RAM. Run one `.move` or `.masm` file through the VM with:
 
 ```
 cargo test -p aptos-transactional-test-harness --test tests --offline -- runner::aptos_test_harness/smoke_test.move
