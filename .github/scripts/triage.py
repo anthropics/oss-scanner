@@ -56,6 +56,9 @@ LOW_CRITICALITY = 0.4
 GITHUB_REPO = re.compile(r"https://(?:www\.)?github\.com/([A-Za-z0-9_.-]+)/([A-Za-z0-9_.-]+?)(?:\.git)?/?(?:#(.+))?")
 LOGIN = re.compile(r"[A-Za-z0-9-]+")
 CHECKBOX = re.compile(r"^\s*[-*]\s+\[([ xX])\]\s+(.+)$", re.MULTILINE)
+EMAIL = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
+# Where GitHub looks for a repository's security policy.
+SECURITY_POLICY_PATHS = ("SECURITY.md", ".github/SECURITY.md", "docs/SECURITY.md")
 # The files we read from a project's directory, and the size above which validate.py refuses each.
 PROJECT_FILES = dict.fromkeys(validate.FILE_KEYS, validate.MAX_FILE_BYTES)
 PROJECT_FILES["project.yaml"] = validate.MAX_CONFIG_BYTES
@@ -403,6 +406,40 @@ def maintainer_row(gh: GitHub, slug: str, meta: dict, login: str) -> tuple[str, 
     return (WARN if roles or recent else FAIL), evidence
 
 
+def security_policy(gh: GitHub, slug: str, owner: str) -> tuple[str, str] | None:
+    """Find the security policy that applies to the repository: its own, or else the one its owner keeps for all
+    their repositories in <owner>/.github. Return the policy's repository and its text, or None."""
+    for repo in (slug, f"{quote(owner, safe='')}/.github"):
+        for path in SECURITY_POLICY_PATHS:
+            try:
+                return repo, gh.fetch(f"repos/{repo}/contents/{path}", accept=RAW)[0].decode("utf-8", "replace")
+            except ApiError as error:
+                if error.status != 404:
+                    raise
+    return None
+
+
+def contact_row(gh: GitHub, slug: str, meta: dict, config: dict) -> tuple[str, str]:
+    """Does the repository's own security policy name the address that reports would go to?"""
+    contact = config.get("primary_contact")
+    if not isinstance(contact, str):
+        return WARN, "project.yaml names no contact"
+    policy = security_policy(gh, slug, meta["owner"]["login"])
+    if policy is None:
+        return INFO, f"no `SECURITY.md` to check {code(contact)} against"
+    repo, text = policy
+    where = "`SECURITY.md`" if repo == slug else f"`SECURITY.md` of {code(repo)}"
+    # Whole addresses are compared, so that security@example.org is not found inside another address.
+    given = sorted({address.lower() for address in EMAIL.findall(text)})
+    if contact.lower() in given:
+        return OK, f"{code(contact)} is in {where}"
+    # Many policies ask for reports through GitHub and give no address at all; that is not a mismatch.
+    if not given:
+        return INFO, f"{where} gives no email address to check {code(contact)} against"
+    shown = ", ".join(code(address) for address in given[:3]) + (" …" if len(given) > 3 else "")
+    return WARN, f"{code(contact)} is not in {where}, which gives {shown}"
+
+
 def scanner_files_row(gh: GitHub, slug: str, ref: str | None, config: dict, beside: set[str]) -> tuple[str, str]:
     """Has the project set up .oss-scanner/ in its own repository, and are the files project.yaml names there?"""
 
@@ -535,6 +572,7 @@ def repository_rows(gh: GitHub, config: dict, beside: set[str], login: str) -> t
         row("Criticality score", criticality_row, gh, slug, meta),
         row("License", license_row, gh, slug, meta),
         row("Opened by an active maintainer", maintainer_row, gh, slug, meta, login),
+        row("Contact in `SECURITY.md`", contact_row, gh, slug, meta, config),
         row("`.oss-scanner/` in the repository", scanner_files_row, gh, slug, ref, config, beside),
     ]
 

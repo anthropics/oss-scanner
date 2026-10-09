@@ -1,8 +1,9 @@
 name: "Triage"
 # Comments on an enrolment pull request with what a reviewer would otherwise look up by hand: the project's stars,
-# forks, license and criticality score, whether whoever opened it looks like an active maintainer, whether the
-# project has set up .oss-scanner/ in its repository, and whether projects/<name>/ follows the rules. The comment
-# informs the review and decides nothing. A pull request that touches nothing under projects/ gets no comment.
+# forks, license and criticality score, whether whoever opened it looks like an active maintainer, whether its
+# SECURITY.md names the contact address, whether it has set up .oss-scanner/ in its repository, and whether
+# projects/<name>/ follows the rules. The comment informs the review and decides nothing. A pull request that
+# touches nothing under projects/ gets no comment.
 #
 # pull_request_target, not pull_request: a pull request from a fork gets a read-only token, which cannot comment.
 # That makes this workflow run with the base repository's token on input from anyone, so it is split in two:
