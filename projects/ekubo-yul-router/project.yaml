@@ -1,0 +1,8 @@
+# Ekubo Yul router: gas-optimized swap router for Ekubo EVM pools (Yul/Solidity, Foundry) plus its TypeScript SDK.
+repo: https://github.com/EkuboProtocol/yul-router#main
+
+primary_contact: security@ekubo.org
+
+homepage: https://ekubo.org
+
+disabled: false
