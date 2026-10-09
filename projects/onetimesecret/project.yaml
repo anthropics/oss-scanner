@@ -18,5 +18,5 @@ pgp: |
   n4H9zAfl2XH74JbW7OAohb+bTABqfNtGVnMH
   =Y/kS
   -----END PGP PUBLIC KEY BLOCK-----
-# Dockerfile and threat_model.md sit beside this file. Beside project.yaml the scanner drops the repository's
-# .dockerignore, which is written for the production image and excludes .git and compose.test.yml.
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
