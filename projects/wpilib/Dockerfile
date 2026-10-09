@@ -32,7 +32,8 @@ RUN cmake -S /src -B /src/build-cmake -G Ninja \
 # online to populate dependencies, then force a second test run offline.
 # Keep installed JNI libraries for later testing
 # by intentionally omitting -PbuildServer (which cleans test installations).
-# Normalize the Gradle wrapper line endings for Linux execution.
+# The wrapper is committed with LF; Windows checkouts may convert it to CRLF.
+# Normalize the local Docker build context for Linux execution.
 RUN sed -i 's/\r$//' ./gradlew \
     && chmod +x ./gradlew \
     && service dbus start \
