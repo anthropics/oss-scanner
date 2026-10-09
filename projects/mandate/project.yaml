@@ -1,0 +1,7 @@
+# Mandate: open-source economic infrastructure for AI agents.
+# Enrollment for Anthropic OSS Scanner (https://red.anthropic.com/oss-scanner/).
+# The Dockerfile and threat_model.md sit beside this file, so no
+# dockerfile: / threat_model: keys are set (validate.py enforces one place only).
+repo: https://github.com/richardsondx/mandate#main
+primary_contact: richardsondx@gmail.com
+disabled: false
