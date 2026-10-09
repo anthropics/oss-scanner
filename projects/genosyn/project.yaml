@@ -1,0 +1,5 @@
+repo: https://github.com/Genosyn/genosyn
+primary_contact: security@genosyn.com
+homepage: https://genosyn.com
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
