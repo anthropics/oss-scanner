@@ -1,0 +1,6 @@
+repo: https://github.com/aionhw/xezim#main
+primary_contact: bondanr@yahoo.com
+homepage: https://github.com/aionhw/xezim
+disabled: false
+# Dockerfile and threat model kept next to this file (projects/xezim/), so the
+# xezim repository itself needs no new files.
