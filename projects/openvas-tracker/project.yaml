@@ -1,5 +1,5 @@
 repo: https://github.com/trcyberoptic/openvas-tracker#master
-primary_contact: security@example.org
+primary_contact: security@cyberoptic.ch
 homepage: https://github.com/trcyberoptic/openvas-tracker
 disabled: false
 dockerfile: .oss-scanner/Dockerfile
