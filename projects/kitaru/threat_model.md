@@ -66,6 +66,7 @@ The real boundaries, which we do want reported:
 
 The image has Kitaru and every extra installed from `/src` in `/src/.venv` (already on `PATH`), the plugin workspace in `/src/plugins/.venv`, and a local PostgreSQL 16. There is no network; `uv` is set to offline and frozen mode.
 
+- **Restore the files the image leaves out, first**: `/src` is copied through the project's `.dockerignore`, which drops `docs/`, `.github/` and every Markdown file except the README and CHANGELOG. That includes `SECURITY.md`, the `AGENTS.md` files that describe the server's layering and authorization rules, and `docs/book/deploy/authentication.md`, which documents the access model above. Run `git -C /src checkout -- .` to restore every tracked file; it does not touch the installed environments. Until you do, about 35 repository-housekeeping tests under `tests/scripts`, `tests/mcp` and `tests/cli` fail with missing files. Tests that need `node` fail regardless, because the TypeScript packages are not built.
 - **Start the database**: run `kitaru-db-start`. It listens on `localhost:5433` with user `postgres` and password `password`.
 - **Start a server with real authentication**:
 
