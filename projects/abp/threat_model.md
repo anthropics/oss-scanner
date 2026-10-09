@@ -9,7 +9,7 @@ Scan the public `abpframework/abp` repository on the default development branch,
 - `modules/identity/` and `modules/account/`: user and role administration, registration, login, external login, password reset, email confirmation, two-factor authentication, and security stamps.
 - `modules/openiddict/`: token issuance and validation integration, grant handling, refresh tokens, client permissions, scopes, and tenant-bound identity.
 - `framework/src/Volo.Abp.Authorization*` and `modules/permission-management/`: application-service authorization and user, role, client, and resource permission checks.
-- `framework/src/Volo.Abp.MultiTenancy*`, `framework/src/Volo.Abp.AspNetCore.MultiTenancy/`, `framework/src/Volo.Abp.EntityFrameworkCore/`, and `modules/tenant-management/`: tenant resolution, tenant context, repository filters, and separation between tenant and host data.
+- `framework/src/Volo.Abp.MultiTenancy*`, `framework/src/Volo.Abp.AspNetCore.MultiTenancy/`, `framework/src/Volo.Abp.EntityFrameworkCore/`, `framework/src/Volo.Abp.MongoDB/`, and `modules/tenant-management/`: tenant resolution, tenant context, repository filters, and separation between tenant and host data.
 - `framework/src/Volo.Abp.AspNetCore*`: conventional HTTP APIs, input handling, antiforgery protection, authentication integration, and redirects.
 
 All public source remains available for inspection. Proprietary modules and repositories are not part of this enrollment. Docs, demos, templates, and tests can explain usage or support a reproducer; a finding confined to an intentionally permissive test fixture is not a production vulnerability. Report a template issue when an ordinary generated application actually inherits the insecure behavior.
@@ -28,7 +28,7 @@ Follow the actual authentication entry point through the whole request flow. Pas
 
 The Dockerfile installs .NET 10 and builds selected backend security test projects and their referenced source projects in Debug mode. It also builds the dynamically loaded MVC test plugin, the Account Web/HTTP API and Identity/Permission Management HTTP API projects. Source, build outputs, restored NuGet packages, and SDK tools remain in the image.
 
-Run `abp-oss-test` from `/src` to execute the prepared suites without restore or rebuild. Results are written to `/tmp/abp-oss-results`, or to the directory passed as the first argument. The test suites use in-process hosts and local SQLite/in-memory fixtures; no external database or real account credentials are supplied.
+Run `abp-oss-test` from `/src` to execute the prepared suites without restore or rebuild. Results are written to `/tmp/abp-oss-results`, or to the directory passed as the first argument. The test suites use in-process hosts and local SQLite/in-memory fixtures; the MongoDB suites start a local `mongod` from the MongoSandbox NuGet package (linux-x64 only). No external database or real account credentials are supplied.
 
 For an individual prepared project, use `dotnet test <project.csproj> --no-build --no-restore --configuration Debug`. For an edited prepared project, use `dotnet build <project.csproj> --no-restore --configuration Debug --disable-build-servers -m:2`. Keep new reproducers within dependencies already cached in the image; do not require network downloads.
 

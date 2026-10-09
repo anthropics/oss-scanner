@@ -26,13 +26,18 @@ framework/test/Volo.Abp.AspNetCore.MultiTenancy.Tests/Volo.Abp.AspNetCore.MultiT
 framework/test/Volo.Abp.AspNetCore.Tests/Volo.Abp.AspNetCore.Tests.csproj
 framework/test/Volo.Abp.AspNetCore.Mvc.Tests/Volo.Abp.AspNetCore.Mvc.Tests.csproj
 framework/test/Volo.Abp.EntityFrameworkCore.Tests/Volo.Abp.EntityFrameworkCore.Tests.csproj
+framework/test/Volo.Abp.MongoDB.Tests/Volo.Abp.MongoDB.Tests.csproj
 modules/identity/test/Volo.Abp.Identity.EntityFrameworkCore.Tests/Volo.Abp.Identity.EntityFrameworkCore.Tests.csproj
+modules/identity/test/Volo.Abp.Identity.MongoDB.Tests/Volo.Abp.Identity.MongoDB.Tests.csproj
 modules/identity/test/Volo.Abp.Identity.AspNetCore.Tests/Volo.Abp.Identity.AspNetCore.Tests.csproj
 modules/account/test/Volo.Abp.Account.Application.Tests/Volo.Abp.Account.Application.Tests.csproj
 modules/permission-management/test/Volo.Abp.PermissionManagement.EntityFrameworkCore.Tests/Volo.Abp.PermissionManagement.EntityFrameworkCore.Tests.csproj
+modules/permission-management/test/Volo.Abp.PermissionManagement.MongoDB.Tests/Volo.Abp.PermissionManagement.MongoDB.Tests.csproj
 modules/openiddict/test/Volo.Abp.OpenIddict.EntityFrameworkCore.Tests/Volo.Abp.OpenIddict.EntityFrameworkCore.Tests.csproj
+modules/openiddict/test/Volo.Abp.OpenIddict.MongoDB.Tests/Volo.Abp.OpenIddict.MongoDB.Tests.csproj
 modules/openiddict/test/Volo.Abp.OpenIddict.AspNetCore.Tests/Volo.Abp.OpenIddict.AspNetCore.Tests.csproj
 modules/tenant-management/test/Volo.Abp.TenantManagement.EntityFrameworkCore.Tests/Volo.Abp.TenantManagement.EntityFrameworkCore.Tests.csproj
+modules/tenant-management/test/Volo.Abp.TenantManagement.MongoDB.Tests/Volo.Abp.TenantManagement.MongoDB.Tests.csproj
 PROJECTS
 cat > /opt/abp-oss-scanner/source-projects.txt <<'PROJECTS'
 framework/test/Volo.Abp.AspNetCore.Mvc.PlugIn/Volo.Abp.AspNetCore.Mvc.PlugIn.csproj
