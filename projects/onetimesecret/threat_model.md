@@ -4,6 +4,10 @@ Onetime Secret shares sensitive text through a single-use link. Creating a secre
 secret link, which the creator passes to a recipient, and the receipt link, which the creator keeps. The recipient
 opens the secret link once and the secret is destroyed. Most of what follows exists to protect that property.
 
+This document describes intended security properties and supported deployment assumptions; it is not evidence that
+the implementation satisfies them. Investigate failures of the mechanisms establishing these assumptions and
+document disagreements between these claims and the code.
+
 Stack: Ruby/Rack backend (`apps/`, `lib/`), Vue 3 SPA (`src/`), Valkey/Redis for secrets, receipts and sessions
 (Familia ORM), SQLite or Postgres for full-mode authentication (Rodauth), RabbitMQ for background jobs. Routes are
 declared in `apps/**/routes.txt`. The `auth=` column lists the authentication strategies a route accepts (`noauth`
@@ -22,8 +26,9 @@ allows anonymous callers) and `sensitive=true` marks routes that take a bearer i
 | Colonel (site admin) | colonel role | trusted |
 | Operator | environment, `etc/config.yaml`, proxy configuration, Valkey and database | trusted |
 
-Secret and receipt identifiers are high-entropy (`Familia::VerifiableIdentifier`). Guessing one is not a viable
-attack. Moving one to a party that should not hold it is.
+Secret and receipt identifiers are intended to be high-entropy (`Familia::VerifiableIdentifier`). Brute force
+against correctly generated identifiers is not a viable attack. Weak entropy, prediction, reuse, or moving an
+identifier to a party that should not hold it are in scope.
 
 ## Where untrusted input enters
 
@@ -238,7 +243,8 @@ demonstrated".
   attempt. The passphrase is checked, and attempts counted, only with `continue=true`.
 - Status endpoints returning a secret's state and metadata to a caller who supplies its identifier.
 - Anonymous access to guest routes when guest routes are enabled.
-- Attacks that require guessing a secret or receipt identifier.
+- Brute force against correctly generated high-entropy secret or receipt identifiers. Weak entropy, prediction
+  and reuse remain in scope.
 - Actions taken by a colonel or the operator.
 - Missing rate limits on endpoints that guard no guessable value, send no mail and do no expensive work.
 - Dependency advisories with no reachable path from this code.
