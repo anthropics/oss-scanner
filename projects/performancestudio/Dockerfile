@@ -11,8 +11,11 @@ ENV DEBIAN_FRONTEND=noninteractive \
     DOTNET_SKIP_FIRST_TIME_EXPERIENCE=1
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-      ca-certificates git python3 \
+      ca-certificates git python3 libfontconfig1 libfreetype6 \
     && rm -rf /var/lib/apt/lists/*
+
+# libfontconfig1 and libfreetype6 are what SkiaSharp (Avalonia, ScottPlot) loads on Linux; without them the tests that
+# draw text fail with DllNotFoundException.
 
 # scanner contract: the checkout lives inside the image, at /src
 COPY . /src
