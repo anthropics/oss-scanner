@@ -2,6 +2,10 @@
 
 Nethermind is an Ethereum execution client written in C#. It processes adversarial peer traffic, transactions, blocks, contract bytecode and JSON-RPC requests. Correct execution and availability are security properties of the client.
 
+## Audit scope
+
+Audit the entire repository, including every production component, plugin, consensus implementation, networking layer, RPC module, storage backend, cryptographic implementation, import/export path, supporting tool, build script and test infrastructure. No project or directory is excluded. The priorities below guide triage; they do not restrict coverage to selected modules. Review supporting tools in the context of their intended privileges and deployment.
+
 ## Trust boundaries and priorities
 
 - Treat remote peer messages, discovery packets, transaction and block contents, serialized data and EVM bytecode as untrusted. Prioritize attacks reachable through default P2P and discovery interfaces.
