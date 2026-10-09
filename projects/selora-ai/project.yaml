@@ -1,0 +1,9 @@
+# The canonical repository is https://gitlab.com/selorahomes/products/selora-ai/ha-integration;
+# this GitHub mirror is what HACS distributes from and carries the same main branch.
+repo: https://github.com/SeloraHomes/ha-selora-ai#main
+
+primary_contact: security@selorahomes.com
+
+homepage: https://selorahomes.com
+
+disabled: false
