@@ -1,17 +1,17 @@
 # Copy this file to projects/<name>/project.yaml and fill in the fields below.
 
 # REQUIRED. The ONE git repository to scan, as an https:// URL. Optionally add #branch or #tag to pin one.
-repo: https://github.com/example/project#main
+repo: https://github.com/trydirect/stacker#dev
 
 # REQUIRED. Who should we email our reports to, and use as the primary contact for questions.
-primary_contact: security@example.org
+primary_contact: security@try.direct
 
 # Optional. Additional email addresses we will CC on disclosure reports.
 auto_ccs:
-  - maintainer@example.org
+  - maintainer@try.direct
 
 # Optional. The project's home page.
-homepage: https://example.org
+homepage: https://try.direct
 
 # Optional. Your armored OpenPGP public key. When set, every report is encrypted to it and goes to primary_contact only
 # (so it cannot be combined with auto_ccs).
