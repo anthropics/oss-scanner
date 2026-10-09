@@ -21,16 +21,27 @@ and reliable handling of malformed network messages and files. A malformed
 input should not enable arbitrary code execution, unintended file access,
 or persistent loss of service in robot software or desktop tools.
 
-Consider attackers who can reach a listening service on a robot, development
-computer, or coprocessor, operate a peer server or camera that a client connects
-to, or supply a file that a user opens. These networks are often local robot
-or development networks; report the required connectivity and configuration
-instead of assuming every service is publicly reachable on the Internet.
+Normal robot deployments assume that the local robot network and its
+participating devices are trusted. Do not assume that the robot LAN is
+adversarial or that robot services are publicly reachable on the Internet.
+
+Development computers and desktop tools may run on untrusted networks;
+simulation services may also be enabled there. Consider attackers who can
+reach those listening services, operate a peer server or camera that a client
+connects to, or supply an external file that a user opens. Identify the actual
+connectivity, enabled features, and attacker control for each finding.
+
+Keep malformed robot-network input in scan scope for memory safety, bounded
+resource consumption, and robustness. For robot-only findings, explain whether
+the input requires a malicious or compromised participant on the otherwise
+trusted LAN. Distinguish robustness defects from security vulnerabilities
+and assess severity using the demonstrated deployment and trust boundary.
 
 NetworkTables and several simulation/telemetry services intentionally allow
 participating peers to publish data without user authentication. Their intended
 data-sharing behavior, and absence of authentication or TLS by itself, are not
-findings. Malformed data crossing those interfaces is still security-relevant.
+findings. Classify malformed-input defects using the deployment and attacker
+control described above.
 Do not treat valid peer traffic as arbitrary-code execution merely because a
 team's application chooses to use values to control its robot.
 
@@ -141,7 +152,9 @@ contacting external hosts during reproduction; use loopback peers and fixtures.
 
 This is proposed triage guidance for this enrollment; assess actual
 reachability, preconditions, and demonstrated impact rather than assigning
-severity from a bug class alone.
+severity from a bug class alone. For findings limited to a trusted robot
+network, explain the necessary malicious or compromised peer and distinguish
+robustness failures from attacks across a demonstrated security boundary.
 
 - Critical: demonstrated arbitrary code execution through a remotely reachable
   WPILib interface without prior process access, under a realistic deployment.
