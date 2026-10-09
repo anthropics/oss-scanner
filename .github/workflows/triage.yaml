@@ -13,7 +13,8 @@ name: "Triage"
 # Values from the event reach the scripts through environment variables, never by ${{ }} substitution into them.
 on:
   pull_request_target:
-    types: [opened, reopened, synchronize]
+    # edited: the comment reports on the checklist in the description.
+    types: [opened, edited, reopened, synchronize]
 
 permissions: {}
 

@@ -26,6 +26,7 @@ import re
 import sys
 import tempfile
 import time
+import traceback
 import urllib.error
 import urllib.request
 from datetime import datetime, timedelta, timezone
@@ -38,6 +39,9 @@ import validate
 API = "https://api.github.com"
 RAW = "application/vnd.github.raw"
 MAX_RATE_LIMIT_WAIT = 65  # seconds
+# No answer we need is larger. A file we only search (a license, a security policy) is read up to the smaller limit.
+MAX_RESPONSE_BYTES = 16 * 1024 * 1024
+MAX_TEXT_BYTES = 256 * 1024
 # The workflow finds the comment to update by this first line.
 MARKER = "<!-- oss-scanner-triage -->"
 CRITERIA = "https://red.anthropic.com/oss-scanner"
@@ -55,8 +59,10 @@ LOW_CRITICALITY = 0.4
 
 GITHUB_REPO = re.compile(r"https://(?:www\.)?github\.com/([A-Za-z0-9_.-]+)/([A-Za-z0-9_.-]+?)(?:\.git)?/?(?:#(.+))?")
 LOGIN = re.compile(r"[A-Za-z0-9-]+")
-CHECKBOX = re.compile(r"^\s*[-*]\s+\[([ xX])\]\s+(.+)$", re.MULTILINE)
-EMAIL = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
+# These two run on text anyone can write (a description, a SECURITY.md), so nothing in them is unbounded or
+# crosses a line: a long run of one character must not make them slow.
+CHECKBOX = re.compile(r"^[ \t]*[-*][ \t]+\[([ xX])\][ \t]+(.+)$", re.MULTILINE)
+EMAIL = re.compile(r"(?<![A-Za-z0-9._%+-])[A-Za-z0-9._%+-]{1,64}@[A-Za-z0-9-]{1,63}(?:\.[A-Za-z0-9-]{1,63}){1,8}")
 # A GitHub repository as OSS-Fuzz's project.yaml files name it in main_repo: any scheme, often with .git.
 MAIN_REPO = re.compile(r"(?:\w+://|git@)?(?:www\.)?github\.com[/:]([^/\s]+/[^/\s#]+?)(?:\.git)?/?")
 # Where GitHub looks for a repository's security policy.
@@ -87,7 +93,10 @@ SOURCE_AVAILABLE = (
     "Business Source License", "Server Side Public License", "Elastic License", "Commons Clause",
     "Functional Source License", "PolyForm", "Sustainable Use License", "Fair Source License",
     "Confluent Community License", "Redis Source Available License", "Attribution-NonCommercial",
+    "Innovation-Enabling Source Code License",
 )
+# Wording of a repository that is open source only in part, such as one with an enterprise directory.
+PARTLY_OPEN = ("Enterprise License", "proprietary license", "commercial license")
 
 CRITICALITY_SOURCE = "https://github.com/ossf/criticality_score"
 # The signals of the OpenSSF criticality score (Rob Pike's formula), each with its (weight, threshold).
@@ -119,16 +128,32 @@ def retry_delay(error: urllib.error.HTTPError) -> float | None:
     """Seconds to wait before asking once more, or None if the answer will not change."""
     if error.code >= 500:
         return 2
-    # Out of requests. The search API allows 30 a minute, so that wait is short; the hourly limit is not waited for.
-    if error.code in (403, 429) and error.headers.get("X-RateLimit-Remaining") == "0":
+    if error.code not in (403, 429):
+        return None
+    # Out of requests, which GitHub says in one of two ways. The search API allows 30 a minute, so that wait is
+    # short; the hourly limit is not waited for.
+    if (error.headers.get("Retry-After") or "").isdigit():
+        delay = int(error.headers["Retry-After"])
+    elif error.headers.get("X-RateLimit-Remaining") == "0":
         delay = float(error.headers.get("X-RateLimit-Reset", 0)) - time.time() + 1
-        if delay <= MAX_RATE_LIMIT_WAIT:
-            return max(delay, 1)
-    return None
+    else:
+        return None
+    return max(delay, 1) if delay <= MAX_RATE_LIMIT_WAIT else None
+
+
+class StayOnGitHub(urllib.request.HTTPRedirectHandler):
+    """Follow a redirect (a renamed repository) only within the API, so that the token is sent nowhere else."""
+
+    def redirect_request(self, request, fp, code, msg, headers, newurl):
+        if not newurl.startswith(f"{API}/"):
+            return None  # urllib then raises the redirect as an HTTPError
+        return super().redirect_request(request, fp, code, msg, headers, newurl)
 
 
 class GitHub:
     """A client for api.github.com that only reads. Callers quote every path segment that comes from a pull request."""
+
+    opener = urllib.request.build_opener(StayOnGitHub)
 
     def __init__(self, token: str | None):
         self.headers = {
@@ -140,15 +165,17 @@ class GitHub:
             self.headers["Authorization"] = f"Bearer {token}"
 
     def fetch(self, path: str, accept: str | None = None, body: dict | None = None, **params) -> tuple[bytes, str]:
-        """GET a path, or POST `body` to it. Return the response's body and its Link header."""
+        """GET a path, or POST `body` to it. Return the response's body and its Link header. Of a file asked for
+        as text, only the start is read."""
+        limit = MAX_TEXT_BYTES if accept == RAW else MAX_RESPONSE_BYTES
         query = urlencode({key: value for key, value in params.items() if value is not None})
         headers = {**self.headers, "Accept": accept} if accept else self.headers
         data = json.dumps(body).encode() if body else None
         request = urllib.request.Request(f"{API}/{path}{'?' + query if query else ''}", data=data, headers=headers)
         for last_try in (False, True):
             try:
-                with urllib.request.urlopen(request, timeout=30) as response:
-                    return response.read(), response.headers.get("Link") or ""
+                with self.opener.open(request, timeout=30) as response:
+                    return response.read(limit), response.headers.get("Link") or ""
             except urllib.error.HTTPError as error:
                 delay = retry_delay(error)
                 if last_try or delay is None:
@@ -190,7 +217,7 @@ class GitHub:
         return self.get(f"search/{kind}", q=query, per_page=1)["total_count"]
 
     def text(self, path: str, **params) -> str | None:
-        """The text of a file in a repository, or None if it is not there."""
+        """The text of a file in a repository (its first 256 KiB), or None if it is not there."""
         try:
             return self.fetch(path, accept=RAW, **params)[0].decode("utf-8", "replace")
         except ApiError as error:
@@ -207,8 +234,11 @@ class GitHub:
 
 
 def code(text: object, limit: int = 120) -> str:
-    """Untrusted text as a Markdown code span that cannot end the span, the table cell or the comment."""
-    text = re.sub(r"[\x00-\x1f\x7f-\x9f]", " ", str(text)).replace("`", "'").replace("|", "¦")
+    """Untrusted text as a Markdown code span that cannot end the span, the table cell or the comment. A value
+    from YAML that is not a string is shown as its type: printing it could be made to take forever."""
+    if not isinstance(text, str):
+        text = f"<{type(text).__name__}>"
+    text = re.sub(r"[\x00-\x1f\x7f-\x9f]", " ", text).replace("`", "'").replace("|", "¦")
     if len(text) > limit:
         text = text[:limit] + "…"
     return f"`{text or ' '}`"
@@ -335,7 +365,8 @@ def checklist_row(body: str) -> tuple[str, str]:
     if not boxes:
         return WARN, "the pull request template's checklist is missing from the description"
     if unticked:
-        return WARN, f"{len(unticked)} of {len(boxes)} not ticked: " + "; ".join(code(text, 80) for text in unticked)
+        shown = "; ".join(code(text, 80) for text in unticked[:5]) + (" …" if len(unticked) > 5 else "")
+        return WARN, f"{len(unticked)} of {len(boxes)} not ticked: {shown}"
     return OK, f"all {len(boxes)} ticked"
 
 
@@ -372,7 +403,13 @@ def license_row(gh: GitHub, slug: str, meta: dict) -> tuple[str, str]:
     found = next((name for name in SOURCE_AVAILABLE if name.lower() in text.lower()), None)
     if found:
         return FAIL, f"the license file mentions “{found}”, a source-available license"
-    return WARN, "GitHub cannot name the license (custom, or more than one); check it"
+    found = next((name for name in PARTLY_OPEN if name.lower() in text.lower()), None)
+    if found:
+        return WARN, f"the license file mentions “{found}”: part of the repository may not be open source"
+    # GitHub also fails to name a plain license with a line added, so show the reviewer what the file says.
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
+    says = next((line for line in lines if "licens" in line.lower()), lines[0] if lines else "nothing")
+    return WARN, f"GitHub cannot name the license; its file says {code(says, 80)}"
 
 
 def maintainer_row(gh: GitHub, slug: str, meta: dict, login: str) -> tuple[str, str]:
@@ -449,9 +486,10 @@ def contact_row(gh: GitHub, slug: str, meta: dict, config: dict) -> tuple[str, s
     return WARN, f"{code(contact)} is not in {where}, which gives {shown}"
 
 
-def oss_fuzz_projects(gh: GitHub, slug: str) -> tuple[dict[str, dict], bool]:
-    """Find the OSS-Fuzz projects that fuzz this repository: each one's name and project.yaml. Also return whether
-    the search for them worked; if it did not, only projects named after the repository or its owner are found."""
+def oss_fuzz_projects(gh: GitHub, slug: str) -> tuple[dict[str, dict], dict[str, object], bool]:
+    """Find the OSS-Fuzz projects that fuzz this repository: each one's name and project.yaml. Also return the
+    main_repo of any project named after the repository or its owner that is for some other repository, and whether
+    the search worked; if it did not, only projects of those two names are found."""
     owner, name = slug.lower().split("/")
     names, searched = [name, owner], True
     try:
@@ -461,7 +499,7 @@ def oss_fuzz_projects(gh: GitHub, slug: str) -> tuple[dict[str, dict], bool]:
     except ApiError:
         searched = False
 
-    found = {}
+    found, namesakes = {}, {}
     for candidate in dict.fromkeys(names):
         text = gh.text(f"repos/google/oss-fuzz/contents/projects/{quote(candidate, safe='')}/project.yaml")
         try:
@@ -473,12 +511,17 @@ def oss_fuzz_projects(gh: GitHub, slug: str) -> tuple[dict[str, dict], bool]:
         match = MAIN_REPO.fullmatch(main_repo.strip()) if isinstance(main_repo, str) else None
         if match and match.group(1).lower() == slug.lower():
             found[candidate] = project
-    return found, searched
+        elif isinstance(project, dict) and candidate in (name, owner):
+            namesakes[candidate] = main_repo
+    return found, namesakes, searched
 
 
 def oss_fuzz_row(gh: GitHub, slug: str, config: dict) -> tuple[str, str]:
     """Is the repository in OSS-Fuzz, whose criteria ours follow, and does OSS-Fuzz report to the same address?"""
-    projects, searched = oss_fuzz_projects(gh, slug)
+    projects, namesakes, searched = oss_fuzz_projects(gh, slug)
+    if not projects and namesakes:
+        others = "; ".join(f"{code(name)} there is for {code(main_repo)}" for name, main_repo in namesakes.items())
+        return INFO, f"no OSS-Fuzz project is for this repository, but {others}"
     if not projects:
         return INFO, "not in OSS-Fuzz" if searched else "not in OSS-Fuzz under its own name (the search failed)"
     result = f"in OSS-Fuzz as {', '.join(code(name) for name in projects)}"
@@ -488,13 +531,15 @@ def oss_fuzz_row(gh: GitHub, slug: str, config: dict) -> tuple[str, str]:
         return OK, result
     primary, ccs = set(), set()
     for project in projects.values():
-        primary.add(str(project.get("primary_contact")).lower())
+        if isinstance(project.get("primary_contact"), str):
+            primary.add(project["primary_contact"].lower())
         for key in ("auto_ccs", "vendor_ccs"):
-            listed = project.get(key) or []
-            ccs.update(str(address).lower() for address in ([listed] if isinstance(listed, str) else listed))
+            listed = project.get(key)
+            listed = [listed] if isinstance(listed, str) else listed if isinstance(listed, list) else []
+            ccs.update(address.lower() for address in listed if isinstance(address, str))
     if contact.lower() in primary:
         return OK, f"{result}, with the same primary contact"
-    theirs = ", ".join(code(address) for address in sorted(primary))
+    theirs = ", ".join(code(address) for address in sorted(primary)) or "not given"
     if contact.lower() in ccs:
         return OK, f"{result}, which CCs {code(contact)} (its primary contact is {theirs})"
     return WARN, f"{result}, whose contacts do not include {code(contact)} (its primary contact is {theirs})"
@@ -599,11 +644,14 @@ def criticality_row(gh: GitHub, slug: str, meta: dict) -> tuple[str, str]:
 
 
 def row(check: str, function, *arguments) -> tuple[str, str, str]:
-    """One row of the table: (mark, check, result). A check GitHub would not answer says so; the others still run."""
+    """One row of the table: (mark, check, result). A check that fails says so, and the others still run."""
     try:
         mark, result = function(*arguments)
     except ApiError as error:
-        mark, result = WARN, f"could not be checked ({error})"
+        mark, result = WARN, f"could not be checked: {code(str(error))}"
+    except Exception as error:  # an answer shaped as we did not expect: the workflow's log has the traceback
+        traceback.print_exc()
+        mark, result = WARN, f"could not be checked: {code(type(error).__name__)}"
     return mark, check, result
 
 
@@ -621,7 +669,7 @@ def repository_rows(gh: GitHub, config: dict, beside: set[str], login: str) -> t
     try:
         meta = gh.find(f"repos/{quote(owner, safe='')}/{quote(name, safe='')}")
     except ApiError as error:
-        return code(repo), [(WARN, "Repository", f"could not be checked ({error})")]
+        return code(repo), [(WARN, "Repository", f"could not be checked: {code(str(error))}")]
     if meta is None:
         return code(repo), [(FAIL, "Repository", "not found on GitHub, or not public")]
 
