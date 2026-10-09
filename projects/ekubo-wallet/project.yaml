@@ -1,0 +1,8 @@
+# Ekubo Wallet: native desktop EVM wallet (Rust, GPUI) with WalletConnect and a local MCP bridge for agents.
+repo: https://github.com/EkuboProtocol/wallet#main
+
+primary_contact: security@ekubo.org
+
+homepage: https://ekubo.org
+
+disabled: false
