@@ -1,0 +1,8 @@
+repo: https://github.com/VocaHQ/vocaphone#main
+primary_contact: kanishk@vocahq.com
+auto_ccs:
+  - jatin@vocahq.com
+homepage: https://github.com/VocaHQ/vocaphone
+disabled: false
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
