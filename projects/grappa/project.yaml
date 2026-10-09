@@ -1,0 +1,12 @@
+# grappa: an always-on IRC bouncer with a REST + Phoenix Channels API and a browser PWA client.
+repo: https://github.com/vjt/grappa-irc#main
+
+primary_contact: vjt@openssl.it
+
+homepage: https://grappa.chat
+
+disabled: false
+
+dockerfile: .oss-scanner/Dockerfile
+
+threat_model: .oss-scanner/threat_model.md
