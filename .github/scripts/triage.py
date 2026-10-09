@@ -5,12 +5,12 @@
 
     GITHUB_TOKEN=... .github/scripts/triage.py --repo anthropics/oss-scanner --pr 123
 
-Run by .github/workflows/triage.yaml, and by hand to see what it would say. Prints nothing when the pull request
-does not touch projects/. The comment helps a reviewer; it decides nothing, and every row can be wrong.
+Run by .github/workflows/triage.yaml, or by hand to see what it would say. Prints nothing when the pull request
+does not touch projects/.
 
-The pull request is read as data through the GitHub API. Nothing from it is checked out or executed, the only host
-contacted is api.github.com, and a read-only token is enough. Text from the pull request and from the enrolled
-repository reaches the comment only through code(), so it cannot inject Markdown.
+The pull request is read as data through the GitHub API: nothing from it is checked out or executed, the only host
+contacted is api.github.com, and a read-only token is enough. Text from the pull request or the enrolled repository
+reaches the comment only through code(), so it cannot inject Markdown.
 
 Requires PyYAML, as tools/validate.py does.
 """
@@ -28,16 +28,16 @@ import tempfile
 import time
 import urllib.error
 import urllib.request
-from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from urllib.parse import quote, urlencode
 
+# tools/validate.py holds the enrolment rules (and imports PyYAML).
 sys.path.insert(0, str(pathlib.Path(__file__).resolve().parents[2] / "tools"))
-import validate  # noqa: E402  (tools/validate.py: the enrolment rules, and PyYAML)
+import validate
 
 API = "https://api.github.com"
-MAX_RATE_LIMIT_WAIT = 65  # seconds
 RAW = "application/vnd.github.raw"
+MAX_RATE_LIMIT_WAIT = 65  # seconds
 # The workflow finds the comment to update by this first line.
 MARKER = "<!-- oss-scanner-triage -->"
 CRITERIA = "https://red.anthropic.com/oss-scanner"
@@ -55,36 +55,37 @@ LOW_CRITICALITY = 0.4
 
 GITHUB_REPO = re.compile(r"https://(?:www\.)?github\.com/([A-Za-z0-9_.-]+)/([A-Za-z0-9_.-]+?)(?:\.git)?/?(?:#(.+))?")
 LOGIN = re.compile(r"[A-Za-z0-9-]+")
+CHECKBOX = re.compile(r"^\s*[-*]\s+\[([ xX])\]\s+(.+)$", re.MULTILINE)
+# The files we read from a project's directory, and the size above which validate.py refuses each.
+PROJECT_FILES = dict.fromkeys(validate.FILE_KEYS, validate.MAX_FILE_BYTES)
+PROJECT_FILES["project.yaml"] = validate.MAX_CONFIG_BYTES
+
 # GitHub's author_association values that mark a maintainer rather than a contributor, and how the comment words them.
 ASSOCIATIONS = {
     "OWNER": "owns the repository",
     "MEMBER": "member of the owning organisation",
     "COLLABORATOR": "collaborator on the repository",
 }
-# Who merged the repository's latest pull requests. Merging takes write access, whatever GitHub shows of the roles.
+# Who merged the repository's latest pull requests.
 RECENT_MERGES = """query($owner: String!, $name: String!) { repository(owner: $owner, name: $name) {
   pullRequests(states: MERGED, first: 100, orderBy: {field: UPDATED_AT, direction: DESC}) {
     nodes { mergedBy { login } } } } }"""
-CHECKBOX = re.compile(r"^\s*[-*]\s+\[([ xX])\]\s+(.+)$", re.MULTILINE)
-# The files we read from a project's directory, and the size above which validate.py refuses each.
-PROJECT_FILES = {"project.yaml": validate.MAX_CONFIG_BYTES}
-PROJECT_FILES.update(dict.fromkeys(validate.FILE_KEYS, validate.MAX_FILE_BYTES))
 
 # SPDX ids, as GitHub reports them, of the licenses we accept without a second look. BSL-1.0 is the Boost license;
 # the Business Source License is BUSL-1.1, which GitHub does not recognise and reports as "Other".
 COMMON_LICENSES = {
     "0BSD", "AGPL-3.0", "Apache-2.0", "BSD-2-Clause", "BSD-3-Clause", "BSL-1.0", "EPL-2.0", "GPL-2.0", "GPL-3.0",
     "ISC", "LGPL-2.1", "LGPL-3.0", "MIT", "MIT-0", "MPL-2.0", "PostgreSQL", "Unlicense", "Zlib",
-}  # fmt: skip
-# Phrases that mark a source-available license, looked for in the license text when GitHub cannot name it.
+}
+# Names of source-available licenses, looked for in the license text when GitHub cannot name it.
 SOURCE_AVAILABLE = (
     "Business Source License", "Server Side Public License", "Elastic License", "Commons Clause",
     "Functional Source License", "PolyForm", "Sustainable Use License", "Fair Source License",
     "Confluent Community License", "Redis Source Available License", "Attribution-NonCommercial",
-)  # fmt: skip
+)
 
-# The OpenSSF criticality score (Rob Pike's formula): signal -> (weight, threshold).
 CRITICALITY_SOURCE = "https://github.com/ossf/criticality_score"
+# The signals of the OpenSSF criticality score (Rob Pike's formula), each with its (weight, threshold).
 CRITICALITY_SIGNALS = {
     "created_since": (1, 120),
     "updated_since": (-1, 120),
@@ -102,10 +103,10 @@ ISSUE_WINDOW_DAYS = 90
 
 
 class ApiError(Exception):
-    """A request to the GitHub API failed. `status` is the HTTP status, or 0 if there was no response."""
+    """A request to the GitHub API failed. `status` is the HTTP status, or 0 if there was no usable response."""
 
-    def __init__(self, status: int, path: str):
-        super().__init__(f"GitHub API {status or 'unreachable'} for {path}")
+    def __init__(self, status: int, path: str, problem: str = ""):
+        super().__init__(f"GitHub API: {problem or status or 'no response'} for {path}")
         self.status = status
 
 
@@ -113,20 +114,16 @@ def retry_delay(error: urllib.error.HTTPError) -> float | None:
     """Seconds to wait before asking once more, or None if the answer will not change."""
     if error.code >= 500:
         return 2
-    if error.code not in (403, 429):
-        return None
     # Out of requests. The search API allows 30 a minute, so that wait is short; the hourly limit is not waited for.
-    if error.headers.get("Retry-After"):
-        delay = float(error.headers["Retry-After"])
-    elif error.headers.get("X-RateLimit-Remaining") == "0":
+    if error.code in (403, 429) and error.headers.get("X-RateLimit-Remaining") == "0":
         delay = float(error.headers.get("X-RateLimit-Reset", 0)) - time.time() + 1
-    else:
-        return None
-    return max(delay, 1) if delay <= MAX_RATE_LIMIT_WAIT else None
+        if delay <= MAX_RATE_LIMIT_WAIT:
+            return max(delay, 1)
+    return None
 
 
 class GitHub:
-    """A read-only client for api.github.com. Callers quote every path segment that comes from a pull request."""
+    """A client for api.github.com that only reads. Callers quote every path segment that comes from a pull request."""
 
     def __init__(self, token: str | None):
         self.headers = {
@@ -152,21 +149,14 @@ class GitHub:
                 if last_try or delay is None:
                     raise ApiError(error.code, path) from None
             except (OSError, http.client.HTTPException):
-                delay = 2  # no usable response: a dropped or cut-off connection
+                delay = 2  # a dropped or cut-off connection
                 if last_try:
                     raise ApiError(0, path) from None
             time.sleep(delay)
 
     def get(self, path: str, **params):
-        """GET a path and parse its JSON."""
-        return json.loads(self.fetch(path, **params)[0])
-
-    def graphql(self, query: str, **variables) -> dict:
-        """Run a GraphQL query, for what the REST API cannot say in one request."""
-        answer = json.loads(self.fetch("graphql", body={"query": query, "variables": variables})[0])
-        if answer.get("errors") or not answer.get("data"):
-            raise ApiError(0, "graphql")
-        return answer["data"]
+        """GET a path and parse its JSON. An answer with no body (204) is {}."""
+        return json.loads(self.fetch(path, **params)[0] or "{}")
 
     def find(self, path: str, **params):
         """Like get(), but None when the path does not exist."""
@@ -187,19 +177,19 @@ class GitHub:
             return 0  # e.g. the comments of a repository with issues turned off
         last = re.search(r'[?&]page=(\d+)[^>]*>; rel="last"', link)
         if not last and 'rel="next"' in link:
-            raise ApiError(0, f"{path} (GitHub gave no count)")
+            raise ApiError(0, path, "no count")  # GitHub leaves the last page out of some expensive listings
         return int(last.group(1)) if last else len(json.loads(body))
 
     def total(self, kind: str, query: str) -> int:
         """How many results a search for issues or commits has."""
         return self.get(f"search/{kind}", q=query, per_page=1)["total_count"]
 
-
-@dataclass
-class Row:
-    mark: str
-    check: str
-    result: str
+    def graphql(self, query: str, **variables) -> dict:
+        """Run a GraphQL query, for what the REST API cannot say in one request."""
+        answer = json.loads(self.fetch("graphql", body={"query": query, "variables": variables})[0])
+        if answer.get("errors") or not answer.get("data"):
+            raise ApiError(0, "graphql", "query refused")
+        return answer["data"]
 
 
 def code(text: object, limit: int = 120) -> str:
@@ -233,18 +223,14 @@ def ago(when: datetime) -> str:
     return f"{days // 365} years ago"
 
 
-# --- the pull request ---
+# --- reading the pull request and the repository ---
 
 
 def changed_paths(gh: GitHub, repo: str, number: int) -> list[str]:
-    """Every path the pull request touches (the first 300; an enrolment has three at most)."""
-    paths = []
-    for page in (1, 2, 3):
-        files = gh.get(f"repos/{repo}/pulls/{number}/files", per_page=100, page=page)
-        paths += [name for file in files for name in (file["filename"], file.get("previous_filename")) if name]
-        if len(files) < 100:
-            break
-    return paths
+    """The paths the pull request touches, a renamed file under both its names. Only the first 100: scope_row()
+    refuses a pull request that changes more."""
+    files = gh.get(f"repos/{repo}/pulls/{number}/files", per_page=100)
+    return [name for file in files for name in (file["filename"], file.get("previous_filename")) if name]
 
 
 def split_paths(paths: list[str]) -> tuple[list[str], list[str]]:
@@ -269,8 +255,6 @@ def fetch_project(gh: GitHub, repo: str, sha: str, name: str, directory: pathlib
     directory.mkdir()
     for entry in entries:
         target, limit = directory / entry["name"], PROJECT_FILES.get(entry["name"])
-        if target.parent != directory:
-            continue
         if entry["type"] in ("dir", "submodule"):
             target.mkdir()
         elif entry["type"] != "file":
@@ -303,10 +287,10 @@ def top_contributors(gh: GitHub, slug: str, count: int) -> list[dict]:
         return []
 
 
-# --- one function per row of the comment ---
+# --- the checks: each returns the mark and the text of one row of the comment ---
 
 
-def scope_row(names: list[str], outside: list[str]) -> Row:
+def scope_row(names: list[str], outside: list[str], changed_files: int) -> tuple[str, str]:
     problems = []
     if len(names) > 1:
         shown = ", ".join(code(name) for name in names[:5])
@@ -314,37 +298,35 @@ def scope_row(names: list[str], outside: list[str]) -> Row:
     if outside:
         shown = ", ".join(code(path) for path in outside[:5]) + (" …" if len(outside) > 5 else "")
         problems.append(f"changes files outside `projects/<name>/`: {shown}")
+    if changed_files > 100:
+        problems.append(f"changes {changed_files} files")
     if problems:
-        return Row(FAIL, "Pull request scope", "; ".join(problems))
-    return Row(OK, "Pull request scope", "only this project's directory")
+        return FAIL, "; ".join(problems)
+    return OK, "only this project's directory"
 
 
-def validate_row(problems: list[str]) -> Row:
+def validate_row(problems: list[str]) -> tuple[str, str]:
     if problems:
-        return Row(FAIL, "`tools/validate.py`", "<br>".join(code(problem, 300) for problem in problems[:10]))
-    return Row(OK, "`tools/validate.py`", "passes")
+        return FAIL, "<br>".join(code(problem, 300) for problem in problems[:10])
+    return OK, "passes"
 
 
-def checklist_row(body: str) -> Row:
-    boxes = CHECKBOX.findall(body)
+def checklist_row(body: str) -> tuple[str, str]:
+    # The template marks the threat model's box as optional: left empty, it is not counted.
+    boxes = [(mark, text) for mark, text in CHECKBOX.findall(body) if mark != " " or "optional" not in text]
     unticked = [text for mark, text in boxes if mark == " "]
     if not boxes:
-        return Row(WARN, "Checklist", "the pull request template's checklist is missing from the description")
+        return WARN, "the pull request template's checklist is missing from the description"
     if unticked:
-        shown = "; ".join(code(text, 80) for text in unticked)
-        return Row(WARN, "Checklist", f"{len(unticked)} of {len(boxes)} not ticked: {shown}")
-    return Row(OK, "Checklist", f"all {len(boxes)} ticked")
+        return WARN, f"{len(unticked)} of {len(boxes)} not ticked: " + "; ".join(code(text, 80) for text in unticked)
+    return OK, f"all {len(boxes)} ticked"
 
 
-def popularity_row(meta: dict) -> Row:
-    return Row(INFO, "Stars / forks", f"{meta['stargazers_count']:,} stars · {meta['forks_count']:,} forks")
-
-
-def standing_row(meta: dict) -> Row:
+def standing_row(meta: dict) -> tuple[str, str]:
     created, pushed = parse_time(meta["created_at"]), parse_time(meta["pushed_at"])
     result = f"created {ago(created)}, last push {ago(pushed)}"
     if meta["archived"]:
-        return Row(FAIL, "Repository", f"archived; {result}")
+        return FAIL, f"archived; {result}"
     concerns = []
     if meta["fork"]:
         concerns.append("a fork of another repository")
@@ -353,51 +335,50 @@ def standing_row(meta: dict) -> Row:
     if months_since(pushed) >= STALE_MONTHS:
         concerns.append(f"no push in {STALE_MONTHS} months")
     if concerns:
-        return Row(WARN, "Repository", f"{'; '.join(concerns)} ({result})")
-    return Row(OK, "Repository", result)
+        return WARN, f"{'; '.join(concerns)} ({result})"
+    return OK, result
 
 
-def license_row(gh: GitHub, slug: str, meta: dict) -> Row:
+def popularity_row(meta: dict) -> tuple[str, str]:
+    return INFO, f"{meta['stargazers_count']:,} stars · {meta['forks_count']:,} forks"
+
+
+def license_row(gh: GitHub, slug: str, meta: dict) -> tuple[str, str]:
     spdx = (meta.get("license") or {}).get("spdx_id")
     if not spdx:
-        return Row(FAIL, "License", "GitHub finds no license file")
+        return FAIL, "GitHub finds no license file"
     if spdx in COMMON_LICENSES:
-        return Row(OK, "License", code(spdx))
+        return OK, code(spdx)
     if spdx != "NOASSERTION":
-        return Row(WARN, "License", f"{code(spdx)} is not on our list of common open-source licenses; check it")
+        return WARN, f"{code(spdx)} is not on our list of common open-source licenses; check it"
     text = gh.fetch(f"repos/{slug}/license", accept=RAW)[0].decode("utf-8", "replace")
-    found = next((phrase for phrase in SOURCE_AVAILABLE if phrase.lower() in text.lower()), None)
+    found = next((name for name in SOURCE_AVAILABLE if name.lower() in text.lower()), None)
     if found:
-        return Row(FAIL, "License", f"the license file mentions “{found}”: source-available, not open source")
-    return Row(WARN, "License", "GitHub cannot name the license (custom, or more than one); check it")
+        return FAIL, f"the license file mentions “{found}”, a source-available license"
+    return WARN, "GitHub cannot name the license (custom, or more than one); check it"
 
 
-def maintainer_row(gh: GitHub, slug: str, meta: dict, login: str) -> Row:
+def maintainer_row(gh: GitHub, slug: str, meta: dict, login: str) -> tuple[str, str]:
     """Is the person who opened the pull request an active maintainer of the repository? Only public signals: a
     role GitHub shows (owner, member, collaborator) or, failing that, having merged recent pull requests."""
-    label = f"Opened by an active maintainer ({code(login)})"
     if not LOGIN.fullmatch(login):
-        return Row(WARN, label, "not a user account")
+        return WARN, "not a user account"
 
     roles = []
     if meta["owner"]["login"].lower() == login.lower():
         roles.append(ASSOCIATIONS["OWNER"])
-    # GitHub labels each issue and pull request with what its author is to the repository.
-    latest = gh.get("search/issues", q=f"repo:{slug} author:{login}", per_page=1)["items"]
-    association = latest[0]["author_association"] if latest else "NONE"
-    if association in ASSOCIATIONS and not roles:
-        roles.append(ASSOCIATIONS[association])
-    if not roles and meta["owner"]["type"] == "Organization":
-        try:
-            gh.fetch(f"orgs/{quote(meta['owner']['login'], safe='')}/public_members/{login}")
-            roles.append("public member of the owning organisation")
-        except ApiError as error:
-            if error.status != 404:
-                raise
+    else:
+        # GitHub labels each issue and pull request with what its author is to the repository.
+        authored = gh.get("search/issues", q=f"repo:{slug} author:{login}", per_page=1)["items"]
+        if authored and authored[0]["author_association"] in ASSOCIATIONS:
+            roles.append(ASSOCIATIONS[authored[0]["author_association"]])
+    organisation = quote(meta["owner"]["login"], safe="")
+    if not roles and gh.find(f"orgs/{organisation}/public_members/{login}") is not None:
+        roles.append("public member of the owning organisation")
 
     merged = 0
     if not roles:
-        # A private membership of the organisation is invisible to us, but what a maintainer does is not.
+        # A private member of the organisation shows no role, but merging takes write access.
         owner, name = slug.split("/")
         merges = gh.graphql(RECENT_MERGES, owner=owner, name=name)["repository"]["pullRequests"]["nodes"]
         merged = sum(1 for pull in merges if ((pull["mergedBy"] or {}).get("login") or "").lower() == login.lower())
@@ -415,15 +396,12 @@ def maintainer_row(gh: GitHub, slug: str, meta: dict, login: str) -> Row:
     evidence = f"{', '.join(roles) or 'no maintainer role visible'}; {commits} commits in the last 12 months; {rank}"
 
     if roles and (recent or merged):
-        return Row(OK, label, evidence)
-    if roles or recent:
-        return Row(WARN, label, f"{evidence} — confirm by hand")
-    return Row(FAIL, label, evidence)
+        return OK, evidence
+    return (WARN if roles or recent else FAIL), evidence
 
 
-def scanner_files_row(gh: GitHub, slug: str, ref: str | None, config: dict, beside: set[str]) -> Row:
+def scanner_files_row(gh: GitHub, slug: str, ref: str | None, config: dict, beside: set[str]) -> tuple[str, str]:
     """Has the project set up .oss-scanner/ in its own repository, and are the files project.yaml names there?"""
-    label = "`.oss-scanner/` in the repository"
 
     def in_repo(path: object) -> bool:
         if not (isinstance(path, str) and validate.REPO_PATH.fullmatch(path)):
@@ -439,15 +417,15 @@ def scanner_files_row(gh: GitHub, slug: str, ref: str | None, config: dict, besi
         result += "; no threat model (optional)"
 
     if "Dockerfile" in beside:
-        return Row(OK if names else INFO, label, f"{result}; the Dockerfile is in this pull request")
+        return (OK if names else INFO), f"{result}; the Dockerfile is in this pull request"
     dockerfile = config.get("dockerfile")
     if in_repo(dockerfile):
-        return Row(OK, label, f"{result}; Dockerfile at {code(dockerfile)}")
-    return Row(FAIL, label, f"{result}; no Dockerfile at {code(dockerfile)}" + (f" on {code(ref)}" if ref else ""))
+        return OK, f"{result}; Dockerfile at {code(dockerfile)}"
+    return FAIL, f"{result}; no Dockerfile at {code(dockerfile)}" + (f" on {code(ref)}" if ref else "")
 
 
 def criticality_signals(gh: GitHub, slug: str, meta: dict) -> dict[str, float]:
-    """Collect the signals of the OpenSSF criticality score the way its reference implementation does."""
+    """Collect the signals of the OpenSSF criticality score, as its reference implementation defines them."""
     commits = f"repos/{slug}/commits"
     created = parse_time(meta["created_at"])
     try:
@@ -506,54 +484,55 @@ def criticality_score(signals: dict[str, float]) -> float:
     return round(total / sum(weight for weight, _ in CRITICALITY_SIGNALS.values()), 5)
 
 
-def criticality_row(gh: GitHub, slug: str, meta: dict) -> Row:
+def criticality_row(gh: GitHub, slug: str, meta: dict) -> tuple[str, str]:
     signals = criticality_signals(gh, slug, meta)
     score = criticality_score(signals)
-    details = ", ".join(f"{name} {value:,}" for name, value in signals.items())
     result = f"**{score:.2f}** on the [OpenSSF]({CRITICALITY_SOURCE}) scale of 0 to 1"
-    little_reach = meta["stargazers_count"] < FEW_STARS and score < LOW_CRITICALITY
-    if little_reach:
-        result += f" — below {LOW_CRITICALITY}, and under {FEW_STARS} stars: little sign of the reach we look for"
-    return Row(WARN if little_reach else INFO, "Criticality score", f"{result}<br><sub>{details}</sub>")
+    low = meta["stargazers_count"] < FEW_STARS and score < LOW_CRITICALITY
+    if low:
+        result += f": low, and the project has under {FEW_STARS} stars"
+    details = ", ".join(f"{name} {value:,}" for name, value in signals.items())
+    return (WARN if low else INFO), f"{result}<details><summary>signals</summary>{details}</details>"
 
 
 # --- putting the comment together ---
 
 
-def attempt(check: str, row, *arguments) -> Row:
-    """Run one row's function. A row that cannot be worked out says so and does not cost us the others."""
+def row(check: str, function, *arguments) -> tuple[str, str, str]:
+    """One row of the table: (mark, check, result). A check GitHub would not answer says so; the others still run."""
     try:
-        return row(*arguments)
+        mark, result = function(*arguments)
     except ApiError as error:
-        return Row(WARN, check, f"could not be checked ({error})")
+        mark, result = WARN, f"could not be checked ({error})"
+    return mark, check, result
 
 
-def repository_rows(gh: GitHub, config: dict, beside: set[str], login: str) -> tuple[str, list[Row]]:
+def repository_rows(gh: GitHub, config: dict, beside: set[str], login: str) -> tuple[str, list[tuple]]:
     """Return a Markdown description of the repository being enrolled, and the rows about it."""
     repo = config.get("repo")
+    if not repo:
+        return "unknown", [(WARN, "Repository", "no project.yaml that names one")]
     match = GITHUB_REPO.fullmatch(repo) if isinstance(repo, str) else None
     if not match:
-        note = "not on github.com: stars, maintainer, license and criticality need a look by hand"
-        if not repo:
-            return "unknown", [Row(WARN, "Repository", "no project.yaml that names one")]
-        return code(repo), [Row(WARN, "Repository", note)]
+        note = "not a github.com repository: check stars, maintainer, license and criticality by hand"
+        return code(repo), [(WARN, "Repository", note)]
 
     owner, name, ref = match.groups()
     try:
         meta = gh.find(f"repos/{quote(owner, safe='')}/{quote(name, safe='')}")
     except ApiError as error:
-        return code(repo), [Row(WARN, "Repository", f"could not be checked ({error})")]
+        return code(repo), [(WARN, "Repository", f"could not be checked ({error})")]
     if meta is None:
-        return code(repo), [Row(FAIL, "Repository", "not found on GitHub, or not public")]
+        return code(repo), [(FAIL, "Repository", "not found on GitHub, or not public")]
 
     slug = meta["full_name"]  # from GitHub: the canonical name, also after a rename
     return f"[{slug}]({meta['html_url']})" + (f" at {code(ref)}" if ref else ""), [
-        standing_row(meta),
-        popularity_row(meta),
-        attempt("Criticality score", criticality_row, gh, slug, meta),
-        attempt("License", license_row, gh, slug, meta),
-        attempt("Opened by an active maintainer", maintainer_row, gh, slug, meta, login),
-        attempt("`.oss-scanner/` in the repository", scanner_files_row, gh, slug, ref, config, beside),
+        row("Repository", standing_row, meta),
+        row("Stars / forks", popularity_row, meta),
+        row("Criticality score", criticality_row, gh, slug, meta),
+        row("License", license_row, gh, slug, meta),
+        row("Opened by an active maintainer", maintainer_row, gh, slug, meta, login),
+        row("`.oss-scanner/` in the repository", scanner_files_row, gh, slug, ref, config, beside),
     ]
 
 
@@ -575,19 +554,18 @@ def triage(gh: GitHub, repo: str, number: int) -> str:
         config = read_config(directory)
         beside = {path.name for path in directory.glob("*")}
 
-    described, about_repository = repository_rows(gh, config, beside, login)
-    rows = [
-        *about_repository,
-        scope_row(names, outside),
-        validate_row(problems),
-        checklist_row(pull.get("body") or ""),
+    described, rows = repository_rows(gh, config, beside, login)
+    rows += [
+        row("Pull request scope", scope_row, names, outside, pull["changed_files"]),
+        row("`tools/validate.py`", validate_row, problems),
+        row("Checklist", checklist_row, pull.get("body") or ""),
     ]
-    table = "\n".join(f"| {row.mark} | {row.check} | {row.result} |" for row in rows)
+    table = "\n".join(f"| {mark} | {check} | {result} |" for mark, check, result in rows)
     return (
         f"{heading}Repository: {described} · opened by {code(login)}\n\n"
         f"| | Check | Result |\n|:-:|---|---|\n{table}\n\n"
-        f"<sub>Generated from public GitHub data to help reviewers. It is not a decision: enrolment is decided case "
-        f"by case against the [criteria]({CRITERIA}), and a maintainer is always confirmed by hand.</sub>\n"
+        f"<sub>Automated, from public GitHub data, to help reviewers. Enrolment is decided case by case against "
+        f"the [criteria]({CRITERIA}).</sub>\n"
     )
 
 
