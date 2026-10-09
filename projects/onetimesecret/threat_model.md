@@ -212,6 +212,6 @@ demonstrated".
 - Actions taken by a colonel or the operator.
 - Missing rate limits on endpoints that guard no guessable value, send no mail and do no expensive work.
 - Dependency advisories with no reachable path from this code.
-- Infrastructure outside this repository: CDN, DNS, the hosted Sentry instance.
+- Infrastructure outside this repository: CDN, DNS, error-telemetry services.
 - The conventions listed in `AGENTS.md` under "Repo conventions (not defects; do not flag in review)", unless the
   finding shows the mechanism enforcing one of them is broken.
