@@ -1,0 +1,6 @@
+repo: https://github.com/mozilla/nss.git
+primary_contact: fuzzing@mozilla.com
+auto_ccs:
+  - cryptoeng-external-reports@mozilla.com
+homepage: https://github.com/mozilla/nss
+disabled: false
