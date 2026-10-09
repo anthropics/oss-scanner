@@ -1,0 +1,9 @@
+# ShieldCortex is memory and a tool-call gate for AI agents: it has to withstand hostile,
+# untrusted input (prompts, tool results, web/API content) by design, which makes it a strong
+# fit for automated adversarial scanning.
+
+repo: https://github.com/Drakon-Systems-Ltd/ShieldCortex
+primary_contact: security@drakonsystems.com
+homepage: https://shieldcortex.ai
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
