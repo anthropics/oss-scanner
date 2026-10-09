@@ -1,0 +1,6 @@
+repo: https://github.com/onetimesecret/onetimesecret#main
+primary_contact: security@onetimesecret.com
+homepage: https://onetimesecret.com
+disabled: false
+# Dockerfile and threat_model.md sit beside this file. Beside project.yaml the scanner drops the repository's
+# .dockerignore, which is written for the production image and excludes .git and compose.test.yml.
