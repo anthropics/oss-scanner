@@ -22,7 +22,7 @@ COPY . .
 RUN yarn install --frozen-lockfile --non-interactive
 RUN yarn workspace web run build
 
-# The scanner must be able to inspect the full source tree, not only a runtime image.
+# The scanner must be able to inspect the full source tree, not only a runtime image
 # Do not start a production-facing server or contact real infrastructure by default.
 WORKDIR /workspace/easynode
 CMD ["bash"]
