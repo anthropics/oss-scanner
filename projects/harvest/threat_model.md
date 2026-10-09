@@ -102,7 +102,8 @@ Out of scope:
 
 - `vendor/` (report those issues upstream), `integration/`, `docs/`, the Grafana dashboard JSON under `grafana/`,
   and the container and Kubernetes examples under `container/`.
-- The closed-source AutoSupport binary (`autosupport/asup`). The Go code that builds and launches it
+- The AutoSupport binary. It is closed source, is not in this repository, and is added when Harvest is packaged.
+  The Go code in this repository that builds the AutoSupport payload and runs the binary
   (`cmd/poller/collector/asup.go`) is in scope.
 
 ## How to exercise it
