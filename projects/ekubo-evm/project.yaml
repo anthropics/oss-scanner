@@ -1,0 +1,8 @@
+# Ekubo Protocol: EVM core AMM (singleton Core, flash accounting, extensions, Positions/Orders NFTs, Router).
+repo: https://github.com/EkuboProtocol/evm-contracts#main
+
+primary_contact: security@ekubo.org
+
+homepage: https://ekubo.org
+
+disabled: false
