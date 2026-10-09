@@ -1,0 +1,5 @@
+repo: https://github.com/qauth-labs/qauth#main
+primary_contact: tahaayan@gmail.com
+homepage: https://docs.qauth.dev
+dockerfile: tools/security-review/Dockerfile
+threat_model: docs/security/threat-model.md
