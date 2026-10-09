@@ -10,17 +10,18 @@ It holds credentials for every system it monitors, and those credentials are the
 
 Trust levels, from most to least trusted:
 
-1. **The operator.** `harvest.yml`, the collector templates under `conf/`, `credentials_file`,
-   `credentials_script` and `certificate_script`, TLS keys, and command-line flags are trusted. Anyone who can write
-   them can already run code as the Harvest user.
-2. **The monitored device's administrator.** Harvest assumes the device is the one it was configured to reach.
+1. **The operator.** `harvest.yml`, `credentials_file`, `credentials_script` and `certificate_script`, TLS keys,
+   and command-line flags are trusted. Anyone who can write them can already run code as the Harvest user.
+2. **Collector templates.** The operator installs them, but often copies them from someone else without reading
+   them closely. They are only partly trusted; see [Templates](#templates).
+3. **The monitored device's administrator.** Harvest assumes the device is the one it was configured to reach.
    Responses are still parsed defensively: a buggy or compromised device must not be able to crash the poller,
    run code, or read files on the poller host.
-3. **Less-privileged users of a monitored device.** These users control strings that Harvest copies into metric
+4. **Less-privileged users of a monitored device.** These users control strings that Harvest copies into metric
    labels. Examples include ONTAP SVM and tenant administrators (volume, qtree, and SVM names, comments, tags) and
    unauthenticated users whose actions appear in EMS events (such as the username in a failed login).
    Treat these strings as untrusted.
-4. **Anyone on the network.** This includes anyone who can reach a poller's Prometheus port, the `harvest admin`
+5. **Anyone on the network.** This includes anyone who can reach a poller's Prometheus port, the `harvest admin`
    HTTP service-discovery endpoint, or the MCP server's HTTP port. It also includes anyone who can intercept
    traffic between Harvest and a device.
 
@@ -37,6 +38,40 @@ Untrusted input enters through:
 - **MCP tool arguments**, which come from an LLM client. These include PromQL strings and the optional
   `tsdb_override` URL and credentials.
 - **TSDB responses** (Prometheus or VictoriaMetrics) read by the MCP server.
+- **Collector templates**, within the limits described in [Templates](#templates).
+
+## Templates
+
+Collector templates are YAML files under `conf/<collector>/`. Each one tells a collector which API objects to
+query, which counters to collect, how to label them, and which plugins to run. Harvest encourages customers to
+change them: the template docs (`docs/configure-templates.md`) tell users to copy existing templates, add their own
+with `custom.yaml`, and keep their edits in extra directories listed in `conf_path`. Templates are shared in
+GitHub Discussions and issues and passed between customers. A customer who copies one rarely reviews it the way
+they would review a script.
+
+The boundary: **a template decides what to collect and how to label it.** It must not be able to:
+
+- change which host the poller connects to, or otherwise send the poller's credentials somewhere else;
+- weaken TLS (verification, minimum version, or CA) compared with `harvest.yml`;
+- make a device run commands beyond read-only collection (for example, CLI commands chained onto a collection
+  command, or a ZAPI or switch command that changes configuration);
+- read, write, or delete files outside Harvest's own directories (the `conf_path` directories, the log
+  directory, and the temporary directories Harvest creates);
+- run local commands or load code.
+
+Places where template values flow into connections, device commands, or file paths:
+
+- The poller settings merged into each template (`Union2` in `cmd/poller/poller.go`) and the client settings read
+  back from the merged result (`ZapiPoller` in `pkg/conf/conf.go`): `addr`, `use_insecure_tls`, `tls_min_version`,
+  and `recorder`.
+- The StatPerf ONTAP CLI command builder (`cmd/tools/rest/clirequestbuilder`), which assembles a command from the
+  template's `query`, filter, and counter names.
+- The ZAPI collector, which sends the template's `query` as the API name (`cmd/collectors/zapi/collector`), and
+  the Arista and Cisco collectors, which send the template's `query` as switch commands.
+- The CmPerf temporary directory and download filenames, built from the template's object name and `query`
+  (`cmd/collectors/cmperf`).
+- Template file lookup through `conf_path` and object file names (`cmd/poller/collector/helpers.go`), and the Unix
+  collector's `mount_point`.
 
 ## Components that matter most / least
 
@@ -93,13 +128,20 @@ Out of scope:
   - Reaching pprof or other debug handlers from a remote host.
   - Reading or writing files outside the configured directories based on device- or network-supplied input.
   - SSRF from the MCP server that sends the configured TSDB credentials to an attacker's host.
+  - A template that sends the poller's credentials to a host it chooses, or weakens TLS.
+  - A template that reads, writes, or deletes files outside Harvest's own directories.
+  - A template that runs device commands beyond read-only collection, when the device account has the
+    read-only role that Harvest's docs recommend.
 - **Medium:**
+  - A template that runs device commands beyond read-only collection, but only when the device account has more
+    than that read-only role.
   - Metric or label injection through exporter escaping.
   - A device response, or an unauthenticated HTTP request, that crashes or hangs a poller, admin node, or MCP
     server, or drives unbounded memory growth.
   - A bypass of the MCP label filter that exposes non-Harvest metrics.
 - **Low:**
-  - Anything that requires writing `harvest.yml`, templates, or credential scripts.
+  - Anything that requires writing `harvest.yml`, credential scripts, or command-line flags.
+  - Template issues not listed above.
   - Issues that only affect the interactive CLI tools when they are pointed at a hostile host.
   - Missing hardening headers.
   - Disclosure of metric data that the endpoint already serves by design.
@@ -115,5 +157,8 @@ denial-of-service finding (medium at most) unless it leads to one of the outcome
   the exporter port is left to network policy.
 - An MCP server bound to a non-localhost address with `--host` is an operator decision. The streamable HTTP
   transport has no built-in auth.
+- A template choosing which read-only endpoints, objects, and counters to collect, how to label them, and which
+  built-in plugins to run (LabelAgent, MetricAgent, Aggregator, Max, ChangeLog) is intended. So is the extra load
+  that a large template puts on a device.
 - Read-only ONTAP accounts are recommended, but some deployments use admin accounts. Do not report "Harvest could
   use stronger credentials" findings.
