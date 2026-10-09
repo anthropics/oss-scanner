@@ -1,0 +1,8 @@
+# Ekubo Protocol: Starknet core AMM (singleton Core, extensions, Positions NFTs, Router) in Cairo.
+repo: https://github.com/EkuboProtocol/starknet-contracts#main
+
+primary_contact: security@ekubo.org
+
+homepage: https://ekubo.org
+
+disabled: false
