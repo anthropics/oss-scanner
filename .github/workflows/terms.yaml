@@ -1,0 +1,35 @@
+name: "Terms"
+# An enrolment pull request must accept the OSS Scanner terms: the box in the pull request template, ticked in the
+# description. This check fails until it is, and runs again whenever the description is edited.
+#
+# pull_request_target, not pull_request: with pull_request the workflow file is taken from the pull request itself, so
+# a contributor could edit this check away. This job reads only the event's description, never the pull request's
+# code, and gets no token at all. The description reaches the script through an environment variable, never by
+# ${{ }} substitution into the script, so its text cannot become shell.
+on:
+  pull_request_target:
+    types: [opened, edited, reopened, synchronize]
+
+permissions: {}
+
+jobs:
+  terms-accepted:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: The description accepts the OSS Scanner terms
+        env:
+          BODY: ${{ github.event.pull_request.body }}
+          AUTHOR: ${{ github.event.pull_request.user.login }}
+        run: |
+          # The repository's maintainers and bots (as in cla.yaml's allowlist) do not enrol through this form.
+          case "$AUTHOR" in
+            carlini|srxzr-ant|punitshah|dependabot\[bot\]|github-actions\[bot\])
+              echo "Opened by $AUTHOR, a maintainer or bot of this repository: no terms box needed."; exit 0 ;;
+          esac
+          if printf '%s\n' "$BODY" | grep -qiE '^[[:space:]]*[-*][[:space:]]+\[[xX]\][[:space:]]+I accept the \[OSS Scanner terms\]\(https://red\.anthropic\.com/oss-scanner/terms/?\)'; then
+            echo "The OSS Scanner terms are accepted in the description."
+          else
+            echo "::error::Tick 'I accept the OSS Scanner terms' in the pull request description. Editing the description runs this check again."
+            exit 1
+          fi
