@@ -1,0 +1,14 @@
+# plumb: an MCP server giving coding agents LSP-backed navigation, edits, git and
+# configured commands over a local workspace. https://github.com/plumbkit/plumb
+repo: https://github.com/plumbkit/plumb#main
+
+# The project's documented security contact (SECURITY.md).
+primary_contact: hello@getplumb.sh
+
+homepage: https://getplumb.sh
+
+disabled: false
+
+dockerfile: .oss-scanner/Dockerfile
+
+threat_model: .oss-scanner/threat_model.md
