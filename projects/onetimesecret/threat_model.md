@@ -36,7 +36,9 @@ Also untrusted:
 - tenant-supplied branding and settings: logos, icons, colours, text, SSO configuration;
 - identity-provider responses: SAML assertions, OIDC tokens and claims, including `email_verified`;
 - DNS answers and HTTP responses fetched during custom-domain verification and SSO connection tests;
-- Stripe webhook bodies until their signature is verified.
+- Stripe webhook bodies until their signature is verified;
+- client-held data read back by the application, including sessionStorage, cookies and bootstrap payloads. A value
+  originally supplied by the server is not trustworthy merely because the client returns it.
 
 Entry points:
 - `apps/api/v1`, `v2`, `v3`: the secret API (create, reveal, burn, receipts, status), anonymous or with an API token
@@ -52,18 +54,21 @@ Entry points:
 
 ## Configuration to assume when rating
 
-Rate as if every feature is on. A bug in a feature that is off by default is not rated lower for that reason.
+Every supported feature is in scope, including features that are off by default. Assess each finding in a valid
+supported configuration, not an imaginary deployment with mutually exclusive modes or settings enabled together.
+Record the authentication mode, enabled features and relevant settings in the report. Optionality alone does not
+lower the severity of demonstrated impact.
 
 - Authentication features: the `env` files of the `full-mfa` and `full-saml-platform` lanes under `tests/lanes/`
   turn them all on between them (full mode, MFA, WebAuthn, magic links, SAML, organization and platform SSO).
 - Billing: `tests/lanes/overlays/billing.env`.
-- Organizations, custom domains, regions and incoming secrets: no lane enables these. `spec/config.test.yaml` keeps
-  them off, and specs that need organizations or custom domains set `ENABLE_ORGS` or `DOMAINS_ENABLED`. Assume all
-  four are on.
+- Organizations, custom domains, regions and incoming secrets are in scope even when disabled in a test lane.
+  Specs that need organizations or custom domains set `ENABLE_ORGS` or `DOMAINS_ENABLED`; enable the relevant
+  features explicitly in the reproducer and record their settings.
 
 Two further rules:
 - Holds under shipped defaults (`etc/defaults/`) or shipped examples (`etc/examples/`, including
-  `Caddyfile-example`): full severity. Self-hosters run them unchanged.
+  `Caddyfile-example`): rate the demonstrated impact without a discount for requiring that shipped configuration.
 - Needs the operator to misconfigure something (trust every proxy, disable CSP, set a weak `SECRET`): out of scope.
 
 ## What matters most
@@ -85,7 +90,25 @@ contributor can trigger (`pull_request_target`, `issue_comment`, `workflow_run`)
 paying; resource exhaustion.
 
 Out of scope: `spec/`, `try/`, `tests/`, `e2e/`, `bin/`, `scripts/`, `docs/`, `generated/`, `.devcontainer/`, and
-built assets under `public/`. Repository content, including `locales/`, is trusted.
+built assets under `public/`. Repository content, including `locales/`, is trusted. Tests and documentation may
+still be used as evidence or to build a reproducer; these exclusions are not a reason to ignore a production
+weakness they expose. Shipped proxy or deployment examples that make an in-repo weakness reachable are in scope.
+
+## Audit guidance
+
+Use the promises above to guide discovery; the following checks are starting points, not an exhaustive list:
+- Trace host and client-IP authority from the immediate peer through proxy-trust checks to every consumer: emailed
+  links, authentication origins and redirects, tenant selection, network gates and rate limiters.
+- Check whether per-request secrets can enter shared mutable objects, response serializers, caches, logs or error
+  telemetry. Scrubbing one field or sink does not establish that every other path is safe.
+- Compare authentication and rate-limiter coverage across API versions, anonymous and authenticated callers, and
+  alternate routes. Check whether expensive work occurs before authentication or limiting.
+- Follow session creation, rotation and revocation through every authentication path and session store. Check
+  authorization separately for organization role, membership state and custom-domain scope.
+- Verify what establishes identity ownership before SSO account linking or account creation; do not equate an
+  asserted email address with a verified one.
+- Follow outbound requests through address validation, DNS resolution, redirects and connection establishment;
+  check the address actually contacted, not only the original URL.
 
 ## How to exercise it
 
@@ -93,13 +116,15 @@ built assets under `public/`. Repository content, including `locales/`, is trust
   Postgres (127.0.0.1:2154).
 - Run tests only through `tests/lanes/run`. It clears the environment and points the app at the test services.
   Calling `rspec` or `try` directly inherits the wrong environment.
-- `tests/lanes/run --list` lists the lanes. Every lane runs in this image, including the Postgres lanes (`full-pg`,
-  `full-pg-agnostic`, `migrations-pg`) and the `browser` lane (Playwright Chromium, Firefox and WebKit are
-  installed).
+- `tests/lanes/run --list` lists the lanes. The image installs Postgres and Playwright Chromium, Firefox and WebKit
+  for Postgres and browser testing. Their presence does not establish that every lane passes; report any setup or
+  execution failure rather than treating it as evidence that a feature is out of scope.
 - `tests/lanes/run --only <path>:<line>` runs one example; the lane is inferred from the path. `*_try.rb` files are
   Tryouts, everything else is RSpec. See `tests/lanes/README.md`.
 - The integration specs drive the full Rack middleware stack with rack-test. A new spec in that style is the
   preferred reproducer.
+- Exercise only services started inside the scan image. Do not probe the live service, customer domains, real
+  identity providers or other external systems.
 
 ## How to rate severity
 
@@ -108,17 +133,18 @@ built assets under `public/`. Repository content, including `locales/`, is trust
   within the rate limits).
 - Remote code execution, command injection, template injection or unsafe deserialization reachable by any untrusted
   party.
-- Signing in as another account, or gaining the colonel role.
+- Account takeover without victim interaction, or gaining the colonel role.
 - Reading or changing another organization's or custom domain's secrets, receipts, members, SSO settings or billing.
 - Code execution with repository write access or publishing secrets from an outside contributor's pull request.
 
 **High**
 - Revealing a secret more than once, or a secret that stays readable after reveal, burn or expiry.
 - Script execution on an origin the app serves, demonstrated with CSP enabled.
-- Account takeover that needs one victim action, such as a reset or magic link built from an attacker-controlled
-  host.
+- Account takeover that requires victim interaction, such as following a reset or magic link built from an
+  attacker-controlled host.
 - A bearer value from "What matters most" item 3 reaching an unauthorized party through a response, redirect,
-  `Referer`, cache, cross-origin read or another tenant.
+  `Referer`, cache, cross-origin read or another tenant, including logs or telemetry the attacker is demonstrated
+  to be able to read.
 - Completing login with fewer factors than the account requires.
 - Escalating role inside an organization, or from one custom domain's scope to the whole organization.
 - Server-side request forgery that reaches internal addresses with a readable response.
@@ -135,7 +161,8 @@ built assets under `public/`. Repository content, including `locales/`, is trust
   attacker-chosen addresses in volume.
 - A session ID that survives an authentication step, when exploiting it needs a separate cookie-planting primitive.
 - Paid features or plan limits available without payment.
-- Bearer values written to application logs or error telemetry.
+- Bearer values written to application logs or error telemetry when attacker access to that sink is not
+  demonstrated. If access is demonstrated, use the High bearer-disclosure rule.
 
 **Low**
 - Missing hardening headers, verbose errors, version disclosure.
@@ -145,7 +172,8 @@ built assets under `public/`. Repository content, including `locales/`, is trust
 
 Rate what the reproducer demonstrates. If impact depends on a step the reproducer does not perform (a browser
 behaviour, a chained bug, a specific deployment), give the demonstrated rating and list the undemonstrated step under
-"Not demonstrated". Do not raise a rating on an assumed chain.
+"Not demonstrated". Do not raise a rating on an assumed chain. An interaction-dependent account takeover is High,
+not Critical merely because the reproducer completes the victim's action; gaining the colonel role remains Critical.
 
 ## Report format
 
@@ -201,8 +229,10 @@ demonstrated".
 
 ## Not vulnerabilities
 
-- Anything that needs the attacker to already hold the secret link or receipt link for that secret. The link is the
-  capability.
+- Exercising the documented powers of a legitimately held secret or receipt link, as listed in "Who holds what".
+  The links grant different capabilities, not unrestricted access. Possession does not excuse passphrase bypass,
+  repeated reveal, access after burn or expiry, disclosure beyond the receipt's documented powers, or crossing an
+  account, organization or domain boundary.
 - The receipt showing a generated secret's value once within `generated_value_display_ttl` of creation.
 - A reveal or burn request without `continue=true`: it returns the same response for any passphrase and records no
   attempt. The passphrase is checked, and attempts counted, only with `continue=true`.
