@@ -254,6 +254,9 @@ def fetch_project(gh: GitHub, repo: str, sha: str, name: str, directory: pathlib
         return False
     directory.mkdir()
     for entry in entries:
+        # The name becomes a path here. Git allows none of these as a name, so this only guards against surprises.
+        if "/" in entry["name"] or "\\" in entry["name"] or entry["name"] in (".", ".."):
+            continue
         target, limit = directory / entry["name"], PROJECT_FILES.get(entry["name"])
         if entry["type"] in ("dir", "submodule"):
             target.mkdir()
