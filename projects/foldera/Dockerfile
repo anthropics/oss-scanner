@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY . /src
 WORKDIR /src
 # The C interoperability target is buildable without Apple frameworks.
-RUN swift build --target CArchive
+RUN swift build --target CArchive --disable-index-store
 # Syntax parsing does not type-check or link AppKit code.
 RUN find Sources/Foldera Tests/FolderaTests -name '*.swift' -print0 \
     | xargs -0 -n 1 swiftc -frontend -parse
