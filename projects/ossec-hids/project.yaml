@@ -1,0 +1,8 @@
+repo: https://github.com/ossec/ossec-hids#main
+primary_contact: security@ossec.net
+auto_ccs:
+  - scott@atomicorp.com
+homepage: https://www.ossec.net
+disabled: false
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
