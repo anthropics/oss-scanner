@@ -1,0 +1,75 @@
+name: "Triage"
+# Comments on an enrolment pull request with what a reviewer would otherwise look up by hand: the project's stars,
+# forks, license and criticality score, whether whoever opened it looks like an active maintainer, whether the
+# project has set up .oss-scanner/ in its repository, and whether projects/<name>/ follows the rules. The comment
+# informs the review and decides nothing. A pull request that touches nothing under projects/ gets no comment.
+#
+# pull_request_target, not pull_request: a pull request from a fork gets a read-only token, which cannot comment.
+# That makes this workflow run with the base repository's token on input from anyone, so it is split in two:
+#   gather   reads the pull request through the GitHub API, as data, with a read-only token. Its checkout is the base
+#            branch (the default for pull_request_target), never the pull request, so no code from the pull request runs.
+#   comment  holds the only write permission, and does nothing but post the text gather produced.
+# Values from the event reach the scripts through environment variables, never by ${{ }} substitution into them.
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize]
+
+permissions: {}
+
+concurrency:
+  group: triage-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  gather:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      comment: ${{ steps.triage.outputs.comment }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1 (sha-pinned)
+        with:
+          persist-credentials: false
+      - name: Write the comment
+        id: triage
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          python3 -c 'import yaml' 2>/dev/null || { sudo apt-get update -qq && sudo apt-get install -y -qq python3-yaml; }
+          # A random delimiter, so that no text in the comment can end the output early.
+          delimiter="triage-$(openssl rand -hex 16)"
+          {
+            echo "comment<<$delimiter"
+            python3 .github/scripts/triage.py --repo "$REPO" --pr "$PR"
+            echo "$delimiter"
+          } >> "$GITHUB_OUTPUT"
+
+  comment:
+    needs: gather
+    if: needs.gather.outputs.comment != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Post the comment, or update the one already there
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+          COMMENT: ${{ needs.gather.outputs.comment }}
+        run: |
+          # The CLA workflow also comments as github-actions[bot]; ours is the one that starts with the marker.
+          existing=$(gh api "repos/$REPO/issues/$PR/comments" --paginate \
+            --jq '.[] | select(.user.login == "github-actions[bot]" and (.body | startswith("<!-- oss-scanner-triage -->"))) | .id')
+          existing=${existing%%$'\n'*}
+          if [ -n "$existing" ]; then
+            jq -n --arg body "$COMMENT" '{body: $body}' | gh api --method PATCH "repos/$REPO/issues/comments/$existing" --input - > /dev/null
+          else
+            jq -n --arg body "$COMMENT" '{body: $body}' | gh api --method POST "repos/$REPO/issues/$PR/comments" --input - > /dev/null
+          fi
