@@ -1,0 +1,5 @@
+repo: https://github.com/ontola/atomic-server#develop
+primary_contact: joep@ontola.io
+homepage: https://atomicdata.dev
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
