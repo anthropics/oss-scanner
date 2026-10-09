@@ -24,10 +24,13 @@ RUN ln -sf /usr/local/lib/node_modules/npm/bin/npm-cli.js /usr/local/bin/npm \
     && ln -sf /usr/local/lib/node_modules/npm/bin/npx-cli.js /usr/local/bin/npx \
     && node --version
 
-# Test services on the compose.test.yml ports: valkey 2163, rabbitmq 2156 (guest/guest), postgres 2154
-# (postgres/postgres), all on loopback. Postgres runs without durability, like the tmpfs in compose.test.yml.
+# Test services on the compose.test.yml ports: valkey 2163, rabbitmq 2156 (guest/guest) with its management API on
+# 12156, postgres 2154 (postgres/postgres), all on loopback. The lane harness specs provision RabbitMQ vhosts through
+# the management API. Postgres runs without durability, like the tmpfs in compose.test.yml.
 RUN printf '%s\n' 'NODENAME=rabbit@localhost' 'NODE_IP_ADDRESS=127.0.0.1' 'NODE_PORT=2156' \
       > /etc/rabbitmq/rabbitmq-env.conf \
+    && printf '%s\n' 'management.tcp.ip = 127.0.0.1' 'management.tcp.port = 12156' > /etc/rabbitmq/rabbitmq.conf \
+    && rabbitmq-plugins enable --offline rabbitmq_management \
     && pg_conftool 17 main set port 2154 \
     && pg_conftool 17 main set listen_addresses localhost \
     && pg_conftool 17 main set fsync off \
