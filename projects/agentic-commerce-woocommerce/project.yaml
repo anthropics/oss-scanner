@@ -1,0 +1,6 @@
+repo: https://github.com/Trusteedxyz/agentic-commerce-woocommerce#main
+primary_contact: security@trusteed.xyz
+homepage: https://github.com/Trusteedxyz/agentic-commerce-woocommerce
+disabled: false
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
