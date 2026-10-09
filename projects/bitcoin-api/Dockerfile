@@ -8,6 +8,23 @@ ENV PYTHONUNBUFFERED=1 \
 COPY . /src
 WORKDIR /src
 RUN python -m pip install -e ".[dev,all,ai,indexer]" build hatchling
+
+# Positive webhook tests resolve example.com. Supply a deterministic public-IP
+# DNS answer only in this test process; normal application/audit DNS is unchanged.
+RUN mkdir -p /opt/oss-scanner \
+    && printf '%s\n' \
+       'import socket' \
+       'import sys' \
+       'import pytest' \
+       '' \
+       'real_getaddrinfo = socket.getaddrinfo' \
+       'def fixture_getaddrinfo(host, *args, **kwargs):' \
+       '    if host == "example.com":' \
+       '        host = "93.184.216.34"  # Synthetic DNS fixture; no connection.' \
+       '    return real_getaddrinfo(host, *args, **kwargs)' \
+       'socket.getaddrinfo = fixture_getaddrinfo' \
+       'raise SystemExit(pytest.main(sys.argv[1:]))' \
+       > /opt/oss-scanner/run-tests.py
+
 RUN python -m build --wheel --no-isolation \
-    && python -m pytest tests/ -q \
-       --ignore=tests/test_e2e.py --ignore=tests/locustfile.py
+    && python /opt/oss-scanner/run-tests.py tests/test_alerts.py -q

@@ -31,11 +31,18 @@ operations and user-owned subscriptions/alerts must remain isolated.
 
 The complete checkout, installed development package, and optional billing,
 email, Redis, analytics, AI and indexer dependencies are in `/src`.
-Run `python -m pytest tests/ -q --ignore=tests/test_e2e.py
+Run `python /opt/oss-scanner/run-tests.py tests/ -q --ignore=tests/test_e2e.py
 --ignore=tests/locustfile.py` as one command. `tests/conftest.py` supplies mocked
 RPC responses and temporary test state. The suite disables the live indexer.
 The omitted E2E/load tests require a separately running deployment; this does
 not remove those application paths from the audit. The wheel is in `/src/dist`.
+
+The test runner supplies a deterministic DNS answer for the positive-test
+hostname `example.com` only. The selected address is a synthetic public-IP
+fixture, not a live-DNS assertion. Every other hostname/address uses the normal
+resolver, and the suite retains localhost, private-IP and metadata-IP rejection
+tests. The fixture exists only in this test process; it does not configure DNS
+or alter application code when an auditor runs/imports the application normally.
 
 ## Severity and scope
 
