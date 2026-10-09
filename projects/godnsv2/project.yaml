@@ -1,0 +1,4 @@
+repo: https://codeberg.org/miekg/dns
+primary_contact: miek@miek.nl
+disabled: false
+dockerfile: Dockerfile
