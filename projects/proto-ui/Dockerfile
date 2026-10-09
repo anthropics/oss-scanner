@@ -1,4 +1,4 @@
-# Static preparation only: this image has not yet been built or tested.
+# Verification status and exact source revision are recorded in the enrollment PR.
 # Scanner contract: the project checkout is the build context and lives at /src.
 FROM node:24-bookworm
 ENV DEBIAN_FRONTEND=noninteractive \
@@ -7,7 +7,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
     ASTRO_TELEMETRY_DISABLED=1 \
     CHROME_PATH=/usr/bin/chromium
 RUN apt-get update && apt-get install -y --no-install-recommends \
-      ca-certificates git python3 build-essential chromium fonts-liberation \
+      ca-certificates git python3 build-essential chromium fonts-liberation fonts-noto-cjk ffmpeg \
     && rm -rf /var/lib/apt/lists/*
 RUN corepack enable && corepack prepare pnpm@10.32.1 --activate
 COPY . /src
