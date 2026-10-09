@@ -1,0 +1,8 @@
+repo: https://github.com/zmap/zmap#main
+primary_contact: davidcadrian@gmail.com
+auto_ccs:
+  - team@zmap.io
+homepage: https://zmap.io
+disabled: false
+dockerfile: containers/oss-scanner.dockerfile
+threat_model: containers/oss-scanner-threat-model.md
