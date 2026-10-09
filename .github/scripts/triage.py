@@ -57,6 +57,8 @@ GITHUB_REPO = re.compile(r"https://(?:www\.)?github\.com/([A-Za-z0-9_.-]+)/([A-Z
 LOGIN = re.compile(r"[A-Za-z0-9-]+")
 CHECKBOX = re.compile(r"^\s*[-*]\s+\[([ xX])\]\s+(.+)$", re.MULTILINE)
 EMAIL = re.compile(r"[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}")
+# A GitHub repository as OSS-Fuzz's project.yaml files name it in main_repo: any scheme, often with .git.
+MAIN_REPO = re.compile(r"(?:\w+://|git@)?(?:www\.)?github\.com[/:]([^/\s]+/[^/\s#]+?)(?:\.git)?/?")
 # Where GitHub looks for a repository's security policy.
 SECURITY_POLICY_PATHS = ("SECURITY.md", ".github/SECURITY.md", "docs/SECURITY.md")
 # The files we read from a project's directory, and the size above which validate.py refuses each.
@@ -186,6 +188,15 @@ class GitHub:
     def total(self, kind: str, query: str) -> int:
         """How many results a search for issues or commits has."""
         return self.get(f"search/{kind}", q=query, per_page=1)["total_count"]
+
+    def text(self, path: str, **params) -> str | None:
+        """The text of a file in a repository, or None if it is not there."""
+        try:
+            return self.fetch(path, accept=RAW, **params)[0].decode("utf-8", "replace")
+        except ApiError as error:
+            if error.status == 404:
+                return None
+            raise
 
     def graphql(self, query: str, **variables) -> dict:
         """Run a GraphQL query, for what the REST API cannot say in one request."""
@@ -357,7 +368,7 @@ def license_row(gh: GitHub, slug: str, meta: dict) -> tuple[str, str]:
         return OK, code(spdx)
     if spdx != "NOASSERTION":
         return WARN, f"{code(spdx)} is not on our list of common open-source licenses; check it"
-    text = gh.fetch(f"repos/{slug}/license", accept=RAW)[0].decode("utf-8", "replace")
+    text = gh.text(f"repos/{slug}/license") or ""
     found = next((name for name in SOURCE_AVAILABLE if name.lower() in text.lower()), None)
     if found:
         return FAIL, f"the license file mentions “{found}”, a source-available license"
@@ -411,11 +422,9 @@ def security_policy(gh: GitHub, slug: str, owner: str) -> tuple[str, str] | None
     their repositories in <owner>/.github. Return the policy's repository and its text, or None."""
     for repo in (slug, f"{quote(owner, safe='')}/.github"):
         for path in SECURITY_POLICY_PATHS:
-            try:
-                return repo, gh.fetch(f"repos/{repo}/contents/{path}", accept=RAW)[0].decode("utf-8", "replace")
-            except ApiError as error:
-                if error.status != 404:
-                    raise
+            text = gh.text(f"repos/{repo}/contents/{path}")
+            if text is not None:
+                return repo, text
     return None
 
 
@@ -438,6 +447,57 @@ def contact_row(gh: GitHub, slug: str, meta: dict, config: dict) -> tuple[str, s
         return INFO, f"{where} gives no email address to check {code(contact)} against"
     shown = ", ".join(code(address) for address in given[:3]) + (" …" if len(given) > 3 else "")
     return WARN, f"{code(contact)} is not in {where}, which gives {shown}"
+
+
+def oss_fuzz_projects(gh: GitHub, slug: str) -> tuple[dict[str, dict], bool]:
+    """Find the OSS-Fuzz projects that fuzz this repository: each one's name and project.yaml. Also return whether
+    the search for them worked; if it did not, only projects named after the repository or its owner are found."""
+    owner, name = slug.lower().split("/")
+    names, searched = [name, owner], True
+    try:
+        query = f'"github.com/{slug}" repo:google/oss-fuzz filename:project.yaml'
+        hits = gh.get("search/code", q=query, per_page=5)["items"]
+        names = [hit["path"].split("/")[1] for hit in hits if hit["path"].count("/") == 2] + names
+    except ApiError:
+        searched = False
+
+    found = {}
+    for candidate in dict.fromkeys(names):
+        text = gh.text(f"repos/google/oss-fuzz/contents/projects/{quote(candidate, safe='')}/project.yaml")
+        try:
+            project = validate.yaml.safe_load(text or "")
+        except (validate.yaml.YAMLError, RecursionError):
+            continue
+        # The search matches words, and a name is only a guess: main_repo is what says it is this repository.
+        main_repo = project.get("main_repo") if isinstance(project, dict) else None
+        match = MAIN_REPO.fullmatch(main_repo.strip()) if isinstance(main_repo, str) else None
+        if match and match.group(1).lower() == slug.lower():
+            found[candidate] = project
+    return found, searched
+
+
+def oss_fuzz_row(gh: GitHub, slug: str, config: dict) -> tuple[str, str]:
+    """Is the repository in OSS-Fuzz, whose criteria ours follow, and does OSS-Fuzz report to the same address?"""
+    projects, searched = oss_fuzz_projects(gh, slug)
+    if not projects:
+        return INFO, "not in OSS-Fuzz" if searched else "not in OSS-Fuzz under its own name (the search failed)"
+    result = f"in OSS-Fuzz as {', '.join(code(name) for name in projects)}"
+
+    contact = config.get("primary_contact")
+    if not isinstance(contact, str):
+        return OK, result
+    primary, ccs = set(), set()
+    for project in projects.values():
+        primary.add(str(project.get("primary_contact")).lower())
+        for key in ("auto_ccs", "vendor_ccs"):
+            listed = project.get(key) or []
+            ccs.update(str(address).lower() for address in ([listed] if isinstance(listed, str) else listed))
+    if contact.lower() in primary:
+        return OK, f"{result}, with the same primary contact"
+    theirs = ", ".join(code(address) for address in sorted(primary))
+    if contact.lower() in ccs:
+        return OK, f"{result}, which CCs {code(contact)} (its primary contact is {theirs})"
+    return WARN, f"{result}, whose contacts do not include {code(contact)} (its primary contact is {theirs})"
 
 
 def scanner_files_row(gh: GitHub, slug: str, ref: str | None, config: dict, beside: set[str]) -> tuple[str, str]:
@@ -573,6 +633,7 @@ def repository_rows(gh: GitHub, config: dict, beside: set[str], login: str) -> t
         row("License", license_row, gh, slug, meta),
         row("Opened by an active maintainer", maintainer_row, gh, slug, meta, login),
         row("Contact in `SECURITY.md`", contact_row, gh, slug, meta, config),
+        row("OSS-Fuzz", oss_fuzz_row, gh, slug, config),
         row("`.oss-scanner/` in the repository", scanner_files_row, gh, slug, ref, config, beside),
     ]
 
