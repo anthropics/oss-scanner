@@ -723,7 +723,7 @@ def triage(gh: GitHub, repo: str, number: int) -> str:
         f"{heading}Repository: {described} · opened by {code(login)}\n\n"
         f"| | Check | Result |\n|:-:|---|---|\n{table}\n\n"
         f"<sub>Automated, from public GitHub data, to help reviewers. Enrolment is decided case by case against "
-        f"the [criteria]({CRITERIA}).</sub>\n"
+        f"the [criteria]({CRITERIA}). If you think we got something wrong, please tell us in a reply.</sub>\n"
     )
 
 
