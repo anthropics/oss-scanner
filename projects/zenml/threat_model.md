@@ -68,6 +68,7 @@ Both are fixed and public. Variants of them, in other endpoints or code paths, a
 
 The image has ZenML installed editable from `/src` with the server and test extras, and no network.
 
+- **Restore the files the image leaves out, first**: `/src` is copied through the project's `.dockerignore`, which only lets `src/`, `tests/`, `scripts/`, `README.md` and `pyproject.toml` through. `docs/`, `examples/`, `docker/`, `helm/`, `.github/`, `SECURITY.md` and the root `AGENTS.md` are missing. Run `git -C /src checkout -- .` to restore every tracked file; it does not touch the installed environment. The deployment and security docs under `docs/book/getting-started/deploying-zenml/` and `docs/book/how-to/manage-zenml-server/` are worth reading.
 - **Start a server configured like a real remote deployment** (SQLite, OAuth2 authentication, local file access off):
 
   ```
