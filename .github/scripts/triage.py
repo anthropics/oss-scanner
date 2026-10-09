@@ -113,6 +113,9 @@ CRITICALITY_SIGNALS = {
     "dependents_count": (2, 500000),
 }
 TOP_CONTRIBUTORS = 15
+# The company each of these accounts gives on its profile. One request, where the REST API takes one per account:
+# the workflow's token is allowed 1,000 requests an hour.
+COMPANIES = "query($ids: [ID!]!) { nodes(ids: $ids) { ... on User { company } } }"
 ISSUE_WINDOW_DAYS = 90
 
 
@@ -228,9 +231,9 @@ class GitHub:
     def graphql(self, query: str, **variables) -> dict:
         """Run a GraphQL query, for what the REST API cannot say in one request."""
         answer = json.loads(self.fetch("graphql", body={"query": query, "variables": variables})[0])
-        if answer.get("errors") or not answer.get("data"):
+        if not answer.get("data"):
             raise ApiError(0, "graphql", "query refused")
-        return answer["data"]
+        return answer["data"]  # with "errors" beside it when only part could be answered, such as a deleted account
 
 
 def code(text: object, limit: int = 120) -> str:
@@ -588,9 +591,10 @@ def criticality_signals(gh: GitHub, slug: str, meta: dict) -> dict[str, float]:
         contributor_count = CRITICALITY_SIGNALS["contributor_count"][1]  # GitHub refuses to list very long histories
 
     organisations = set()
-    for person in top_contributors(gh, slug, TOP_CONTRIBUTORS):
-        # Bots are contributors too, and some (Copilot) have no user page at all.
-        company = (gh.find(f"users/{quote(person['login'], safe='')}") or {}).get("company")
+    people = [person["node_id"] for person in top_contributors(gh, slug, TOP_CONTRIBUTORS) if person.get("node_id")]
+    # Bots are contributors too: they have no company, and some (Copilot) no profile at all.
+    for person in gh.graphql(COMPANIES, ids=people)["nodes"] if people else []:
+        company = (person or {}).get("company")
         if company:
             organisations.add(re.sub(r"inc\.|llc|@|\s", "", company.lower()).rstrip(","))
 
