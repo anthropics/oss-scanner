@@ -4,9 +4,9 @@ Aptos Core is the software an Aptos validator runs. It orders blocks, executes M
 
 A defect matters when untrusted input can change who owns funds, make two honest validators commit different ledgers, or break type, ability, or reference safety in the Move VM. Signature checks and the rest of `crates/aptos-crypto/` are in that set.
 
-Read `consensus/`, `execution/`, `storage/`, `mempool/`, `network/`, `secure/`, `keyless/`, `types/`, `crates/aptos-crypto/`, `aptos-move/` (the VM, the block executor, the framework, and the natives), and `third_party/move/`. Treat `api/` as in scope when the bug crashes a validator or changes consensus or funds.
+Read `consensus/` except `consensus/src/dag/`, `execution/`, `storage/`, `mempool/`, `network/`, `secure/`, `keyless/`, `types/`, `crates/aptos-crypto/`, `aptos-move/` (the VM, the block executor, the framework, and the natives), and `third_party/move/`. Treat `api/` as in scope when the bug crashes a validator or changes consensus or funds.
 
-Skip `terraform/`, `dashboards/`, documentation, the faucet, telemetry, and the NFT metadata crawler. The indexer-processors submodule is not in this image. Skip other trees under `third_party/` except Move, and skip test-only code. A difference in gas charged is out of scope unless a transaction can force unbounded work in the VM.
+Skip `terraform/`, `dashboards/`, documentation, the faucet, telemetry, and the NFT metadata crawler. The indexer-processors submodule is not in this image. Skip `consensus/src/dag/`: that folder is test-only. Skip other trees under `third_party/` except Move, and skip test-only code. A difference in gas charged is out of scope unless a transaction can force unbounded work in the VM.
 
 Use these severity classes:
 
@@ -33,6 +33,21 @@ cargo test -p e2e-move-tests --offline --lib tests::vm::failed_encrypted_transac
 
 A new test is a `#[test]` under `aptos-move/e2e-move-tests/src/tests/`, registered in `src/tests/mod.rs`. It uses `MoveHarness`. A file in `aptos-move/e2e-move-tests/tests/` is a separate binary: `cargo test -p e2e-move-tests --offline --test view_closure_type_args_oom`.
 
-A small crate is `cargo test -p aptos-crypto --offline --lib`. Do not build `aptos-node`, the smoke tests, or Forge.
+A small crate is `cargo test -p aptos-crypto --offline --lib`.
+
+The minimal consensus tests are safety rules and the message types:
+
+```
+cargo test -p aptos-safety-rules --offline --lib
+cargo test -p aptos-consensus-types --offline --lib
+```
+
+A single AptosBFT test, with the DAG suite left out:
+
+```
+cargo test -p aptos-consensus --offline --lib round_manager -- --skip dag::
+```
+
+Do not build `aptos-node`, the smoke tests, or Forge.
 
 One report per root cause. The reproducer is a small test or harness. The patch changes only what the bug requires. Skip style findings, guesses, and a second writeup of the same cause.
