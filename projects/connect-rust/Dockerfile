@@ -24,7 +24,7 @@ RUN curl -fsSL -o /tmp/protoc.zip \
     && rm /tmp/protoc.zip \
     && protoc --version
 
-# CI also checks the client for wasm32.
+# CI also checks connectrpc with no default features for wasm32.
 RUN rustup target add wasm32-unknown-unknown
 
 # scanner contract: the checkout lives inside the image, at /src
