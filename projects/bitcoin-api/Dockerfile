@@ -15,6 +15,7 @@ RUN mkdir -p /opt/oss-scanner \
     && printf '%s\n' \
        'import socket' \
        'import sys' \
+       'sys.path.insert(0, "/src")' \
        'import pytest' \
        '' \
        'real_getaddrinfo = socket.getaddrinfo' \
@@ -27,4 +28,7 @@ RUN mkdir -p /opt/oss-scanner \
        > /opt/oss-scanner/run-tests.py
 
 RUN python -m build --wheel --no-isolation \
-    && python /opt/oss-scanner/run-tests.py tests/test_alerts.py -q
+    && python /opt/oss-scanner/run-tests.py tests/ --collect-only -q \
+       --ignore=tests/test_e2e.py --ignore=tests/locustfile.py \
+    && python /opt/oss-scanner/run-tests.py \
+       tests/test_alerts.py tests/test_count_facts.py -q
