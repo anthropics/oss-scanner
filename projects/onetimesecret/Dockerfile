@@ -3,6 +3,7 @@
 # The toolchain mirrors docker/base.dockerfile (Ruby from .ruby-version, Node 26, pnpm from package.json). The test
 # services in compose.test.yml (Valkey, RabbitMQ, Postgres) are installed as packages, because the scan VM has no
 # Docker and no network. `ots-test-services` starts them on the same 127.0.0.1 ports the test lanes expect.
+# Playwright's Chromium, Firefox and WebKit are installed for the browser lane.
 FROM docker.io/library/node:26-trixie-slim AS node
 FROM docker.io/library/ruby:3.4.10-slim-trixie
 
@@ -69,6 +70,7 @@ RUN npm install -g "$(node -p 'require("./package.json").packageManager')" && pn
 # BUNDLE_APP_CONFIG. Install into Ruby's default gem directory so the gems resolve with or without them.
 RUN env -u GEM_HOME -u BUNDLE_APP_CONFIG bundle install --jobs "$(nproc)" --retry 3
 RUN pnpm install --frozen-lockfile && pnpm run build
+RUN pnpm exec playwright install --with-deps chromium firefox webkit && rm -rf /var/lib/apt/lists/*
 
 # Run the unit lane so the image is known to work; a failing test does not fail the build.
 RUN ots-test-services \
