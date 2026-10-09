@@ -1,0 +1,12 @@
+# Drydock: a Docker container update manager (https://github.com/CodesWhat/drydock).
+# main is the release branch: release candidates and stable tags are cut and signed from it.
+repo: https://github.com/CodesWhat/drydock#main
+
+# The security contact published in the project's SECURITY.md.
+primary_contact: security@getdrydock.com
+
+homepage: https://getdrydock.com
+
+disabled: false
+
+# The Dockerfile and threat_model.md sit next to this file, so neither key is set.
