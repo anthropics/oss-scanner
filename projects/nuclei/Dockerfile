@@ -1,4 +1,4 @@
-FROM golang:1.27
+FROM golang:1.27.1
 # Pinned Debian package versions break on every point release.
 # hadolint ignore=DL3008
 RUN apt-get update && apt-get install -y --no-install-recommends chromium \
