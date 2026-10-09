@@ -1,0 +1,4 @@
+repo: https://github.com/openssl/openssl#master
+primary_contact: openssl-security@openssl.org
+homepage: https://openssl-library.org
+disabled: false
