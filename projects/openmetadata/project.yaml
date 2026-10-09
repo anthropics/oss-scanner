@@ -1,0 +1,15 @@
+# OpenMetadata: open-source metadata platform for data discovery, observability and governance.
+# The Dockerfile and threat model live in the OpenMetadata repository, under docker/oss-scanner/.
+repo: https://github.com/open-metadata/OpenMetadata#main
+
+primary_contact: security@open-metadata.org
+
+auto_ccs:
+  - pmbrull@getcollate.io
+  - harsha@getcollate.io
+
+homepage: https://open-metadata.org
+
+dockerfile: docker/oss-scanner/Dockerfile
+
+threat_model: docker/oss-scanner/threat_model.md
