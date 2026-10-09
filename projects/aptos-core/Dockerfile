@@ -38,9 +38,12 @@ WORKDIR /src
 
 RUN cargo fetch --locked
 
-ENV CARGO_NET_OFFLINE=true
+ENV CARGO_NET_OFFLINE=true \
+    CARGO_INCREMENTAL=0 \
+    CARGO_PROFILE_DEV_DEBUG=0 \
+    CARGO_PROFILE_TEST_DEBUG=line-tables-only
 
-# Binaries for the commands in threat_model.md. The agent machine has 2 CPUs and 8 GB.
+# Binaries for the commands in threat_model.md. Full debug objects do not fit the build disk.
 RUN cargo test -p aptos-crypto --offline --lib --no-run \
     && cargo test -p aptos-safety-rules --offline --lib --no-run \
     && cargo test -p aptos-consensus-types --offline --lib --no-run \

@@ -31,7 +31,7 @@ Run one Move end-to-end test with:
 cargo test -p e2e-move-tests --offline --lib tests::vm::failed_encrypted_transaction_increments_sequence_number
 ```
 
-A new test is a `#[test]` under `aptos-move/e2e-move-tests/src/tests/`, registered in `src/tests/mod.rs`. It uses `MoveHarness`. A file in `aptos-move/e2e-move-tests/tests/` is a separate binary: `cargo test -p e2e-move-tests --offline --test view_closure_type_args_oom`.
+A new test is a `#[test]` under `aptos-move/e2e-move-tests/src/tests/`, registered in `src/tests/mod.rs`. It uses `MoveHarness`. A file in `aptos-move/e2e-move-tests/tests/` is a separate binary: `cargo test -p e2e-move-tests --offline --test closure_ty_tag_memory`.
 
 A small crate is `cargo test -p aptos-crypto --offline --lib`.
 
