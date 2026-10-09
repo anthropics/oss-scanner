@@ -1,0 +1,8 @@
+# Ekubo governance: Starknet staker/governor/airdrop (Cairo) and the L1 governance proxy (Solidity).
+repo: https://github.com/EkuboProtocol/governance#main
+
+primary_contact: security@ekubo.org
+
+homepage: https://ekubo.org
+
+disabled: false
