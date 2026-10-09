@@ -1,7 +1,7 @@
 repo: https://github.com/open-telemetry/opentelemetry-dotnet#main
-primary_contact: martin.costello@grafana.com
+primary_contact: security@opentelemetry.io
 auto_ccs:
-  - security@opentelemetry.io
+  - martin.costello@grafana.com
   - pkielkow@cisco.com
 homepage: https://opentelemetry.io/docs/languages/dotnet/
 disabled: false
