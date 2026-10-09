@@ -1,0 +1,17 @@
+# Anthropic OSS Scanner enrolment for Open-ASM. See https://oasm.dev
+# Rules: https://github.com/anthropics/oss-scanner/blob/main/README.md
+
+# The git repository to scan. Default branch (main) is the only line that gets fixes.
+repo: https://github.com/oasm-platform/open-asm#main
+
+# Security contact. Public on the org profile and docs site.
+primary_contact: security@oasm.dev
+
+homepage: https://oasm.dev
+
+disabled: false
+
+# The Dockerfile and threat_model.md sit next to this file (no dockerfile: / threat_model: keys).
+# To update the build without a PR here, move them to .oss-scanner/ in the repository and set
+#   dockerfile: .oss-scanner/Dockerfile
+#   threat_model: .oss-scanner/threat_model.md
