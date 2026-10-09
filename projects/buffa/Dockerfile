@@ -1,18 +1,19 @@
 # Scanner image for https://github.com/anthropics/buffa.
 #
-# The audit runs offline, so this build installs the toolchains, fetches every crate, and compiles the tests, the
-# conformance binaries and the fuzz targets. threat_model.md, next to this file, says how to run each of them.
+# The audit runs offline, so this build installs the toolchains, fetches every crate, compiles the tests and the
+# conformance binaries, and tries to compile the fuzz targets. threat_model.md, next to this file, says how to run each.
 # x86-64 only: the protoc download below is the linux-x86_64 release.
 
-# --- The protobuf conformance runner, built the way the repository's conformance/Dockerfile.tools builds it. ---
+# --- The protobuf conformance runner, from the commits and cmake options of conformance/Dockerfile.tools. ---
 # It is a separate stage so that the protobuf build tree stays out of the final image.
 FROM buildpack-deps:bookworm-scm AS conformance-tools
 ENV DEBIAN_FRONTEND=noninteractive
 RUN sed -i 's|http://deb.debian.org|https://deb.debian.org|g' /etc/apt/sources.list.d/debian.sources \
     && apt-get update && apt-get install -y --no-install-recommends cmake g++ make python3 \
     && rm -rf /var/lib/apt/lists/*
-# The protobuf and jsoncpp commits are read from the repository's own pins, so that a protobuf bump there reaches
-# this image without a change here. The defaults apply only if the pins can no longer be found in that file.
+# The protobuf and jsoncpp commits are read from the repository's own pins, so that a bump there reaches the runner
+# and the test protos without a change here. The defaults apply only if the pins can no longer be found in that file.
+# The protoc and nightly versions further down are copies of CI's pins and need a change here when CI moves.
 # jsoncpp is built shared because protobuf's conformance build links the jsoncpp_lib target, which only the shared
 # build defines; the final image gets the library together with the runner.
 COPY conformance/Dockerfile.tools /tmp/Dockerfile.tools
@@ -63,7 +64,7 @@ RUN sed -i 's|http://deb.debian.org|https://deb.debian.org|g' /etc/apt/sources.l
       unzip build-essential clang gcc-multilib pkg-config python3 \
     && rm -rf /var/lib/apt/lists/*
 
-# protoc, at the version and checksum that the repository's CI pins (PROTOC_VERSION in .github/workflows/ci.yml).
+# protoc, at the version and checksum that the repository's CI pins today (PROTOC_VERSION in .github/workflows/ci.yml).
 ARG PROTOC_VERSION=33.5
 ARG PROTOC_SHA256=24e58fb231d50306ee28491f33a170301e99540f7e29ca461e0e80fd1239f8d1
 RUN curl -fsSL -o /tmp/protoc.zip \
@@ -106,7 +107,7 @@ RUN cargo fetch \
 # The workspace and its tests, as CI builds them. A step that fails fails the build, and primary_contact gets the log.
 RUN cargo test --workspace --no-run
 
-# The conformance binary, with and without std, where conformance/run-conformance.sh expects to find each.
+# The conformance binary, with and without std, at the paths threat_model.md gives the runner.
 RUN cargo build --release --manifest-path conformance/Cargo.toml \
     && cargo build --release --manifest-path conformance/Cargo.toml --no-default-features \
          --target-dir conformance/target-nostd
