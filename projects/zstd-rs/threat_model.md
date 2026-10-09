@@ -37,11 +37,14 @@ impact rather than inferring severity solely from the use of unsafe code.
 The checkout is at /src. Rust, C/C++ compilers, libclang, CMake, the zstd command,
 and Cargo dependencies are installed. Cargo is configured for offline operation.
 The project is not a Cargo workspace: test the nested manifests explicitly.
+Run the zstd-safe tests separately with the default C allocator and with the
+Rust allocator enabled to cover both allocation paths.
 
 ```
 cargo test
 cargo test --features experimental,zstdmt,with-rust-allocator
 cargo test --manifest-path zstd-safe/Cargo.toml --features std,seekable
+cargo test --manifest-path zstd-safe/Cargo.toml --features std,seekable,with-rust-allocator
 cargo test --manifest-path zstd-safe/zstd-sys/Cargo.toml --features bindgen,experimental,seekable,zstdmt
 ```
 

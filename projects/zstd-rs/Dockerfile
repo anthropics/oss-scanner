@@ -22,4 +22,5 @@ ENV CARGO_NET_OFFLINE=true \
 RUN cargo test \
     && cargo test --features experimental,zstdmt,with-rust-allocator \
     && cargo test --manifest-path zstd-safe/Cargo.toml --features std,seekable \
+    && cargo test --manifest-path zstd-safe/Cargo.toml --features std,seekable,with-rust-allocator \
     && cargo test --manifest-path zstd-safe/zstd-sys/Cargo.toml --features bindgen,experimental,seekable,zstdmt
