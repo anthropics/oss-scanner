@@ -178,7 +178,11 @@ class GitHub:
         for last_try in (False, True):
             try:
                 with self.opener.open(request, timeout=30) as response:
-                    return response.read(limit), response.headers.get("Link") or ""
+                    answer, length = response.read(limit), response.headers.get("Content-Length")
+                    # Unlike a read to the end, a read of n bytes does not notice a connection that was cut off.
+                    if length and length.isdigit() and len(answer) < min(int(length), limit):
+                        raise http.client.IncompleteRead(answer)
+                    return answer, response.headers.get("Link") or ""
             except urllib.error.HTTPError as error:
                 delay = retry_delay(error)
                 if last_try or delay is None:
