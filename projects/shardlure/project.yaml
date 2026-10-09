@@ -1,0 +1,7 @@
+# ShardLure: SSH honeypot telemetry -> attacker identity, threat-intel enrichment and abuse.ch sharing.
+repo: https://github.com/hett-patell/ShardLure#main
+primary_contact: hetworkshard@gmail.com
+auto_ccs:
+  - hello@networkshard.com
+homepage: https://github.com/hett-patell/ShardLure
+disabled: false
