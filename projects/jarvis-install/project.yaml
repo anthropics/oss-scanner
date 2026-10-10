@@ -1,0 +1,13 @@
+# AI Jarvis workshop installer (bash for macOS · PowerShell for Windows).
+repo: https://github.com/oogisoogi/jarvis-install
+
+# Reports and build problems go here (public).
+primary_contact: oogisoogi@gmail.com
+
+homepage: https://jarvis.godmeyou.kr/get/
+
+disabled: false
+
+# Both live in the repository root (published from the maintainers' source tree by a snapshot tool).
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
