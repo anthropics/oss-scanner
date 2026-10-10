@@ -1,0 +1,23 @@
+# Copy this file to projects/<name>/project.yaml and fill in the fields below.
+# This is the enrollment for kritya. Nothing here goes in the kritya repo —
+# only this single directory is added in a PR to anthropics/oss-scanner.
+
+# REQUIRED. The ONE git repository to scan.
+repo: https://github.com/GenAICloudDevOps/Kritya
+
+# REQUIRED. Reports and build problems go here.
+primary_contact: technologistvenkat@gmail.com
+
+# Optional. The project's home page.
+homepage: https://github.com/GenAICloudDevOps/Kritya#readme
+
+# Optional. true pauses reports without removing the enrolment.
+disabled: false
+
+# REQUIRED: the Dockerfile lives in the kritya repo so we can update the build
+# without a pull request to oss-scanner.
+dockerfile: .oss-scanner/Dockerfile
+
+# Optional, but strongly recommended: the threat model also lives in the kritya
+# repo, next to the Dockerfile.
+threat_model: .oss-scanner/threat_model.md
