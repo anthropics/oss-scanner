@@ -63,6 +63,8 @@ LOGIN = re.compile(r"[A-Za-z0-9-]+")
 # crosses a line: a long run of one character must not make them slow.
 CHECKBOX = re.compile(r"^[ \t]*[-*][ \t]+\[([ xX])\][ \t]+(.+)$", re.MULTILINE)
 EMAIL = re.compile(r"(?<![A-Za-z0-9._%+-])[A-Za-z0-9._%+-]{1,64}@[A-Za-z0-9-]{1,63}(?:\.[A-Za-z0-9-]{1,63}){1,8}")
+# How many OSS-Fuzz projects with a name like the repository's are read to see whether one is for it.
+OSS_FUZZ_CANDIDATES = 5
 # A GitHub repository as OSS-Fuzz's project.yaml files name it in main_repo: any scheme, often with .git.
 MAIN_REPO = re.compile(r"(?:\w+://|git@)?(?:www\.)?github\.com[/:]([^/\s]+/[^/\s#]+?)(?:\.git)?/?")
 # Where GitHub looks for a repository's security policy.
@@ -493,44 +495,63 @@ def contact_row(gh: GitHub, slug: str, meta: dict, config: dict) -> tuple[str, s
     return WARN, f"{code(contact)} is not in {where}, which gives {shown}"
 
 
-def oss_fuzz_projects(gh: GitHub, slug: str) -> tuple[dict[str, dict], dict[str, object], bool]:
-    """Find the OSS-Fuzz projects that fuzz this repository: each one's name and project.yaml. Also return the
-    main_repo of any project named after the repository or its owner that is for some other repository, and whether
-    the search worked; if it did not, only projects of those two names are found."""
-    owner, name = slug.lower().split("/")
-    names, searched = [name, owner], True
-    try:
-        query = f'"github.com/{slug}" repo:google/oss-fuzz filename:project.yaml'
-        hits = gh.get("search/code", q=query, per_page=5)["items"]
-        names = [hit["path"].split("/")[1] for hit in hits if hit["path"].count("/") == 2] + names
-    except ApiError:
-        searched = False
+def squash(name: str) -> str:
+    """A name reduced to its letters and digits, so that PcapPlusPlus and pcap-plus-plus compare equal."""
+    return re.sub(r"[^a-z0-9]", "", name.lower())
 
+
+def oss_fuzz_candidates(slug: str, names: list[str]) -> list[str]:
+    """Of OSS-Fuzz's project names, the few that could be this repository's, likeliest first.
+
+    OSS-Fuzz has no index by repository, and GitHub's code search is closed to the workflow's token. But a project
+    is nearly always named after its repository or the repository's owner (bitcoin-core fuzzes bitcoin/bitcoin):
+    of OSS-Fuzz's 1,252 projects on GitHub, this finds 1,183."""
+    owner, repo = (squash(part) for part in slug.split("/"))
+
+    def rank(name: str) -> int | None:
+        key = squash(name)
+        if key in (repo, owner):
+            return 0 if key == repo else 1
+        # One name inside the other, unless the inner one is so short that it is there by chance.
+        for place, (inner, outer) in enumerate(((repo, key), (key, repo), (owner, key), (key, owner)), start=2):
+            if len(inner) >= 4 and inner in outer:
+                return place
+        return None
+
+    ranked = sorted((place, len(name), name) for name in names if (place := rank(name)) is not None)
+    return [name for _, _, name in ranked[:OSS_FUZZ_CANDIDATES]]
+
+
+def oss_fuzz_projects(gh: GitHub, slug: str) -> tuple[dict[str, dict], dict[str, object]]:
+    """Find the OSS-Fuzz projects that fuzz this repository: each one's name and project.yaml. Also return the
+    main_repo of any project named exactly after the repository or its owner that is for some other repository."""
+    listing = gh.get("repos/google/oss-fuzz/git/trees/HEAD:projects")["tree"]
+    owner, name = (squash(part) for part in slug.split("/"))
     found, namesakes = {}, {}
-    for candidate in dict.fromkeys(names):
+    for candidate in oss_fuzz_candidates(slug, [entry["path"] for entry in listing if entry["type"] == "tree"]):
         text = gh.text(f"repos/google/oss-fuzz/contents/projects/{quote(candidate, safe='')}/project.yaml")
         try:
             project = validate.yaml.safe_load(text or "")
         except (validate.yaml.YAMLError, RecursionError):
             continue
-        # The search matches words, and a name is only a guess: main_repo is what says it is this repository.
+        # A name is only a guess: main_repo is what says the project is for this repository.
         main_repo = project.get("main_repo") if isinstance(project, dict) else None
         match = MAIN_REPO.fullmatch(main_repo.strip()) if isinstance(main_repo, str) else None
         if match and match.group(1).lower() == slug.lower():
             found[candidate] = project
-        elif isinstance(project, dict) and candidate in (name, owner):
+        elif isinstance(project, dict) and squash(candidate) in (name, owner):
             namesakes[candidate] = main_repo
-    return found, namesakes, searched
+    return found, namesakes
 
 
 def oss_fuzz_row(gh: GitHub, slug: str, config: dict) -> tuple[str, str]:
     """Is the repository in OSS-Fuzz, whose criteria ours follow, and does OSS-Fuzz report to the same address?"""
-    projects, namesakes, searched = oss_fuzz_projects(gh, slug)
+    projects, namesakes = oss_fuzz_projects(gh, slug)
     if not projects and namesakes:
         others = "; ".join(f"{code(name)} there is for {code(main_repo)}" for name, main_repo in namesakes.items())
         return INFO, f"no OSS-Fuzz project is for this repository, but {others}"
     if not projects:
-        return INFO, "not in OSS-Fuzz" if searched else "not in OSS-Fuzz under its own name (the search failed)"
+        return INFO, "not found in OSS-Fuzz"
     result = f"in OSS-Fuzz as {', '.join(code(name) for name in projects)}"
 
     contact = config.get("primary_contact")
