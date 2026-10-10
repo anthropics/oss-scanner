@@ -1,0 +1,5 @@
+# Enrollment configuration for Browser Agent Guide
+repo: https://github.com/buddypia/browser-agent-guide#main
+primary_contact: shoridevel@gmail.com
+homepage: https://github.com/buddypia/browser-agent-guide
+disabled: false
