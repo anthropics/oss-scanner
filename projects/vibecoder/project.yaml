@@ -4,7 +4,7 @@
 repo: https://github.com/stSoftwareAU/VibeCoder#main
 
 # REQUIRED. Who should we email our reports to, and use as the primary contact for questions.
-primary_contact: nigel@stsoftware.com.au
+primary_contact: maintainer@stsoftware.com.au
 
 # Optional. Additional email addresses we will CC on disclosure reports.
 #auto_ccs:
