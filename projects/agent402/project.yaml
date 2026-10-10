@@ -1,0 +1,6 @@
+# Agent402: a self-hostable x402 + MCP server that sells web tools to AI agents, paid per request,
+# plus the agent402-tollbooth, agent402-client and agent402-mcp npm packages.
+repo: https://github.com/MikeyPetrillo/Agent402#main
+primary_contact: mike@agent402.tools
+homepage: https://agent402.tools
+disabled: false
