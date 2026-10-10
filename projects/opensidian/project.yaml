@@ -1,0 +1,36 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+# OSS Scanner enrolment for Opensidian. Copy to projects/opensidian/project.yaml in
+# https://github.com/anthropics/oss-scanner when opening the enrolment PR.
+
+# The git repository to scan, pinned to the main branch.
+repo: https://github.com/jpzk/opensidian#main
+
+# Reports and build problems go here (the address published in SECURITY.md).
+primary_contact: jendrik@madewithtea.com
+
+homepage: https://opensidian.org
+
+# Reports are encrypted to the release signing key (A6E6 9ED6 BC47 79F3 2817 2148 4CC1 AFDE 15B6 4EA3),
+# from https://keys.openpgp.org/vks/v1/by-fingerprint/A6E69ED6BC4779F3281721484CC1AFDE15B64EA3
+# With pgp set, reports go to primary_contact only (no auto_ccs).
+pgp: |
+  -----BEGIN PGP PUBLIC KEY BLOCK-----
+  Comment: A6E6 9ED6 BC47 79F3 2817  2148 4CC1 AFDE 15B6 4EA3
+  Comment: jendrik@madewithtea.com <jendrik@madewithtea.com>
+
+  xjMEZGUkGxYJKwYBBAHaRw8BAQdAJQfkeKwx/O12YIYqHRQC+NtHE074r+GLdUoh
+  8UHrEw/NMWplbmRyaWtAbWFkZXdpdGh0ZWEuY29tIDxqZW5kcmlrQG1hZGV3aXRo
+  dGVhLmNvbT7CjAQQFgoAPgWCZGUkGwQLCQcICZBMwa/eFbZOowMVCAoEFgACAQIZ
+  AQKbAwIeARYhBKbmnta8R3nzKBchSEzBr94Vtk6jAAB/GwEAtOb0cZ65/TKrP9Jz
+  DbHS/qCTbzopZ95xf+Yyl6VKWA0BAP/o2s8wyEnfpchxecOqEeHAQExTvkYD14KL
+  1EHlmZgBzjgEZGUkGxIKKwYBBAGXVQEFAQEHQIokt1A4nHfIAhXLTxTYeHhEttMQ
+  7rvXBW5YGHUy/FZ4AwEIB8J4BBgWCAAqBYJkZSQbCZBMwa/eFbZOowKbDBYhBKbm
+  nta8R3nzKBchSEzBr94Vtk6jAABLhwD+PTZ/grF+qPa6YqxtaMuiuTtUWkIFPuCh
+  zwYJfKPTWzMBAOiIRM8MZUutGESBBPzCAnHYTkAwKCUoZ0LUHPNvl0IF
+  =kACq
+  -----END PGP PUBLIC KEY BLOCK-----
+
+disabled: false
+
+# Build recipe, kept in this repository so it can change without a PR to oss-scanner.
+dockerfile: .oss-scanner/Dockerfile
