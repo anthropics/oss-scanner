@@ -1,0 +1,6 @@
+repo: https://github.com/willynilly0085-creator/tarjim#master
+primary_contact: willy.nilly0085@gmail.com
+homepage: https://github.com/willynilly0085-creator/tarjim
+disabled: false
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
