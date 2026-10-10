@@ -52,4 +52,5 @@ RUN cd /src/orion-fuzz \
     && cargo fetch \
     && cargo vendor vendor > .cargo/config.toml
 
-CMD ["/bin/bash"]
+RUN cd /src/orion \
+    && cargo test --all-features
