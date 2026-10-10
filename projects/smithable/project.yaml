@@ -1,0 +1,6 @@
+repo: https://github.com/smithable/smithable#main
+primary_contact: security@smithable.ai
+homepage: https://smithable.ai
+disabled: false
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
