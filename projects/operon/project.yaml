@@ -1,0 +1,5 @@
+# Enrollment configuration for Operon
+repo: https://github.com/buddypia/operon#main
+primary_contact: shoridevel@gmail.com
+homepage: https://github.com/buddypia/operon
+disabled: false
