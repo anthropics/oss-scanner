@@ -1,0 +1,104 @@
+# Threat model
+
+Paths are relative to the repository root. Line numbers were checked against release v0.3.0 (commit `c6733e1`) of the default branch; when they drift, search for the function named next to them. Unless a path says otherwise, `auth/`, `commands/`, `config.rs`, `output.rs`, `failure.rs` and `lib.rs` are under `crates/hodeishield-cli/src/`, and `client.rs` is `crates/hodeishield-api/src/client.rs`.
+
+## What this project does and where untrusted input enters
+`hodeishield` (`crates/hodeishield-cli`, binary `target/debug/hodeishield`) is a read-only command-line client for the HodeiShield public `/v1` HTTP API. `crates/hodeishield-api` is the Rust client for that API (types and operations generated from `openapi/v1.json` into `generated.rs`; transport in `client.rs`); `xtask` only generates that code and the man pages. Every API request is a `GET`: `Client::get` is the only request path (`client.rs:372-388`) and every generated operation declares `GET`. The workspace forbids `unsafe` code (`Cargo.toml:26`). The tool runs on the user's machine with the user's credentials: a tenant API key from `HODEISHIELD_API_KEY`, or an OAuth sign-in token kept in the system keychain.
+
+Trust boundaries:
+- The remote API and the sign-in server (the "app") are trusted to decide what a credential may read. Their **responses are untrusted input to the CLI**: JSON fields (vendor names, alert titles, error messages, pagination numbers), headers (`X-Request-Id`, `Retry-After`, `RateLimit-*`), the API's protected resource metadata, OAuth/OIDC discovery documents, token, device-code, revocation and `userinfo` answers, and redirect responses. How the CLI renders, stores, bounds and acts on those values is in scope.
+- The user's configuration (flags, environment variables, `config.toml`) is trusted: whatever API or app URL the user sets is where the user chose to send a credential. The CLI must still refuse unsafe base URLs and must never send a credential anywhere the user did not choose (in particular, never to a destination taken from a server response).
+- The loopback listener used by browser sign-in (`auth/loopback.rs`) receives input from any web page open in the user's browser and from any local process, of any local user, that can connect to `127.0.0.1`.
+- Command-line arguments that become URL path segments or query values (ids, framework slugs, filters) are untrusted when the CLI is driven by scripts.
+- The only network peers are the configured API (default `https://api.hodeishield.com`, `crates/hodeishield-api/src/generated.rs:19`), the configured app (default `https://app.hodeishield.com`, `config.rs:16`) and the endpoints the app's OAuth metadata names. The browser is opened only on the authorization endpoint from that metadata (`commands/session.rs:57-65`). There is no update check, telemetry or other background request.
+
+## Components that matter most / least
+Most important:
+- Credential handling: `auth/mod.rs`, `auth/store.rs`, `config.rs`, `client.rs`.
+- Sign-in: `auth/oauth.rs` (discovery, PKCE, device flow, refresh, revocation, userinfo), `auth/loopback.rs`, `commands/session.rs`.
+- Output of server-controlled text: `output.rs` (`clean`, `print_json`, `print_csv`), `failure.rs`, `lib.rs`, `commands/resources.rs`, `commands/mod.rs` (`--verbose`).
+- URL and path construction: `config.rs::parse_url`, `client.rs::{check_base_url, encode_path_segment, url}`.
+
+Less important: `cli.rs` argument definitions, `commands/config.rs`, shell completion generation, `xtask/`, `packaging/`, and `crates/hodeishield-api/src/generated.rs` (generated; report problems in the generator or its input, not in individual generated functions).
+
+## Credential storage and handling
+- **Sign-in tokens** are stored only in the system keychain (macOS Keychain, Windows Credential Manager, or the Secret Service, such as GNOME Keyring or KWallet, on Linux and the BSDs): service `hodeishield-cli`, account = the profile name (`auth/store.rs:14`, `entry` at `:139-142`, backend selection `:113-137`). The entry is one JSON object with the access token, the optional refresh token, expiry, scope, the issuer, the API URL the token was obtained for, and the client id (`Payload`, `store.rs:35-48`).
+- **There is no file fallback.** Without a usable keychain, storing the token fails (`ensure_store`, `store.rs:100-111`); the documented alternative is an API key. The keychain is opened when the token is stored, after the OAuth exchange (`commands/session.rs:100`).
+- **API keys** are read only from `HODEISHIELD_API_KEY`, trimmed (`api_key_from_env`, `auth/mod.rs:16`, `:28-34`). When set, the key is used for every API call and the profile's sign-in is not (`credential_for_api`, `auth/mod.rs:42-44`). The CLI never writes or prints it.
+- **Config file** (`config.toml` in the platform config directory, or `HODEISHIELD_CONFIG`; `config.rs:117-127`) holds only `default_profile` and per-profile `api_url`, `app_url`, `oauth_client_id`, `oauth_scopes`; unknown keys are rejected (`#[serde(deny_unknown_fields)]`, `config.rs:23`, `:33`), so it has no field for a credential. On Unix a new file is created with mode 0600; an existing file keeps its permissions (`write_private`, `config.rs:160-171`).
+- **In memory**, tokens, keys, the PKCE verifier and the authorization code are `secrecy::SecretString` and are exposed only to build a request or the keychain payload. `Debug` output is redacted (test `store.rs:231-238`; `client.rs:154-162`, `:290-297`). The `Authorization` header value is marked sensitive (`client.rs:351-356`).
+- **Logging.** `--verbose` prints to stderr only method, URL (with its query string; never a credential), status, elapsed time, the `X-Request-Id` header and retry reasons (`commands/mod.rs:39-61`, `client.rs:105-133`). Header text reaches it through `HeaderValue::to_str`, which only admits visible ASCII (`client.rs:73-81`).
+- **Where credentials travel.** The API credential goes only in the `Authorization` header to the API (`client.rs:384-388`). OAuth secrets go in form bodies to the token and revocation endpoints (`oauth.rs:367-377`, `:517-524`); the access token also goes as a bearer to the `userinfo` endpoint when the metadata lists one (`oauth.rs:681-701`). None is put in a URL. Error messages are fixed text plus server text that is cleaned before printing (see Output injection).
+
+## API keys, OAuth tokens and the sign-in flows
+- **Discovery.** The API's protected resource metadata (RFC 9728, `/.well-known/oauth-protected-resource`) may name the authorization server; only one on the same origin as the user's configured `app_url`, without user info, is accepted, and `resource` must equal the API URL; a 404 means the app itself is the issuer (`authorization_server`, `oauth.rs:151-202`). Authorization server metadata (RFC 8414, then OpenID Connect discovery) must carry an `issuer` equal to the URL it was fetched from; every endpoint it lists must be `https` (plain `http` only to a loopback host, and only when the app itself is on loopback); if `code_challenge_methods_supported` is present it must include `S256` (`discover`/`validate`, `oauth.rs:205-280`).
+- **HTTP client for the app** follows no redirects, requires HTTPS unless the app host is loopback, has 10 s connect and 30 s total timeouts, and caps bodies at 8 MiB (`http_client`, `oauth.rs:87-106`; `read_body`, `client.rs:504-535`).
+- **Browser flow** (`commands/session.rs:53-89`): authorization code with PKCE `S256`; the verifier is 32 bytes from the OS random source and `state` is 24 (`oauth.rs:292-321`, `session.rs:55-56`). The redirect URI is `http://127.0.0.1:<port>/callback` with an OS-chosen port; the listener binds `127.0.0.1` only (`Loopback::bind`, `loopback.rs:31-44`).
+- **Loopback listener** (`loopback.rs:53-196`): it handles one connection at a time. For each, it reads the request head (5 s read timeout, up to about 16 KiB) and uses only the target of a `GET` request line; anything else is dropped. Other paths get 404. A callback whose `state` does not match is **refused (400) and the listener keeps waiting**, so a forged or stale request can neither complete nor cancel the sign-in (`:108-117`). Once `state` matches: `iss` (RFC 9207) must equal the issuer when present, and is required when the metadata says the server sends it (`:118-141`); an `error` ends the sign-in (`:142-157`); otherwise the first code ends the listener, so only one code is accepted, and it is exchanged with the PKCE verifier and the same redirect URI (`oauth.rs:448-468`). The overall limit is 5 minutes (`session.rs:16`), checked between connections (`loopback.rs:61-80`).
+- **Device flow** (RFC 8628, `session.rs:34-52`, `oauth.rs:564-670`): verification URIs must be `https` or on a loopback host; the user code is cleaned before printing. The server's code lifetime is capped at 1 hour and the polling interval kept between 1 and 60 s, `slow_down` included, so a hostile answer cannot hang the CLI or overflow time arithmetic (`oauth.rs:615-653`).
+- **Token answers** must be `bearer` (`oauth.rs:383-388`).
+- **Refresh** happens 60 s before expiry and once more after an API 401 (`current_token`/`renew`/`refresh_stored`, `auth/mod.rs:100-189`; `client.rs:467-478`). A stored token is used or refreshed only while the profile's `app_url` is on the same origin as the stored issuer (`auth/mod.rs:106-115`, `:133`). Refresh goes to the stored issuer's metadata, never to the current profile's. An `invalid_grant` answer deletes the stored token, unless another process has already stored a newer refresh token (`auth/mod.rs:176-187`).
+- **Revocation** (`hodeishield logout`, RFC 7009): the access token and then the refresh token are revoked at the **issuer stored with the token**, not at whatever the profile points to now; the local entry is deleted whatever the app answers, and a warning is printed when revocation is not confirmed (`logout_with`, `session.rs:124-148`; `revoke_at_issuer`, `:236-265`; `oauth.rs:507-549`).
+- **Base URLs** (`parse_url`, `config.rs:96-114`; `check_base_url`, `client.rs:549-563`): must parse, have a host, carry no user name or password, and use `https`; plain `http` is accepted only for `localhost` or a loopback IP (`is_loopback_host`, `client.rs:540-547`). Requests to loopback bypass proxies (`client.rs:244-248`, `oauth.rs:89-92`). The API client never follows redirects (`client.rs:254-257`).
+
+## Tenant and profile scoping
+- A sign-in token is stored per profile and carries the API URL it was obtained for. It is sent only to that API: `credential_for_api` refuses when the effective API URL differs (flag, environment or profile changed), and `renew` refuses likewise (`auth/mod.rs:50-65`, `:125-140`).
+- A sign-in token is bound to one issuer and to the one tenant chosen on the app's consent screen (public README, "By signing in"); the CLI has no switch that merges profiles. Profiles never share keychain entries (account = profile name).
+- The API key from the environment is sent to the effective API URL. Flags, environment and config are under the user's control, so that is by design; the CLI must not pick any other destination for a credential.
+- In scope: any path where a credential, token or refresh token of one profile, issuer or API URL is sent to or used against another; a redirect, discovery document, header or JSON field that changes where a credential is sent; a token kept, used or refreshed after the profile was pointed elsewhere.
+
+## Output injection
+- Text for people goes through `output::clean`, which replaces C0 and C1 controls, DEL, and a fixed list of invisible and bidirectional format characters (U+00AD, U+061C, U+180E, U+200B-U+200F, U+202A-U+202E, U+2060-U+2064, U+2066-U+2069, U+FEFF, U+FFF9-U+FFFB) with U+FFFD (`output.rs:13-36`). Tables, detail views, error messages, hints and request ids use it (`commands/resources.rs`, `output.rs:111-142`, `lib.rs:44-53`, `session.rs:39`, `:141`, `:217`, `:268-279`). Other invisible or look-alike characters are not on the list; they matter only if they make one record look like another.
+- `--json` prints the API body (with `--all`, the array of raw items) as a value. It escapes DEL, C1 controls and the characters above as `\uXXXX`, on top of serde_json's escaping of C0 controls, so the output cannot drive a terminal and still decodes to the same value (`print_json`, `output.rs:90-109`).
+- `--csv` (`print_csv`, `output.rs:144-215`): RFC 4180 quoting. A text cell or header whose **first character** is `=`, `+`, `-`, `@`, tab or CR gets a leading `'` (CWE-1236); numbers stay numbers; other control characters except tab, CR and LF are replaced. No other leading character (a space, for example) is defused.
+- In scope: a control or escape sequence that reaches stdout or stderr unchanged; a CSV cell that a mainstream spreadsheet evaluates as a formula; JSON output that changes a value; text that makes one record look like another.
+
+## Path and URL construction, TLS, proxy
+- Path arguments (ids, framework) are percent-encoded per segment, keeping only unreserved characters; empty segments and segments made only of dots are refused (`encode_path_segment`, `client.rs:572-585`). Query values are added with `query_pairs_mut` (`client.rs:333-344`).
+- TLS uses `reqwest` with `rustls` (`Cargo.toml:19`) and the platform's certificate verification (`rustls-platform-verifier` in `Cargo.lock`). No code path disables certificate verification; none should be added. Proxy settings from the environment (and, through reqwest's `system-proxy` feature, the OS proxy settings on macOS and Windows) apply, except for loopback hosts.
+- Bounds: response bodies 8 MiB (`client.rs:504`); `--all` stops after 1,000 pages or 100,000 items and does not trust the server to end the walk (`commands/resources.rs:29-35`, `:115-139`); 30 s per request; at most 2 retries for `429` and 2 for `502`/`503`/`504` or connection errors, and a `Retry-After` above 60 s is not honoured (`client.rs:312-325`, `:432-466`).
+
+## Supply chain (mostly out of scope for code scanning)
+Release archives, packages and `install.sh` are built and signed by `.github/workflows/release.yml` (Sigstore keyless signatures, SLSA provenance, `SHA256SUMS`; see `docs/verifying-releases.md`). Builds use `Cargo.lock` with `--locked`; `deny.toml` configures `cargo deny`. The CLI never updates itself. Reviewing CI, signing and packaging is not the focus of this scan. A concrete flaw in `install.sh` is in scope: installing a file that failed its checksum or signature check, using an attacker-influenced version string or path unsafely, or writing outside the chosen directories.
+
+## In scope / out of scope
+In scope: flaws in the code above that one of these parties can use against the user running the CLI:
+- a malicious or compromised API or app at a URL the user configured, beyond what that server is trusted with (see the severity table);
+- a network attacker who cannot break TLS;
+- a web page open in the user's browser, or a process of **another** local user, reaching the loopback listener;
+- a script passing hostile command-line arguments.
+Also in scope: how the CLI handles its own credentials and files.
+
+Out of scope:
+- The HodeiShield service and web application themselves; only the CLI is covered here.
+- A local attacker running as the same user (who can read the keychain, the environment and the config anyway), root, debuggers, malware, or anything that needs a compromised OS, keychain, browser or trust store (including a `localhost` that does not resolve to loopback).
+- A configured server behaving badly within what the user chose to trust: receiving the credential the user configured for it, hiding data, returning false results, or being slow or failing within the size, page, retry and timeout bounds above. It stays in scope when it makes the CLI leak a credential elsewhere, run something, write outside its own files, or corrupt the terminal.
+- Plain HTTP to `localhost` or loopback addresses (an intentional exception for local development and tests).
+- API keys and tokens that users put in logs, shell history or CI output themselves.
+- Behaviour of the OS keychain, the browser, `cosign` or third-party crates unless the CLI uses them unsafely; resource exhaustion caused by the local user's own input.
+- Test code (`crates/*/tests`, `#[cfg(test)]` modules) and the `xtask` generator, except where they weaken a guarantee above.
+
+## How you rate severity
+A configured server already receives the credential configured for it, so "the API saw my API key" is not a finding. What counts is the CLI crossing a boundary it promises to keep.
+
+| Severity | Examples |
+|---|---|
+| Critical | A remote party (server, network attacker, web page) obtains a stored token or the API key **without** the user configuring it as the destination; remote code execution in the CLI process. |
+| High | A credential of one profile, issuer or API URL is sent to or used against another (including through a redirect, discovery document, header or JSON field); the loopback listener accepts a forged callback (state, issuer or single-use check bypassed), enabling login CSRF or session fixation; TLS validation or HTTPS-only enforcement bypassed for a non-loopback host; an escape sequence from a server reaches the terminal unchanged and can run commands, write the clipboard or rewrite earlier output; a write outside the CLI's own files. |
+| Medium | A CSV cell from a server that a mainstream spreadsheet evaluates as a formula; a secret in `--verbose` output, error messages or panic text; `logout` reporting success while a token stays valid at the issuer or stays stored; PKCE or `state` weakened (predictable, reused or skipped) without a full bypass; a path or query argument that changes which resource is requested. |
+| Low | A local process (any user) delaying or stalling the loopback listener; denial of service by a malicious server that escapes the size, page, retry or timeout bounds; tokens issued but neither stored nor revoked when sign-in fails; the config file with loose permissions (it holds no secret); cosmetic output confusion without terminal control; panics on malformed server data without further impact. |
+
+Every report needs a reproducer against the built CLI or its tests (a small mock HTTP server on `127.0.0.1` is enough; see below). A report without a working reproducer is at most Low. The preferred patch is minimal, keeps the existing style, and adds a test next to the existing ones.
+
+## How to exercise it
+- Build output: `/src/target/debug/hodeishield` (also `cargo run -p hodeishield-cli -- <args>`). The scan has no network, so run a mock server in the container (any local HTTP server, for example a few lines of Python) on `127.0.0.1:<port>`.
+- Point the CLI at it: `export HODEISHIELD_API_KEY=testkey HODEISHIELD_CONFIG=/tmp/h.toml` and use `--api-url http://127.0.0.1:<port>` (or `HODEISHIELD_API_URL`); plain `http` is accepted for loopback. Use `hodeishield vendors list [--json|--csv|--all|--verbose]`, `vendors get <id>`, `alerts list`, `compliance posture <framework>`, `whoami`. Response shapes are in `openapi/v1.json`.
+- Sign-in flows can be tried against a mock authorization server with `HODEISHIELD_APP_URL=http://127.0.0.1:<port>`; it must serve `/.well-known/oauth-authorization-server` (the API port may serve `/.well-known/oauth-protected-resource`). `hodeishield login --no-browser` prints the authorization URL; `login --device` uses the device endpoint. The container has no Secret Service, so storing a token fails by design; the unit tests use an in-memory store (`auth/store.rs`, `MemoryStore`), which is the way to test refresh and revocation logic.
+- The existing tests are the reference and use mock servers (the `mockito` crate on `127.0.0.1`): `crates/hodeishield-cli/tests/cli.rs` (end-to-end through the binary; for example output cleaning at `:282` and `:516`, refusal of non-HTTPS at `:303`, sign-in discovery at `:386`, proxy bypass for loopback at `:541`, CSV from `:563`), `crates/hodeishield-api/tests/api.rs` (transport: redirects, retries, size limit, path encoding, 401 renewal), and the `#[cfg(test)]` modules in `auth/oauth.rs`, `auth/loopback.rs`, `auth/mod.rs`, `commands/session.rs`, `config.rs` and `output.rs`. Run them with `cargo test --workspace --locked --offline`.
+
+## Anything to leave alone
+- `crates/hodeishield-api/src/generated.rs` formatting and naming; it is regenerated by `cargo xtask codegen`.
+- Plain `http` for `localhost` and loopback addresses, and the absence of a file fallback for tokens (both intentional).
+- Distribution topics such as macOS notarization or code signing of the binaries.
+- The API key being readable by the user's own processes through the environment.
+- Style or lint-level findings (`cargo clippy`) without a security impact.
