@@ -1,0 +1,5 @@
+repo: https://github.com/jihadoden-alt/Odentrade-
+primary_contact: jihad.oden@gmail.com
+homepage: https://odentrade.com
+dockerfile: .oss-scanner/Dockerfile
+disabled: false
