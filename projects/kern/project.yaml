@@ -1,0 +1,23 @@
+# Kern: air-gapped Bitcoin signing device firmware for the ESP32-P4.
+repo: https://github.com/odudex/Kern#master
+primary_contact: odudex@proton.me
+homepage: https://odudex.github.io/Kern/
+disabled: false
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
+
+# Reports are encrypted to this key (https://github.com/odudex.gpg) and sent to primary_contact only.
+pgp: |
+  -----BEGIN PGP PUBLIC KEY BLOCK-----
+  
+  mDMEabRP4hYJKwYBBAHaRw8BAQdA+dv6kCKiD7PYB0dZ13PcBmoPAnAVJBR8LQ7h
+  x6F+GVi0GW9kdWRleCA8b2R1ZGV4QHByb3Rvbi5tZT6IkwQTFgoAOxYhBM1IKYo4
+  bONPOp/uPrmqR8PoHdFMBQJptE/iAhsDBQsJCAcCAiICBhUKCQgLAgQWAgMBAh4H
+  AheAAAoJELmqR8PoHdFMNtUBALmjQf+JPK/E/S97hf4NMtyFYaiVzuWlvGPfR1oY
+  Lw2IAQDG324Zvd4KoeV2dEQQNG+yGVbu/AShREsxrDgdqND1A7g4BGm0T+ISCisG
+  AQQBl1UBBQEBB0DTxbWVVKHvxpcUMxp1VqDT5gurjwpouI3jhpEqvmM7YwMBCAeI
+  eAQYFgoAIBYhBM1IKYo4bONPOp/uPrmqR8PoHdFMBQJptE/iAhsMAAoJELmqR8Po
+  HdFMFbUA/iTwBohgDsD72XAvK/YsWxrkdYHp38z/PKGQ7sZy6uMuAP9NQYFfGtj/
+  lwmvZ3BPu+XvOaXbLPvZ9Y/SyyKGVCZyCQ==
+  =aZKc
+  -----END PGP PUBLIC KEY BLOCK-----
