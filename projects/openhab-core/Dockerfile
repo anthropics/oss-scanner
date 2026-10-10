@@ -8,7 +8,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends git ca-certific
 COPY . /src
 WORKDIR /src
 
-# Match openHAB Core's Java 21 static-analysis CI build. Integration tests include Linux sysfs hardware
-# discovery and are not reliable in the scanner's containerized build environment.
+# Match openHAB Core's Java 21 static-analysis CI build; tests are run selectively below.
 RUN ./.github/scripts/maven-build install -B -T 1.25C -U \
     -Dspotless.check.skip=true -Dmaven.test.skip=true -Dfeatures.verify.skip=true
+
+# Run the sysfs integration tests while build networking is available; tools/check disables networking in its shell.
+RUN ./mvnw -pl itests/org.openhab.core.config.discovery.usbserial.linuxsysfs.tests -am \
+    -Dspotless.check.skip=true test

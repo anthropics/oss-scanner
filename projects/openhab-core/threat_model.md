@@ -12,7 +12,7 @@ Issues confined to openHAB add-ons or third-party dependencies should identify t
 
 ## Build and tests
 
-The image builds the repository using openHAB Core's Java 21 static-analysis CI command `./.github/scripts/maven-build install -B -T 1.25C -U -Dspotless.check.skip=true -Dmaven.test.skip=true -Dfeatures.verify.skip=true`. Integration tests include Linux sysfs hardware discovery and are not reliable in the scanner's containerized build environment. Focus analysis on the source code and tests in this checkout; the scan runs without network access after the image is built.
+The image builds the repository using openHAB Core's Java 21 static-analysis CI command `./.github/scripts/maven-build install -B -T 1.25C -U -Dspotless.check.skip=true -Dmaven.test.skip=true -Dfeatures.verify.skip=true`, then runs the Linux sysfs discovery integration-test module. Other tests are skipped during the build. The test run caches its Maven dependencies while build networking is available, so it can also be rerun in the offline shell opened by `tools/check`. Focus analysis on the source code and tests in this checkout; the scan runs without network access after the image is built.
 
 ## Severity guidance
 
