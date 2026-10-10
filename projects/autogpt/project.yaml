@@ -1,0 +1,14 @@
+# AutoGPT Platform (autogpt_platform/): the agent-building platform behind the hosted service at
+# https://platform.agpt.co, also self-hosted with Docker. Every change lands on `dev` before it is released to
+# `master`, so scanning `dev` catches issues before they ship.
+repo: https://github.com/Significant-Gravitas/AutoGPT#dev
+
+# The security contact published in the repository's SECURITY.md.
+primary_contact: security@agpt.co
+# A core maintainer, copied on every report.
+auto_ccs:
+  - nicholas.tindle@agpt.co
+
+homepage: https://agpt.co
+
+disabled: false
