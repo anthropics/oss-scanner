@@ -1,0 +1,19 @@
+repo: https://github.com/aptos-labs/aptos-core#main
+primary_contact: security@aptoslabs.com
+homepage: https://aptos.dev
+disabled: false
+pgp: |
+  -----BEGIN PGP PUBLIC KEY BLOCK-----
+
+  mDMEaskAEBYJKwYBBAHaRw8BAQdAeqNTHbNMT9d12x55dfHXCJnp4NiRqBGbE7XX
+  WsdJop60J0FwdG9zIFNlY3VyaXR5IDxzZWN1cml0eUBhcHRvc2xhYnMuY29tPoiv
+  BBMWCgBXFiEEHsB+9N4cdyzbzs7m3Vp/Q65uCxQFAmrJABAbFIAAAAAABAAObWFu
+  dTIsMi41KzEuMTIsMCwzAhsDBQsJCAcCAiICBhUKCQgLAgQWAgMBAh4HAheAAAoJ
+  EN1af0OubgsUzjQA/ArP/31m3GkISgVSNu4i0XWoTHfrA0E3cAD9RtavTb4zAQC/
+  as18O7fQMmfIiSv+UHLAfQ5Ku+8S1DNqqcnYYo5cBLg4BGrJABASCisGAQQBl1UB
+  BQEBB0CxCmVqkaghHmsWaDSdHxRPduc79UrPqsL7erEEUQ/qMgMBCAeIlAQYFgoA
+  PBYhBB7AfvTeHHcs287O5t1af0OubgsUBQJqyQAQGxSAAAAAAAQADm1hbnUyLDIu
+  NSsxLjEyLDAsMwIbDAAKCRDdWn9Drm4LFFJrAQDAjfq4CWnPGje+z7KKJq2ZN6BV
+  C2OISZuVIfAoSlO6ywD/RkM8GnBB/L3QwCJtURLXPUjGurxoJDCz0YrAH3iQoAU=
+  =Vcoi
+  -----END PGP PUBLIC KEY BLOCK-----
