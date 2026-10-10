@@ -1,0 +1,22 @@
+repo: https://github.com/onetimesecret/onetimesecret#main
+primary_contact: security@onetimesecret.com
+homepage: https://onetimesecret.com
+disabled: false
+# Reports are encrypted to this key (fingerprint 5766 C994 D558 B4B1 39D2  B478 5500 3AC6 B807 3081).
+pgp: |
+  -----BEGIN PGP PUBLIC KEY BLOCK-----
+
+  xjMEZmS8+RYJKwYBBAHaRw8BAQdAbay0tSot8a/cYvRlPfIsuoe3lcoaodgi
+  Mx8cqsEi+k/NN3NlY3VyaXR5QG9uZXRpbWVzZWNyZXQuY29tIDxzZWN1cml0
+  eUBvbmV0aW1lc2VjcmV0LmNvbT7CjAQQFgoAPgWCZmS8+QQLCQcICZBVADrG
+  uAcwgQMVCAoEFgACAQIZAQKbAwIeARYhBFdmyZTVWLSxOdK0eFUAOsa4BzCB
+  AAD6cgEA+Tr3Fjiv92BocrXUO8FS8R1/fw17Rry5ItXWFH7KV/sA/iGKLUfA
+  E0NbjaorT3RMllWasLDFXlpOnTQzg8dnXnUFzjgEZmS8+RIKKwYBBAGXVQEF
+  AQEHQHlDD7lZrb922ebdY6S8oAGt63/oaZc5vIK1VVj40sM3AwEIB8J4BBgW
+  CgAqBYJmZLz5CZBVADrGuAcwgQKbDBYhBFdmyZTVWLSxOdK0eFUAOsa4BzCB
+  AACT0wD9FsgRsu/tnb6hNIhjGpGxJGFyyNYX4C/c4bp4D5TBNCUA/jwM+vlF
+  n4H9zAfl2XH74JbW7OAohb+bTABqfNtGVnMH
+  =Y/kS
+  -----END PGP PUBLIC KEY BLOCK-----
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
