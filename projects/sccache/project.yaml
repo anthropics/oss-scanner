@@ -1,0 +1,7 @@
+repo: https://github.com/mozilla/sccache#main
+
+primary_contact: sledru@mozilla.com
+
+homepage: https://github.com/mozilla/sccache
+
+disabled: false

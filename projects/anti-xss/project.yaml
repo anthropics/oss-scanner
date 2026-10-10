@@ -1,0 +1,5 @@
+repo: https://github.com/voku/anti-xss
+primary_contact: lars@moelleken.org
+homepage: https://github.com/voku/anti-xss
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
