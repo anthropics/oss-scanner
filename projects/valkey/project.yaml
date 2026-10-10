@@ -1,0 +1,4 @@
+repo: https://github.com/valkey-io/valkey#unstable
+primary_contact: security@lists.valkey.io
+homepage: https://valkey.io
+disabled: false
