@@ -1,0 +1,8 @@
+# cryptsetup: userspace setup tool and library (libcryptsetup) for Linux dm-crypt / LUKS,
+# dm-verity (veritysetup) and dm-integrity (integritysetup).
+#
+# Upstream development happens on GitLab; GitHub (mbroz/cryptsetup) and kernel.org are mirrors.
+repo: https://gitlab.com/cryptsetup/cryptsetup#main
+primary_contact: gmazyland@gmail.com
+homepage: https://gitlab.com/cryptsetup/cryptsetup
+disabled: false
