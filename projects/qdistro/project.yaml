@@ -1,0 +1,5 @@
+repo: https://github.com/qdistro/qdistro#main
+primary_contact: jan@kotek.net
+homepage: https://qdistro.org
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
