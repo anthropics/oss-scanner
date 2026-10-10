@@ -230,8 +230,16 @@ cd /src/autogpt_platform/frontend
 - `next start` warns that it doesn't work with standalone output; it serves everything anyway.
 - Anything that needs an API key logs errors and fails offline (LLM calls, embeddings, third-party integrations).
 
-**Frontend tests**: `cd /src/autogpt_platform/frontend && pnpm test:unit` runs Vitest with MSW, which works
-offline. Playwright browsers are not installed.
+**Frontend tests** use Vitest with MSW, which works offline. Most test files are in `__tests__` folders next to the
+code they test:
+
+```
+cd /src/autogpt_platform/frontend
+pnpm exec vitest run src/lib/auth
+```
+
+- The whole suite takes over 30 minutes on two CPUs, so run the folders you need; `src/lib/auth` takes 40 seconds.
+- Playwright browsers are not installed.
 
 ## How we rate severity
 
