@@ -1,0 +1,21 @@
+# Enrollment for Anthropic OSS Scanner, a staging copy.
+#
+# This file does nothing here. To enroll, a core maintainer copies it to
+# projects/ffc-footer-only-template/project.yaml in a fork of
+# https://github.com/anthropics/oss-scanner, runs tools/validate.py and
+# `tools/check ffc-footer-only-template`, and opens the PR. See
+# .oss-scanner/README.md and FreeForCharity/FFC-Cloudflare-Automation#1582.
+#
+# Email addresses here become PUBLIC in the anthropics/oss-scanner repository.
+
+repo: https://github.com/FreeForCharity/FFC-IN-Footer_Only_Template#main
+
+primary_contact: clarkemoyer@freeforcharity.org
+
+homepage: https://freeforcharity.org/website-templates/
+
+disabled: false
+
+dockerfile: .oss-scanner/Dockerfile
+
+threat_model: .oss-scanner/threat_model.md
