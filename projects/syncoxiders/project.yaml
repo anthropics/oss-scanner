@@ -1,0 +1,5 @@
+repo: https://github.com/radumarias/syncoxiders
+primary_contact: radumarias@gmail.com
+homepage: https://oxfer.app
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
