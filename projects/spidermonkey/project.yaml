@@ -1,0 +1,6 @@
+repo: https://github.com/mozilla-firefox/firefox#main
+primary_contact: fuzzing@mozilla.com
+auto_ccs:
+  - jdemooij@mozilla.com
+homepage: https://spidermonkey.dev
+disabled: false
