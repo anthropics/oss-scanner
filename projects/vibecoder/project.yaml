@@ -1,0 +1,35 @@
+# Copy this file to projects/<name>/project.yaml and fill in the fields below.
+
+# REQUIRED. The ONE git repository to scan, as an https:// URL. Optionally add #branch or #tag to pin one.
+repo: https://github.com/stSoftwareAU/VibeCoder#main
+
+# REQUIRED. Who should we email our reports to, and use as the primary contact for questions.
+primary_contact: security@stsoftware.com.au
+
+# Optional. Additional email addresses we will CC on disclosure reports.
+auto_ccs:
+  - maintainer@stsoftware.com.au
+
+# Optional. The project's home page.
+homepage: https://github.com/stSoftwareAU/VibeCoder
+
+# Optional. Your armored OpenPGP public key. When set, every report is encrypted to it and goes to primary_contact only
+# (so it cannot be combined with auto_ccs).
+# Paste the whole block, including the BEGIN line and END line.
+# pgp: |
+#   -----BEGIN PGP PUBLIC KEY BLOCK-----
+#   mDMEZ...
+#   -----END PGP PUBLIC KEY BLOCK-----
+
+# Optional. true pauses reports without removing the enrolment; false (or omitting it) enables your project.
+disabled: false
+
+# REQUIRED: a Dockerfile (start from templates/Dockerfile) is required in one of two places:
+#   - in your repository (recommended), in which case you should provide the path of the file in your repo below
+#   - in this repository, next to this file, as projects/<name>/Dockerfile, in which case you should delete the line below
+dockerfile: .oss-scanner/Dockerfile
+
+# Optional, but strongly recommended: a threat_model.md (start from templates/threat_model.md) goes in one of two places:
+#   - in your repository (recommended), in which case you should provide the path of the file in your repo below
+#   - in this repository, next to this file, as projects/<name>/threat_model.md, in which case you should delete the line below
+threat_model: .oss-scanner/threat_model.md
