@@ -1,0 +1,5 @@
+repo: https://github.com/DrMorgan73/getcuravia-site#master
+primary_contact: info@iecincglobal.com
+homepage: https://www.getcuravia.com
+disabled: false
+dockerfile: Dockerfile
