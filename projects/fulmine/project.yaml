@@ -1,0 +1,5 @@
+# Fulmine.js: drop-in Express 5 replacement on uWebSockets.js.
+repo: https://github.com/nigrosimone/fulmine.js#main
+primary_contact: nigro.simone@gmail.com
+homepage: https://github.com/nigrosimone/fulmine.js
+disabled: false
