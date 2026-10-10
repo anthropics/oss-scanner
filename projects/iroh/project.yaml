@@ -1,0 +1,5 @@
+# iroh: peer-to-peer QUIC connections dialed by public key, with NAT traversal, relay servers and DNS/pkarr address lookup.
+# The Dockerfile and threat_model.md sit next to this file, so neither key is set here.
+repo: https://github.com/n0-computer/iroh#main
+primary_contact: security@n0.computer
+homepage: https://iroh.computer
