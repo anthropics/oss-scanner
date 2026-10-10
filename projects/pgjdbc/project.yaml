@@ -1,0 +1,7 @@
+repo: https://github.com/pgjdbc/pgjdbc#master
+
+primary_contact: pgsql-jdbc-security@lists.postgresql.org
+
+homepage: https://jdbc.postgresql.org
+
+disabled: false
