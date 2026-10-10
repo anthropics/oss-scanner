@@ -1,0 +1,11 @@
+# The one repository to scan.
+repo: https://github.com/phasespace-labs/palinode#main
+
+# Receives every report and build-failure log. Already published in SECURITY.md.
+primary_contact: paul@phasespace.co
+
+homepage: https://phasespace.co
+
+disabled: false
+
+# Dockerfile and threat_model.md sit next to this file, so neither `dockerfile:` nor `threat_model:` is set.
