@@ -1,0 +1,5 @@
+# laravolt/laravolt: the Laravolt Platform monorepo (admin panel, ACL, auth, CRUD, media/file manager, form and table builders, workflow).
+repo: https://github.com/laravolt/laravolt#master
+primary_contact: q@laravolt.dev
+homepage: https://laravolt.dev
+disabled: false
