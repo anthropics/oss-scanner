@@ -1,0 +1,6 @@
+repo: https://github.com/blockmineJS/blockmine#master
+primary_contact: merkkaa1@gmail.com
+homepage: https://github.com/blockmineJS/blockmine
+disabled: false
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
