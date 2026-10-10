@@ -1,4 +1,4 @@
-# Keeps the pinned GitHub Actions (the CLA workflow) up to date. There are no other package manifests in this repository.
+# Keeps the pinned GitHub Actions (the CLA and triage workflows) up to date. There are no other package manifests in this repository.
 version: 2
 updates:
   - package-ecosystem: "github-actions"
