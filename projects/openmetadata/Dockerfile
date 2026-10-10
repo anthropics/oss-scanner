@@ -1,17 +1,5 @@
-# Build image for Anthropic's OSS Scanner (https://github.com/anthropics/oss-scanner).
-#
-# This file and threat_model.md live next to project.yaml. The scanner copies this
-# Dockerfile into the OpenMetadata checkout at .oss-scanner/Dockerfile and builds it
-# with the repository root as the context. Keep the built checkout at /src.
-#
-# The scanner builds this file with the repository checkout as the build context, then
-# audits /src as root with NO network access. Anything needed to compile the server or run
-# its unit tests must therefore be downloaded here, at build time.
-#
-# Scope: the OpenMetadata server, i.e. openmetadata-service and openmetadata-mcp plus the
-# modules they depend on (common, openmetadata-spec and the shaded search clients). The UI,
-# the Python ingestion framework and the k8s operator are in /src as source only; see
-# threat_model.md next to this file.
+# Build OpenMetadata for Anthropic's OSS Scanner.
+# The scanner uses the repository root as the build context and audits /src offline.
 #
 # The JDK base and Maven pins match docker/olivaw/Dockerfile; bump them together.
 FROM eclipse-temurin:21-jdk-jammy@sha256:dbfd085220ae632a0830166e443747d1ee89e9038d92e3b48c3e5e9d8292b9a7
@@ -25,11 +13,12 @@ ENV DEBIAN_FRONTEND=noninteractive \
     MAVEN_HOME=/opt/maven \
     PATH=/opt/maven/bin:$PATH
 
-# git: openmetadata-service's buildnumber-maven-plugin reads the commit from /src/.git.
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends ca-certificates curl git \
+    && apt-get install -y --no-install-recommends ca-certificates curl git make \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
+
+RUN ln -s "${JAVA_HOME}/bin/java" /usr/bin/java
 
 RUN curl -fsSL --retry 3 --retry-all-errors \
         "https://archive.apache.org/dist/maven/maven-3/${MAVEN_VERSION}/binaries/apache-maven-${MAVEN_VERSION}-bin.tar.gz" \
@@ -44,17 +33,10 @@ RUN curl -fsSL --retry 3 --retry-all-errors \
 COPY . /src
 WORKDIR /src
 
-# Build and install the server modules (and, through -am, common, openmetadata-spec and the
-# shaded search clients) into /root/.m2, so that one module can be rebuilt and tested offline
-# without -am, e.g.
-#   mvn -o -pl openmetadata-service test -Dtest=JwtFilterTest
-# Test classes are compiled here, not run.
-RUN mvn -B -ntp -DskipTests install -pl openmetadata-service,openmetadata-mcp -am
+RUN make install_antlr_cli
 
-# -DskipTests never resolves surefire's JUnit provider, so run the security unit tests once:
-# that downloads it for offline use and proves the test setup works. Test failures are
-# reported but do not fail the build; a broken test setup does.
-RUN mvn -B -ntp -pl openmetadata-service surefire:test \
-        -Dtest='org/openmetadata/service/security/**/*Test' \
-        -Dsurefire.failIfNoSpecifiedTests=false \
-        -Dmaven.test.failure.ignore=true
+# Build and install all Maven modules, including their test classes.
+RUN mvn -B -ntp -DskipTests install
+
+# Run default unit tests in every module; report failures without stopping image setup.
+RUN mvn -B -ntp --fail-never surefire:test

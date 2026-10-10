@@ -1,7 +1,7 @@
 # Threat model
 
-The scanner reads this file before it starts. It covers the OpenMetadata **server**, the part
-the Dockerfile next to this file builds. For general deployment guidance see
+The scanner reads this file before it starts. It covers OpenMetadata, with the highest priority
+on the server's security boundaries. For general deployment guidance see
 [THREAT_MODEL.md](https://github.com/open-metadata/OpenMetadata/blob/main/THREAT_MODEL.md).
 The scope, trust model and severity guidance below apply to this scan.
 
@@ -68,28 +68,27 @@ Untrusted input reaches the server through:
 
 ### Lower priority and out of scope
 
-- Lower priority, and not built in this image: the UI (`openmetadata-ui`,
-  `openmetadata-ui-core-components`), the Python ingestion framework (`ingestion/`) and
-  `openmetadata-airflow-apis`, which run inside the operator's own infrastructure with credentials
-  the operator gives them, and the Kubernetes operator, SDKs and clients. Stored XSS is in scope
-  when the server accepts or returns content it is meant to sanitize.
+- Lower priority: the UI (`openmetadata-ui`, `openmetadata-ui-core-components`), the Python ingestion
+  framework (`ingestion/`), `openmetadata-airflow-apis`, the Kubernetes operator, SDKs and clients.
+  Ingestion and Airflow run inside the operator's own infrastructure with credentials the operator
+  gives them. Stored XSS is in scope when OpenMetadata renders untrusted content for other users.
 - Out of scope: tests (`**/src/test/**`, `openmetadata-integration-tests`, Playwright), `examples/`,
   `scripts/`, `docker/` development and quickstart files, documentation, and CI workflows.
 
 ## How to exercise it
 
-- `/src` is the checkout. The image ran
-  `mvn -DskipTests install -pl openmetadata-service,openmetadata-mcp -am`, so those modules and the
-  ones they depend on are compiled and installed in `/root/.m2`. JDK 21 and Maven 3.9.9 are on the
-  `PATH`. There is no network, database or search engine, so the server itself cannot start here.
-- Run unit tests offline without `-am`:
-  `mvn -o -pl openmetadata-service test -Dtest=JwtFilterTest` (or `-pl openmetadata-mcp`).
-  Do not combine `-am` with the `compile` or `test` phases: the shaded Elasticsearch and OpenSearch
-  clients only exist after `package`. After changing `common` or `openmetadata-spec`, run
-  `mvn -o -DskipTests install -pl openmetadata-service -am` first.
+- `/src` is the checkout. The image ran `mvn -DskipTests install` for the entire Maven reactor,
+  followed by `mvn surefire:test` with the project's default unit-test selection. Maven artifacts,
+  frontend dependencies and test providers are cached in the image. JDK 21 and Maven 3.9.9 are on
+  the `PATH`. Python ingestion dependencies are not installed by Maven.
+- Run the default Maven unit tests offline with `mvn -o --fail-never surefire:test`. This attempts
+  every module and reports failures in the console and each module's `target/surefire-reports`.
+  After changing sources, rebuild with `mvn -o -DskipTests install`, then rerun the tests. Installing
+  the full reactor keeps inter-module dependencies and shaded search clients available.
+- The image has no database, search engine or Docker daemon. Integration tests and a running
+  server need those services in a separate deployment.
 - Write proofs of concept as JUnit 5 and Mockito tests beside the existing ones, which mock the
-  database and search layers. `JwtFilterTest` and `DefaultAuthorizerTest` are good models; the
-  module's other tests show how each area is set up.
+  database and search layers. Follow the existing tests in the affected module for setup.
 - When an issue needs a running server, give the exact HTTP requests against a default deployment
   (`docker/docker-compose-quickstart`), stating the user and role that sends each one.
 
