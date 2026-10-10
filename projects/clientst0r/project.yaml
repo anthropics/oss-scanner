@@ -1,0 +1,20 @@
+# Client St0r — self-hosted, multi-tenant IT documentation, credential vault
+# and service desk for managed service providers.
+
+# REQUIRED. The ONE git repository to scan.
+repo: https://github.com/agit8or1/clientst0r#main
+
+# REQUIRED. Primary security contact (public).
+primary_contact: agit8or@agit8or.net
+
+# Optional. The project's home page.
+homepage: https://mspreboot.com
+
+# Optional. true pauses reports without removing the enrolment.
+disabled: false
+
+# REQUIRED: Dockerfile kept in our repository.
+dockerfile: .oss-scanner/Dockerfile
+
+# Optional: threat model kept in our repository.
+threat_model: .oss-scanner/threat_model.md
