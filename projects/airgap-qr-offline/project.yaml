@@ -1,0 +1,36 @@
+repo: https://github.com/chrislengerich/airgap-qr-offline#main
+primary_contact: chris.lengerich@gmail.com
+homepage: https://qrft.org
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
+disabled: false
+pgp: |
+  -----BEGIN PGP PUBLIC KEY BLOCK-----
+  
+  mQINBGp3s20BEADL/ZQDhInLBFSuPLXLoubat4tl/ADUzOF2PfwK0+ZUb23QUkLH
+  zBwzlUJYjINuqjwY4L8C3AgxH6VVHZBdmiaiuAxHlYHqQe7XuR2ASxnBzX8r4yuW
+  wmM9luoOBwvXDFOEn6Dl2iI2SIegxnfF6WbnpdG7GCT8ReUXpe55dD3xrIFi87jg
+  fda8g+HtDGJlC3bgqoXoosDaNZ2pVtkLJxzMlvFg66h7/OB4mc4XXVcXKdBS6rqY
+  /7HFOVv54Cxa9JDj63W25Q09gK0Xlda/+S67EqOZk/gqYIuAx2oovYITdFxDp8rt
+  Sm0o1cVmlZdA2f+6iY02yddFhQup+/qrQRdzg3XmY4AlnxJ4ZBLpUNiuLGySHubT
+  ACf19KVI0+GUUiWBmukzLiY+G3Si328pb3Ok6JnQMJp/CnC8n9PHRyyR98RcM26A
+  xYwel0D3HbhmvRnOtLPgW36n+PnyjQ3L43M7zs9/pEtFeEjqF/z4mUugi+RRrPfi
+  jkH2B+bLx+3M2pDbQKxGjfcdVKIs+EmlWHin7I670ieVOHPq6joMXEopEjxm3SJY
+  wHwkLPRw8RDoJ7s2QejXHidC93Bdgs6unfuH8IjUcRW8EyHBUHlRJbDvaSnScZ4Z
+  W6m11K8EECIQEhhHelWDNdoa3RQ7IobsFCY7KKTJB8bxNqZCnBihH6mJAwARAQAB
+  tCRKaWppIFMgPGtpLnNheTg5OStqaWppQHBhc3NtYWlsLm5ldD6JAk4EEwEKADgW
+  IQRk20A0YUU0RZw7lujz4qJk+ksJqwUCanezbQIbDQULCQgHAgYVCgkICwIEFgID
+  AQIeAQIXgAAKCRDz4qJk+ksJq7KMD/4zWK/Q1Z7eqhrd0P3EmlxcumO88I99p9uf
+  aDXBb+58zLlR/onqJ2axY426tCeO/c2+Xc+/1LsycmrMHFTciwDlP42dzhyz9voT
+  Xi/rZfl2wnVIwTV9G/QxLbKUxATuAOOKc7OW1DPwwBiBmXZh+NIjnCIa8DSGZkl+
+  ahaC5ZJKZPxszl4Au3+jdRXOmq1WIAoYuIONG8RyfngAMhevtwCQwuwQgo0U1KIQ
+  eUKfZQMWIWg1UY207IyBA1DYj+kTGc8P/MJ+luNsNA6z76hL4gdRGA4hJDZQ8A6/
+  hf6ytSXtI/XFqBBC5ZBaiMG93MbueoIbSUBJgkqZbRvOxqcRm2DT5ZXa+DLMhIgJ
+  R05vXbKl+yT+CKX3B7EflhmI/dXsiiGqpoTMLhGSAvYXkziHOGTKJhoeFjc+XiOB
+  5UauDMvHELLaRslauhmkz3yhxKo6vfr/7q0S7aP72O0aZ/uQfHWhXGkI/pqtNVc0
+  VAvsUyDG4sDlUIp8VRLla/yzQBkvxUpgsQcQeXb0ar2gJSNRbTLIwhw/kLrAVsL1
+  ddaAdLvPZ1LrXm4YqfQQuMUaThC0LUQgLnsgvkAj4yBbEDa4MJ2Yj0yri7Zk9zZ+
+  WLPozaM8iyJQALDPKH6DrQoC3YkfoYDXMDZFrjHSZaDHTFJIFC0yjXimTshRoy9g
+  cAUKVcxB2w==
+  =/txZ
+  -----END PGP PUBLIC KEY BLOCK-----
