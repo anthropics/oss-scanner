@@ -1,0 +1,8 @@
+repo: https://github.com/go-jose/go-jose#main
+primary_contact: security@letsencrypt.org
+auto_ccs:
+- mattm+oss-scanner@letsencrypt.org
+homepage: https://pkg.go.dev/github.com/go-jose/go-jose/v4
+disabled: false
+dockerfile: tests.Containerfile
+threat_model: threat_model.md
