@@ -1,0 +1,14 @@
+# Anthropic OSS Scanner enrolment for openapi-client-axios. See https://openapistack.co
+# Rules: https://github.com/anthropics/oss-scanner/blob/main/README.md
+
+repo: https://github.com/openapistack/openapi-client-axios
+
+# Security contact. Public already in SECURITY.md of every openapistack repository.
+primary_contact: support@openapistack.co
+
+homepage: https://openapistack.co
+
+disabled: false
+
+# Dockerfile and threat_model.md sit next to this file. To update them without a PR here, move them
+# to .oss-scanner/ in the repository and set dockerfile: / threat_model: accordingly.
