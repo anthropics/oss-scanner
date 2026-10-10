@@ -1,0 +1,20 @@
+# OPNManager (OPNMGR): self-hosted OPNsense fleet management.
+
+# REQUIRED. The ONE git repository to scan, as an https:// URL. Optionally add #branch or #tag to pin one.
+repo: https://github.com/agit8or1/OPNMGR#main
+
+# REQUIRED. Who should we email our reports to, and use as the primary contact for questions.
+# This address is PUBLIC once merged.
+primary_contact: agit8or@gmail.com
+
+# Optional. The project's home page.
+homepage: https://github.com/agit8or1/OPNMGR
+
+# Optional. true pauses reports without removing the enrolment; false (or omitting it) enables your project.
+disabled: false
+
+# Kept in the project repository so the build can change without a PR here.
+dockerfile: .oss-scanner/Dockerfile
+
+# Kept in the project repository.
+threat_model: .oss-scanner/threat_model.md
