@@ -1,0 +1,13 @@
+# HodeiShield Attest Verifier: an offline verifier (one bash script) for signed posture attestations.
+
+# The default branch, main, is always the latest release.
+repo: https://github.com/Hodeitek/hodeishield-attest-verifier
+
+# The contact SECURITY.md and README.md publish for vulnerability reports.
+primary_contact: security@hodeitek.com
+
+homepage: https://hodeishield.com
+
+disabled: false
+
+# No dockerfile: or threat_model: key. Both files sit next to this one.
