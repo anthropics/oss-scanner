@@ -1,0 +1,12 @@
+# St0r: a self-hosted web management interface for UrBackup servers.
+repo: https://github.com/agit8or1/St0r#main
+
+# The address you choose here is published in this public repository; see the note in the pull request.
+primary_contact: agit8or@agit8or.net
+
+homepage: https://github.com/agit8or1/St0r
+
+disabled: false
+
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
