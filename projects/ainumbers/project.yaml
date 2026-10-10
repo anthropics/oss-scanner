@@ -1,0 +1,47 @@
+# ainumbers — 674 deterministic financial-calculus kernels + ~740 static HTML
+# calculator pages. Static site, no server component.
+repo: https://github.com/PostOakLabs/ainumbers#main
+primary_contact: security@postoaklabs.com
+homepage: https://ainumbers.co
+pgp: |
+  -----BEGIN PGP PUBLIC KEY BLOCK-----
+  
+  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
+  ioc9Ih8I2jT8j4lEPEZwwGYR6sc73VmWWM6m
+  =r/u6
+  -----END PGP PUBLIC KEY BLOCK-----
