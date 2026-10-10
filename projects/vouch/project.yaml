@@ -1,0 +1,6 @@
+repo: https://github.com/vouch-sh/vouch#main
+primary_contact: security@vouch.sh
+homepage: https://vouch.sh
+disabled: false
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
