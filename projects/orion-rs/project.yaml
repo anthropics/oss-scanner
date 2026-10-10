@@ -1,0 +1,6 @@
+repo: https://github.com/orion-rs/orion#master
+
+primary_contact: brycx@protonmail.com
+
+# Optional. true pauses reports without removing the enrolment; false (or omitting it) enables your project.
+disabled: false
