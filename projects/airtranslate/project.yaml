@@ -1,0 +1,15 @@
+# OSS Scanner enrolment for AirTranslate (macOS live audio transcription/translation app, Apache-2.0).
+
+# REQUIRED. The git repository to scan, pinned to the default branch.
+repo: https://github.com/himomohi/AirTranslate#master
+
+# REQUIRED. Reports and build problems are emailed here.
+primary_contact: admin@roketsai.com
+
+# Optional. The project's home page (GitHub Pages site built from docs/ is not confirmed; repo URL used).
+homepage: https://github.com/himomohi/AirTranslate
+
+disabled: false
+
+# Dockerfile and threat_model.md are placed next to this file in the oss-scanner repo,
+# so no files need to be added to the AirTranslate repo and the dockerfile:/threat_model: keys are omitted.
