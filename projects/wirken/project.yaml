@@ -1,0 +1,6 @@
+# wirken: local gateway for AI agents across chat channels, with a permission gate, sandboxed exec and a hash-chained audit log.
+repo: https://github.com/gebruder/wirken#main
+primary_contact: security@ottenheimer.app
+homepage: https://wirken.ai
+dockerfile: docker/audit.Dockerfile
+threat_model: docs/threat-model.md
