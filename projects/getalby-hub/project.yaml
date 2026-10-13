@@ -1,0 +1,60 @@
+repo: https://github.com/getAlby/hub#master
+primary_contact: security@getalby.com
+homepage: https://albyhub.com
+disabled: false
+dockerfile: Dockerfile
+pgp: |
+  -----BEGIN PGP PUBLIC KEY BLOCK-----
+  Comment: B4A4 1AFC 9A15 0CCE A409  0D78 948A 7A9B 1B51 CDAE
+  Comment: security@getalby.com <security@getalby.com>
+
+  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
+  tl1hWI7J2H8nzbjO+iPGXYM+Uw==
+  =YDIV
+  -----END PGP PUBLIC KEY BLOCK-----
