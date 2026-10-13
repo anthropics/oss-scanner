@@ -1,0 +1,6 @@
+repo: https://github.com/mlflow-oidc/mlflow-oidc-auth#main
+primary_contact: opensource-security@kharkevich.com
+homepage: https://mlflow-oidc.github.io/mlflow-oidc-auth/
+disabled: false
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
