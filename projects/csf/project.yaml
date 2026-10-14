@@ -1,0 +1,19 @@
+# projects/csf/project.yaml in https://github.com/anthropics/oss-scanner
+# Enrols the Black-HOST continuation of CSF (ConfigServer Security & Firewall).
+
+# The ONE git repository to scan; #main pins the default branch explicitly.
+repo: https://github.com/Black-HOST/csf#main
+
+# Reports and build failures go here. This address is already the public security
+# contact in SECURITY.md, and it is published by this file.
+primary_contact: csf@black.host
+
+homepage: https://github.com/Black-HOST/csf/wiki
+
+# true pauses reports without withdrawing the enrolment.
+disabled: false
+
+# Both files live in the CSF repository so the build and the threat model can be
+# changed with a normal CSF pull request, without a pull request here.
+dockerfile: .github/security/Dockerfile
+threat_model: .github/security/threat_model.md
