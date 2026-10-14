@@ -1,0 +1,9 @@
+# python-garminconnect: Python 3 API wrapper for Garmin Connect.
+repo: https://github.com/cyberjunky/python-garminconnect#master
+
+# Public address; reports and build failures go here.
+primary_contact: ron@cyberjunky.nl
+
+homepage: https://github.com/cyberjunky/python-garminconnect
+
+disabled: false
