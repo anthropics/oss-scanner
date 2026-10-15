@@ -1,0 +1,10 @@
+# KashCal: offline-first Android calendar with CalDAV and CardDAV sync.
+# The Dockerfile and threat_model.md sit next to this file.
+
+repo: https://github.com/KashCal/KashCal#main
+
+primary_contact: kashcal@onekash.org
+
+homepage: https://kashcal.onekash.org
+
+disabled: false
