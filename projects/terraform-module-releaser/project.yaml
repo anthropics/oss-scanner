@@ -1,0 +1,11 @@
+# Terraform Module Releaser: a GitHub Action (TypeScript, Node 24) that versions, tags, releases, and documents
+# Terraform modules in monorepos.
+repo: https://github.com/techpivot/terraform-module-releaser#main
+
+primary_contact: security@techpivot.com
+
+homepage: https://github.com/marketplace/actions/terraform-module-releaser
+
+disabled: false
+
+# The Dockerfile and threat_model.md sit next to this file in projects/terraform-module-releaser/.
