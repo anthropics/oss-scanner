@@ -1,0 +1,5 @@
+# Lium: the decentralized GPU cloud on Bittensor Subnet 51 (validator, miner, executor node agent).
+repo: https://github.com/Datura-ai/lium-io#main
+primary_contact: rustam@lium.io
+homepage: https://lium.io
+disabled: false
