@@ -1,0 +1,16 @@
+# Cipansor IMS — information management system for Yayasan Pesantren Cipansor
+# (a boarding-school foundation in Tasikmalaya, West Java): TK Qur'an, SD IT,
+# SMP IT, SMA Qur'an + tahfidz. pnpm + Turborepo monorepo: Express 5 / Prisma 7
+# / Redis API, Next.js 16 web client, shared TypeScript contracts.
+repo: https://github.com/cipansor/cipansor#main
+
+# Public security contact (already in the repository's SECURITY.md), so this is
+# the foundation's general address rather than a personal one.
+primary_contact: admin@cipansor.or.id
+
+homepage: https://cipansor.or.id
+
+disabled: false
+
+# Dockerfile and threat_model.md live next to this file in this repository, so
+# neither key is set here.
