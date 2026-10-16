@@ -1,0 +1,12 @@
+# apowerb: open-source agentic framework (FastAPI + Google ADK) for building and running AI agents with
+# tool integration, RAG, text-to-SQL, webhooks and scheduled runs. Releases are cut from `main`.
+repo: https://github.com/apowerb/apowerb#main
+
+# The maintainer who receives reports.
+primary_contact: elom.gnaglo@gmail.com
+
+homepage: https://docs.apowerb.com/
+
+disabled: false
+
+# Dockerfile and threat_model.md live next to this file.
