@@ -1,0 +1,69 @@
+# QtPass: multi-platform GUI for pass, the standard Unix password manager.
+# main is the development branch (2.0); the 1.8 branch only gets backports.
+repo: https://github.com/IJHack/QtPass#main
+
+# The address published in QtPass's SECURITY.md for vulnerability reports.
+primary_contact: help@qtpass.org
+
+homepage: https://qtpass.org
+
+disabled: false
+
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
+
+# Reports are encrypted to the maintainer's key (Anne Jan Brouwer,
+# DF7FEF8DFBA721E320B18F5615B63ADCA0034B9E) and go to primary_contact only.
+pgp: |
+  -----BEGIN PGP PUBLIC KEY BLOCK-----
+  
+  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
+  SHvYxkeoQw==
+  =4lOT
+  -----END PGP PUBLIC KEY BLOCK-----
