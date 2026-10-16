@@ -1,0 +1,7 @@
+# Zephyr: a desktop GUI client for the Mihomo (Clash Meta) proxy core, built with Tauri and Rust.
+# It downloads and runs the proxy core, imports remote subscription configs, and can route the
+# whole machine's traffic (system proxy / TUN mode), so its users depend on it being trustworthy.
+# The Dockerfile and threat_model.md sit next to this file, so neither key is set here.
+repo: https://github.com/Juwan-Hwang/Zephyr#main
+primary_contact: juwan.hwang@proton.me
+homepage: https://github.com/Juwan-Hwang/Zephyr
