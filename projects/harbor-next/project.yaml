@@ -1,0 +1,5 @@
+repo: https://github.com/container-registry/harbor-next#main
+primary_contact: infosec@container-registry.com
+homepage: https://container-registry.com
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
