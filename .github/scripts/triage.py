@@ -88,10 +88,26 @@ ASSOCIATIONS = {
     "MEMBER": "member of the owning organisation",
     "COLLABORATOR": "collaborator on the repository",
 }
-# Who merged the repository's latest pull requests.
-RECENT_MERGES = """query($owner: String!, $name: String!) { repository(owner: $owner, name: $name) {
-  pullRequests(states: MERGED, first: 100, orderBy: {field: UPDATED_AT, direction: DESC}) {
-    nodes { mergedBy { login } } } } }"""
+# Where a project names its maintainers, if it does.
+MAINTAINER_FILES = (".github/CODEOWNERS", "CODEOWNERS", "docs/CODEOWNERS", "MAINTAINERS", "MAINTAINERS.md", "OWNERS")
+# What shows whether an account can push to the repository: who merged its latest pull requests and wrote its latest
+# commits, those files, and whether GitHub marks the account's reviews there as from someone with push access.
+MAINTAINER_BLOBS = " ".join(
+    f'f{index}: object(expression: "HEAD:{path}") {{ ... on Blob {{ text }} }}'
+    for index, path in enumerate(MAINTAINER_FILES)
+)
+PUSH_EVIDENCE = (
+    """query($owner: String!, $name: String!, $login: String!, $reviewed: String!) {
+  repository(owner: $owner, name: $name) {
+    pullRequests(states: MERGED, first: 100, orderBy: {field: UPDATED_AT, direction: DESC}) {
+      nodes { mergedAt mergedBy { login } } }
+    defaultBranchRef { target { ... on Commit { history(first: 100) { nodes { author { user { login } } } } } } }
+    """
+    + MAINTAINER_BLOBS
+    + """ }
+  search(query: $reviewed, type: ISSUE, first: 10) { nodes { ... on PullRequest {
+    reviews(author: $login, first: 5) { nodes { authorCanPushToRepository } } } } } }"""
+)
 # Who opened the repository's latest issues and pull requests, and who wrote its latest commits.
 PARTICIPANTS = """query($owner: String!, $name: String!, $threads: Int!) { repository(owner: $owner, name: $name) {
   issues(first: $threads, orderBy: {field: CREATED_AT, direction: DESC}) {
@@ -519,33 +535,70 @@ def license_row(gh: GitHub, slug: str, meta: dict) -> tuple[str, str]:
     return WARN, f"GitHub cannot name the license; its file says {code(says, 80)}"
 
 
+def push_evidence(gh: GitHub, slug: str, login: str) -> dict:
+    """What shows whether an account can push to the repository. `shown` lists what GitHub itself says for it;
+    `denied` is true when GitHub says that it cannot now; `listed` is the project's file that names it, if any."""
+    owner, name = slug.split("/")
+    reviewed = f"repo:{slug} is:pr reviewed-by:{login}"
+    found = gh.graphql(PUSH_EVIDENCE, owner=owner, name=name, login=login, reviewed=reviewed)
+    repository = found["repository"]
+
+    def by_them(node: dict | None) -> bool:
+        return ((node or {}).get("login") or "").lower() == login.lower()
+
+    merges = repository["pullRequests"]["nodes"]
+    theirs = [pull for pull in merges if by_them(pull["mergedBy"])]
+    history = ((repository["defaultBranchRef"] or {}).get("target") or {}).get("history") or {"nodes": []}
+    wrote = sum(1 for commit in history["nodes"] if by_them((commit["author"] or {}).get("user")))
+    # GitHub says of each review whether its author can push to the repository now, whenever the review was made.
+    pulls = (found.get("search") or {}).get("nodes") or []
+    reviews = [review for pull in pulls for review in (pull.get("reviews") or {}).get("nodes", [])]
+    flags = {review["authorCanPushToRepository"] for review in reviews}
+    # As @login or as a link to the profile, and as nothing longer: a bare name could be anyone's, and the name
+    # must not be found inside an email address (someone@login.org), a team (@login/team) or a link to a repository.
+    name = re.escape(login)
+    named = re.compile(rf"(?:(?<![\w.@/+-])@{name}(?![\w.@/-])|github\.com/{name}(?![\w.-])(?!/[\w.-]))", re.IGNORECASE)
+    files = [repository.get(f"f{index}") or {} for index in range(len(MAINTAINER_FILES))]
+    listed = [path for path, file in zip(MAINTAINER_FILES, files) if named.search(file.get("text") or "")]
+
+    shown = []
+    if theirs:
+        shown.append(f"merged {len(theirs)} of the last {len(merges)} pull requests")
+    if True in flags:
+        shown.append("reviews as someone who can push")
+    return {
+        "shown": shown,
+        "denied": flags == {False},
+        "listed": listed[0] if listed else None,
+        "merged_lately": sum(1 for pull in theirs if parse_time(pull["mergedAt"]) > YEAR_AGO),
+        "merges": len(merges),
+        "wrote": wrote,
+        "commits": len(history["nodes"]),
+    }
+
+
 def maintainer_row(gh: GitHub, slug: str, meta: dict, login: str) -> tuple[str, str]:
     """Is the person who opened the pull request an active maintainer of the repository? Only public signals: a
-    role GitHub shows (owner, member, collaborator) or, failing that, having merged recent pull requests."""
+    role GitHub shows (owner, member, collaborator), and what shows that they can push to the repository. The two
+    differ: a member of the owning organisation need not have any say over this repository, and a busy
+    contributor need not have the right to merge."""
     if not LOGIN.fullmatch(login):
         return WARN, "not a user account"
 
-    roles = []
-    if meta["owner"]["login"].lower() == login.lower():
+    roles, owns = [], meta["owner"]["login"].lower() == login.lower()
+    if owns:
         roles.append(ASSOCIATIONS["OWNER"])
     else:
         # GitHub labels each issue and pull request with what its author is to the repository.
         authored = gh.get("search/issues", q=f"repo:{slug} author:{login}", per_page=1)["items"]
         if authored and authored[0]["author_association"] in ASSOCIATIONS:
             roles.append(ASSOCIATIONS[authored[0]["author_association"]])
+            owns = authored[0]["author_association"] == "OWNER"  # an owner of the organisation
     organisation = quote(meta["owner"]["login"], safe="")
     if not roles and gh.find(f"orgs/{organisation}/public_members/{login}") is not None:
         roles.append("public member of the owning organisation")
 
-    merged = 0
-    if not roles:
-        # A private member of the organisation shows no role, but merging takes write access.
-        owner, name = slug.split("/")
-        merges = gh.graphql(RECENT_MERGES, owner=owner, name=name)["repository"]["pullRequests"]["nodes"]
-        merged = sum(1 for pull in merges if ((pull["mergedBy"] or {}).get("login") or "").lower() == login.lower())
-        if merged:
-            roles.append(f"merged {merged} of the last {len(merges)} pull requests")
-
+    push = push_evidence(gh, slug, login)
     # Listed, not counted: GitHub does not say how many pages a search by author has in a very large repository.
     recent = len(gh.get(f"repos/{slug}/commits", author=login, since=iso(YEAR_AGO), per_page=100))
     commits = f"{recent}+" if recent == 100 else recent
@@ -554,11 +607,38 @@ def maintainer_row(gh: GitHub, slug: str, meta: dict, login: str) -> tuple[str, 
         rank = f"#{contributors.index(login.lower()) + 1} contributor"
     else:
         rank = "not in the top 100 contributors" if contributors else "contributor rank unavailable"
-    evidence = f"{', '.join(roles) or 'no maintainer role visible'}; {commits} commits in the last 12 months; {rank}"
+    role = ", ".join(roles) or "no maintainer role visible"
+    activity = f"{commits} commits in the last 12 months; {rank}"
 
-    if roles and (recent or merged):
-        return OK, evidence
-    return (WARN if roles or recent else FAIL), evidence
+    named = f"named in {code(push['listed'])}" if push["listed"] else None
+    if push["denied"] and not owns:
+        # What GitHub says of their reviews is how things stand now. It outweighs pull requests they merged while
+        # they still could, and a list of maintainers that may not have been kept up.
+        note = "GitHub shows their reviews as from someone who cannot push to the repository"
+        past = "; ".join(part for part in [role, *push["shown"], named, activity] if part)
+        return WARN, f"{note}: a core maintainer should confirm ({past})"
+
+    # The project's list of maintainers is text that a name was looked for in. It backs up what GitHub shows, a role
+    # included; alone it proves nothing.
+    proof = list(push["shown"])
+    if named and (proof or roles):
+        proof.append(named)
+    elif named:
+        activity += f"; {named}"
+
+    if owns or proof:
+        evidence = "; ".join([role, *proof, activity])
+        if recent or push["merged_lately"]:
+            return OK, evidence
+        return WARN, f"can push, but has not committed or merged in the last 12 months ({evidence})"
+    if roles and (recent or push["wrote"]):
+        # In a repository that works by pull requests, a maintainer leaves a trace in merging or reviewing them.
+        if push["merges"] and push["wrote"] < REGULAR_COMMITS:
+            trace = f"merged none of its last {push['merges']} pull requests, reviewed none"
+            trace += f", wrote {push['wrote']} of its last {push['commits']} commits"
+            return WARN, f"{role}, but nothing shows that they can push to this repository: {trace} ({activity})"
+        return OK, f"{role}; {activity}"
+    return (WARN if roles or recent else FAIL), f"{role}; {activity}"
 
 
 def security_policy(gh: GitHub, slug: str, owner: str) -> tuple[str, str] | None:
