@@ -1,0 +1,5 @@
+repo: https://github.com/kyverno/kyverno
+primary_contact: kyverno-security@googlegroups.com
+homepage: https://kyverno.io
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
