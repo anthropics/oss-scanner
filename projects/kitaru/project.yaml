@@ -1,0 +1,9 @@
+# Kitaru: the open-source, self-hostable runtime for recording, replaying, and improving AI agents. The develop
+# branch is where all changes land before release, so scanning it catches issues before they ship.
+repo: https://github.com/zenml-io/kitaru#develop
+
+primary_contact: security@zenml.io
+
+homepage: https://kitaru.ai
+
+disabled: false
