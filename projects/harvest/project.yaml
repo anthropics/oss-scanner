@@ -1,0 +1,5 @@
+repo: https://github.com/NetApp/harvest#main
+primary_contact: ng-harvest-files@netapp.com
+homepage: https://netapp.github.io/harvest/
+disabled: false
+dockerfile: .oss-scanner/Dockerfile
