@@ -1,0 +1,6 @@
+repo: https://github.com/cybergarage/mupnp#master
+primary_contact: skonno@cybergarage.org
+homepage: https://github.com/cybergarage/mupnp
+disabled: false
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
