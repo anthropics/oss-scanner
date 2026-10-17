@@ -1,0 +1,8 @@
+# Hive: autonomous engineering platform that runs AI coding agents against GitHub repositories behind a
+# deterministic policy proxy, with a multi-tenant hosted hub. The Go module lives at src/ in the repository;
+# the Dockerfile and threat model sit in the repository at the paths below.
+repo: https://github.com/hivecommons/hive#v5
+primary_contact: andy@clubanderson.com
+homepage: https://hive.hivecommons.dev/
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
