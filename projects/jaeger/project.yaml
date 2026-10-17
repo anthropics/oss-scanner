@@ -1,0 +1,4 @@
+repo: https://github.com/jaegertracing/jaeger#main
+primary_contact: cncf-jaeger-maintainers@lists.cncf.io
+homepage: https://www.jaegertracing.io
+disabled: false
