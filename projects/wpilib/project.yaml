@@ -1,0 +1,8 @@
+# Scan the development branch of WPILib's core libraries and desktop tools.
+repo: https://github.com/wpilibsuite/allwpilib#main
+
+primary_contact: gr-wpilib_developers@wpi.edu
+
+homepage: https://wpilib.org/
+
+# Dockerfile and threat_model.md live beside this file in the enrollment repo.
