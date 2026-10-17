@@ -1,0 +1,7 @@
+# Micronaut Framework core: compile-time dependency injection, AOP, HTTP server and client, routing, JSON binding.
+# The default branch of the repository is the current development line (5.x), which is what CI builds.
+repo: https://github.com/micronaut-projects/micronaut-core
+primary_contact: foundation@micronaut.io
+homepage: https://micronaut.io
+disabled: false
+# The Dockerfile and threat_model.md sit next to this file.
