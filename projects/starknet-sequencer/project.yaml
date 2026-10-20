@@ -1,0 +1,6 @@
+# Starknet sequencer (Apollo): the gateway, mempool, batcher, consensus, state sync and the blockifier transaction
+# executor, on the v0.14.4 release branch.
+# The Dockerfile and threat_model.md sit next to this file, so neither key is set here.
+repo: https://github.com/starkware-libs/sequencer#main-v0.14.4
+primary_contact: security@starkware.co
+homepage: https://www.starknet.io
