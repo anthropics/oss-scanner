@@ -83,6 +83,16 @@ Less: metering, the debug-transcript relay, voice, search, and the PostHog relay
 
 The checkout is at `/src` with dependencies installed and no network. Run `bun run test` for `src/` and the `shared/` roots (happy-dom), `bun run test:backend` for the API (in-memory PGlite, no Postgres), `bun run test:agent-core`, `bun run test:agent-core:browser` (Chromium and WebKit through Playwright; on an arm64 host WebKit's OPFS case falls back to in-memory storage, while it passes on x86 in CI), `cd cli && bun run test`, and `cargo test --offline` in `src-tauri/` and `crates/thunderbolt-acp-client/`. A bare `bun test` at the repository root hangs on tests that wait for services. The backend pins an older Bun than the rest of the repository; the image picks it whenever the working directory is under `backend/`, so run backend commands from there (`cd backend && bun test <file>`) rather than with `--cwd`.
 
+The live app also runs offline in this image. Start three processes:
+
+```
+cd /src && bun -e "await (await import('./e2e/fake-provider.ts')).createFakeProvider(9878)" &
+cd /src/backend && DATABASE_DRIVER=pglite DATABASE_URL=/tmp/tb-pglite BETTER_AUTH_SECRET=offline-check-secret-at-least-32-characters BETTER_AUTH_URL=http://localhost:8000 WAITLIST_AUTO_APPROVE_DOMAINS=example.test RATE_LIMIT_ENABLED=false ANTHROPIC_API_KEY=fake ANTHROPIC_BASE_URL=http://localhost:9878 POWERSYNC_JWT_SECRET=powersync-dev-secret POWERSYNC_JWT_KID=powersync-dev bun src/index.ts &
+cd /src && VITE_SKIP_ONBOARDING=true bun run dev &
+```
+
+Open `http://localhost:1420` in Playwright's Chromium and sign in with any `@example.test` address. The backend log prints the code after `OTP code:`, and typing all eight digits submits the form. Pick an Anthropic model such as Opus 5.5; the backend routes it to the fake provider. Private (Tinfoil) models and sync need the network. Drop `RATE_LIMIT_ENABLED=false` to test rate limits.
+
 For a reproducer against real routes, use `createTestApp` from `backend/src/test-utils/e2e.ts`. It builds the real app, signs a user in through the real OTP flow and returns a signed bearer. It takes an injected `fetchFn` and `dnsLookup`; `e2eDnsLookup` resolves `private.test` to `192.168.1.1`. Good models are `backend/src/proxy/e2e.test.ts` and the cross-user cases in `backend/src/dal/powersync.test.ts`. The Playwright specs in `e2e/`, including the E2EE attacks in `e2e/e2ee/attacks/`, need a running stack and will not run here. Unit tests use happy-dom, which does not enforce iframe sandboxing or CSP; to show a sandbox or CSP finding, use a standalone Playwright script against the installed Chromium or WebKit, as `scripts/agent-core-browser-check.ts` does.
 
 ## How we rate severity
