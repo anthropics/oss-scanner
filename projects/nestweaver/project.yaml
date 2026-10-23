@@ -1,0 +1,8 @@
+# NestWeaver: a code and notes knowledge graph with a CLI, daemon, MCP server, gRPC server and web UI.
+# The Dockerfile and threat_model.md live in the NestWeaver repository under .oss-scanner/.
+repo: https://github.com/Kehl-io/nestweaver#main
+primary_contact: kory@kehl.io
+homepage: https://nestweaver.kehl.io
+disabled: false
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
