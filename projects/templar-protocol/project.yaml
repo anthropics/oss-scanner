@@ -1,0 +1,9 @@
+# Templar Protocol: overcollateralized lending markets, curated vaults and price oracles on NEAR and Stellar (Soroban).
+# The contracts custody user deposits and the oracles price every loan, so a bug here can mean direct loss of user funds.
+# The Dockerfile and threat_model.md live in the repository, at the paths below.
+repo: https://github.com/Templar-Protocol/contracts#dev
+primary_contact: security@templarprotocol.com
+homepage: https://templarfi.org
+disabled: false
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
