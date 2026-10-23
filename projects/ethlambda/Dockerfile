@@ -22,10 +22,6 @@ RUN make leanSpec/fixtures
 
 RUN cargo build --locked --profile release-fast --bin ethlambda \
     && cargo test --locked --profile release-fast --workspace --no-run \
-    && cargo test --locked --profile release-fast -p ethlambda-types --lib \
-        --features preset-minimal --no-run \
-    && cargo test --locked --profile release-fast -p ethlambda-state-transition --lib \
-        --features preset-minimal --no-run \
     && cargo test --locked --manifest-path tooling/event-monitor/Cargo.toml --no-run
 
 ENV CARGO_NET_OFFLINE=true

@@ -45,7 +45,7 @@ For denial of service, quantify the input and attacker cost against CPU, memory,
 
 ## How to exercise it offline
 
-The source is at `/src`; all Cargo and Git dependencies, leanSpec fixtures, and `release-fast` build/test outputs are installed. `CARGO_NET_OFFLINE=true` is set. Use the `release-fast` profile: the repository notes that signature verification and aggregation can stack-overflow in an unoptimized dev build.
+The source is at `/src`; all Cargo and Git dependencies, leanSpec fixtures, and default-preset `release-fast` build/test outputs are installed. `CARGO_NET_OFFLINE=true` is set. Minimal-preset test variants can be rebuilt from the cached dependencies when needed. Use the `release-fast` profile: the repository notes that signature verification and aggregation can stack-overflow in an unoptimized dev build.
 
 Run the two standard test halves separately to limit disk and memory pressure:
 
