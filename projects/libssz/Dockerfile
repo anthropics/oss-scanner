@@ -17,7 +17,7 @@ COPY . /src
 WORKDIR /src
 
 RUN cargo fetch \
-    && cargo fetch --manifest-path fuzz/Cargo.toml --locked
+    && cargo fetch --manifest-path fuzz/Cargo.toml
 
 RUN ./spec-tests/download-vectors.sh
 
