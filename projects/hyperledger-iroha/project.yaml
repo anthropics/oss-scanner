@@ -1,0 +1,9 @@
+# Hyperledger Iroha 3: a blockchain node with an internet-facing HTTP API (Torii), P2P networking, Sumeragi BFT
+# consensus, the IVM smart-contract VM and the Norito codec. The Dockerfile and threat model live in the repository
+# under .oss-scanner/, so the build can change with the code. `optimizations` is the active development branch.
+repo: https://github.com/hyperledger-iroha/iroha#optimizations
+primary_contact: takemiya@soramitsu.co.jp
+homepage: https://docs.iroha.tech
+disabled: false
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
