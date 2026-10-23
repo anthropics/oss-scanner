@@ -15,6 +15,10 @@ window. Its Dockerfile fetches the pinned production commit
 that source tree's own build. The code under review is therefore the production
 site commit, not a separate implementation.
 
+The mirror also publishes `SECURITY.md` with the production security contact
+and a source-licensing notice. These files document the mirror boundary; they
+do not relicense the fetched production source.
+
 Protect account data, uploaded CVs and application documents, consent and
 payment state, privileged credentials, and the integrity of information shown
 to users. A compromise could expose personal data, alter paid services, or
