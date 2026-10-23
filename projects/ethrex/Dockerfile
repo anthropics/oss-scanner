@@ -32,11 +32,19 @@ WORKDIR /src
 
 ENV COMPILE_CONTRACTS=true
 
-RUN cargo fetch --locked
+RUN cargo fetch --locked \
+    && cargo fetch --locked --manifest-path tooling/Cargo.toml
 
-RUN cargo build --locked --profile release-fast --bin ethrex --features l2,l2-sql \
+RUN make -C tooling/ef_tests/blockchain download-test-vectors
+
+RUN cargo build --locked --profile release --bin ethrex --features l2,l2-sql \
     && cargo test --locked --profile release-fast --workspace --features rocksdb \
         --exclude 'ethrex-l2*' --exclude ethrex-prover --exclude ethrex-guest-program --no-run \
-    && cargo test --locked --profile release-fast -p ethrex-l2 --lib --no-run
+    && cargo test --locked --profile release-fast -p ethrex-l2 --lib --no-run \
+    && cargo test --locked --profile release-fast -p ethrex-guest-program --no-default-features --no-run \
+    && cargo test --locked --profile release-fast --manifest-path tooling/Cargo.toml \
+        -p ef_tests-blockchain --no-run \
+    && cargo test --locked --profile release-fast --manifest-path tooling/Cargo.toml \
+        -p ef_tests-blockchain --features stateless --no-run
 
 ENV CARGO_NET_OFFLINE=true
