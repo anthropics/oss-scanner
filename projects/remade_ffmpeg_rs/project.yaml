@@ -1,0 +1,13 @@
+# remade_ffmpeg_rs: a pure-Rust remake of FFmpeg (demuxers, decoders, encoders, CLIs, HTTP API).
+repo: https://github.com/Remade-With-Rust/remade_ffmpeg_rs#main
+
+# Reports and build problems go here. This file is public.
+primary_contact: tim.almond@thehouseinc.xyz
+
+homepage: https://www.mata.network/remade-with-rust
+
+disabled: false
+
+# Both live in the project's repository, so the build can change without a PR here.
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
