@@ -11,9 +11,9 @@ The scanner build uses the compact repository
 `valerielinc-ops/frontaliere-si-o-no-oss-scanner` as its Git entry point because
 the production repository's Git history is too large for the scanner's clone
 window. Its Dockerfile fetches the pinned production commit
-`51d4352e369d784ad8d0805400c6dc9df09e3d64` and runs that source tree's own
-build. The code under review is therefore the production site commit, not a
-separate implementation.
+`51d4352e369d784ad8d0805400c6dc9df09e3d64` with a shallow Git fetch and runs
+that source tree's own build. The code under review is therefore the production
+site commit, not a separate implementation.
 
 Protect account data, uploaded CVs and application documents, consent and
 payment state, privileged credentials, and the integrity of information shown
