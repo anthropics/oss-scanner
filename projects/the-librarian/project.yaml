@@ -1,0 +1,6 @@
+repo: https://github.com/code-ministry-ltd/the-librarian#main
+primary_contact: jim@sangwine.net
+homepage: https://codeministry.net/the-librarian/
+disabled: false
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
