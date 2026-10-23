@@ -1,0 +1,14 @@
+# REQUIRED. The ONE git repository to scan, as an https:// URL. Optionally add #branch or #tag to pin one.
+repo: https://github.com/getprobo/probo#main
+
+# REQUIRED. Who should we email our reports to, and use as the primary contact for questions.
+# This is the address published in https://github.com/getprobo/probo/blob/main/SECURITY.md
+primary_contact: security@probo.com
+
+# Optional. The project's home page.
+homepage: https://www.probo.com
+
+# Optional. true pauses reports without removing the enrolment; false (or omitting it) enables your project.
+disabled: false
+
+# The Dockerfile and threat_model.md are next to this file, so dockerfile: and threat_model: are omitted.
