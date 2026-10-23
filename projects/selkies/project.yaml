@@ -1,0 +1,8 @@
+repo: https://github.com/selkies-project/selkies#main
+primary_contact: security@linuxserver.io
+auto_ccs:
+  - ehfddr@gmail.com
+  - ryankuba@gmail.com
+homepage: https://github.com/selkies-project/selkies
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
