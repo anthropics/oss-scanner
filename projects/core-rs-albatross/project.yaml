@@ -1,0 +1,6 @@
+# Nimiq core-rs-albatross: the Rust node (full, history and light client, validator) for the Nimiq Proof-of-Stake
+# blockchain, plus the web client that compiles the light client to WebAssembly.
+# The Dockerfile and threat_model.md sit next to this file, so neither key is set here.
+repo: https://github.com/nimiq/core-rs-albatross#albatross
+primary_contact: security@nimiq.com
+homepage: https://www.nimiq.com
