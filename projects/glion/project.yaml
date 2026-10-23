@@ -1,0 +1,6 @@
+repo: https://github.com/rethinkhealth/glion#main
+primary_contact: security@rethinkhealth.io
+homepage: https://glion.dev
+disabled: false
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
