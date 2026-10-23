@@ -1,0 +1,5 @@
+repo: https://github.com/XNinety9/Printr#master
+primary_contact: x99@x99.fr
+homepage: https://xninety9.github.io/Printr/
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
