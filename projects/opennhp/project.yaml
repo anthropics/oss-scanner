@@ -1,0 +1,16 @@
+# OpenNHP — Zero Trust network-infrastructure & data hiding toolkit.
+# https://github.com/OpenNHP/opennhp
+
+# The git repository to scan, pinned to the default branch.
+repo: https://github.com/OpenNHP/opennhp#main
+
+# Reports, and any build failures, are emailed here. This address is public.
+primary_contact: support@opennhp.org
+
+homepage: https://opennhp.org
+
+disabled: false
+
+# Dockerfile and threat_model.md sit next to this file
+# (projects/opennhp/Dockerfile, projects/opennhp/threat_model.md), so the
+# dockerfile: / threat_model: keys are intentionally omitted.
