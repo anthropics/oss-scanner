@@ -1,0 +1,4 @@
+repo: https://github.com/Automattic/woocommerce-services#trunk
+primary_contact: security@automattic.com
+homepage: https://wordpress.org/plugins/woocommerce-services/
+disabled: false
