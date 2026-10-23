@@ -122,8 +122,11 @@ this image is an older release that the version registry leaves inert; report an
 ## How to exercise it
 
 - Run `wp-start` first. It starts MariaDB and Apache. The site is at `http://127.0.0.1/`, with pretty permalinks,
-  WooCommerce and Storefront, one simple product, the shop, cart, checkout and My Account pages installed, and three
-  pending sample actions in the `oss-scanner` group. `wp-stop` stops both.
+  WooCommerce and Storefront, one simple product, and the shop, cart, checkout and My Account pages installed.
+  The image also seeds three sample actions in the `oss-scanner` group at build time. They may have run by the time
+  scanning starts; the sample hook has no callback, so attempted runs are marked failed. For fresh pending rows,
+  run `wp --path=/var/www/html action-scheduler action generate oss_scanner_sample_hook tomorrow --count=3 --interval=3600 --args='{"order_id":1,"note":"sample"}' --group=oss-scanner`.
+  `wp-stop` stops both services.
 - PHP errors, warnings and deprecations from Apache and the CLI go to `/var/log/php-error.log`; Apache's own logs are
   under `/var/log/apache2/`.
 - Users (password equals username): `admin` (administrator), `shopmanager` (shop_manager), `customer` (customer),
