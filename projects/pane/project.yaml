@@ -1,0 +1,15 @@
+# Pane: a desktop app (Electron) that runs coding agents in parallel git worktrees,
+# with a local daemon, the runpane CLI and an optional remote web client.
+repo: https://github.com/greenfield-inc/Pane#main
+
+primary_contact: khazapar7@gmail.com
+auto_ccs:
+  - tyler@tbrown.io
+
+homepage: https://runpane.com/
+
+disabled: false
+
+# Both live in the repository, so a change to how Pane builds can update them in the same pull request.
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
