@@ -1,0 +1,4 @@
+repo: https://github.com/logos-co/logos-web#develop
+primary_contact: jinho@status.im
+homepage: https://logos.co
+dockerfile: .oss-scanner/Dockerfile
