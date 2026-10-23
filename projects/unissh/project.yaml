@@ -1,0 +1,6 @@
+# UniSSH: a cross-platform SSH client with end-to-end-encrypted vaults that sync through a self-hosted server.
+# The Dockerfile sits next to this file; the threat model lives in the repository.
+repo: https://github.com/goduni/unissh#main
+primary_contact: uni@goduni.me
+homepage: https://unissh.dev
+threat_model: THREAT_MODEL.md
