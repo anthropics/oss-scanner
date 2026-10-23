@@ -1,0 +1,15 @@
+# REQUIRED. The ONE git repository to scan, as an https:// URL. Optionally add #branch or #tag to pin one.
+repo: https://github.com/illegalstudio/elephc#main
+
+# REQUIRED. Who should we email our reports to, and use as the primary contact for questions.
+primary_contact: sec@elephc.dev
+
+# Optional. The project's home page.
+homepage: https://elephc.dev
+
+# Optional. true pauses reports without removing the enrolment; false (or omitting it) enables your project.
+disabled: false
+
+# The Dockerfile and threat model live in the elephc repository.
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
