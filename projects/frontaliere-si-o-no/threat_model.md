@@ -24,6 +24,13 @@ payment state, privileged credentials, and the integrity of information shown
 to users. A compromise could expose personal data, alter paid services, or
 publish misleading content.
 
+This is a live, first-party production service rather than a library-only
+fixture. First-party GA4 data for `frontaliereticino.ch` (excluding other
+hosts) recorded approximately 190,000 users, 222,000 sessions, and 354,000
+page views from 2026-09-19 through 2026-10-18. These aggregate figures describe
+the public consumer surface and are not a claim of independent downstream
+projects or critical infrastructure.
+
 ## Untrusted input and trust boundaries
 
 Treat all browser requests, query parameters, form fields, and user-controlled
