@@ -1,5 +1,7 @@
 repo: https://github.com/milind-soni/OpenMausBot
 primary_contact: soni.mil2001@gmail.com
+auto_ccs:
+  - milind.soni@supamaus.com
 homepage: https://mausbot.com
 disabled: false
 dockerfile: .oss-scanner/Dockerfile
