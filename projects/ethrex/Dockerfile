@@ -22,8 +22,9 @@ arch="${TARGETARCH:-$(uname -m)}"
 case "$arch" in
     arm64|aarch64)
         asset=solc-static-linux-arm
+        dpkg --add-architecture amd64
         apt-get update
-        apt-get install -y --no-install-recommends qemu-user
+        apt-get install -y --no-install-recommends qemu-user libc6:amd64 libstdc++6:amd64 zlib1g:amd64
         rm -rf /var/lib/apt/lists/*
         ;;
     amd64|x86_64) asset=solc-static-linux ;;
