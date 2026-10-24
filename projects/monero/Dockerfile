@@ -33,6 +33,7 @@ RUN git submodule update --init --recursive --depth=1
 
 RUN cmake -S /src -B /src/build \
       -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+      -DARCH=default \
       -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
       -DCMAKE_C_FLAGS="-fno-omit-frame-pointer" \
       -DCMAKE_CXX_FLAGS="-fno-omit-frame-pointer" \
