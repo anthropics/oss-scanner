@@ -1,0 +1,4 @@
+repo: https://github.com/nanakokyobashi-rgb/frontaliere-articles#main
+primary_contact: info@frontaliereticino.ch
+homepage: https://frontaliereticino.ch/
+dockerfile: .oss-scanner/Dockerfile
