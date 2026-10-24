@@ -34,9 +34,8 @@ ENV COMPILE_CONTRACTS=true \
     CARGO_TARGET_DIR=/src/target
 
 RUN cargo fetch --locked \
-    && cargo fetch --locked --target wasm32-unknown-unknown \
     && cargo fetch --locked --manifest-path tooling/Cargo.toml \
-    && cargo fetch --locked --manifest-path tooling/Cargo.toml --target wasm32-unknown-unknown
+    && cargo fetch --locked --manifest-path /usr/local/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/sp1-core-machine-5.2.4/Cargo.toml
 
 RUN make -C tooling/ef_tests/blockchain download-test-vectors
 
