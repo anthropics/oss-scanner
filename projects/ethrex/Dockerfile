@@ -34,8 +34,7 @@ ENV COMPILE_CONTRACTS=true \
     CARGO_TARGET_DIR=/src/target
 
 RUN cargo fetch --locked \
-    && cargo fetch --locked --manifest-path tooling/Cargo.toml \
-    && cargo fetch --locked --manifest-path /usr/local/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/sp1-core-machine-5.2.4/Cargo.toml
+    && cargo fetch --locked --manifest-path tooling/Cargo.toml
 
 RUN make -C tooling/ef_tests/blockchain download-test-vectors
 
@@ -153,6 +152,9 @@ test "$(git ls-remote https://github.com/OpenZeppelin/openzeppelin-contracts.git
 test "$(git ls-remote https://github.com/succinctlabs/sp1-contracts.git HEAD | cut -f1)" = 2ac5ecbbe473421a963d67e55f182e9a36576f7c
 test "$(git ls-remote https://github.com/pcaversaccio/create2deployer HEAD | cut -f1)" = b3521e52ce800f1c2824e85b8da87164fcabfac4
 EOF
+
+RUN cargo fetch --locked --manifest-path /usr/local/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/sp1-core-machine-5.2.4/Cargo.toml \
+    && cargo fetch --locked --manifest-path /usr/local/cargo/registry/src/index.crates.io-1949cf8c6b5b557f/sp1-recursion-core-5.2.4/Cargo.toml
 
 ENV CARGO_NET_OFFLINE=true \
     GIT_ALLOW_PROTOCOL=file
