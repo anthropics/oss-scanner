@@ -1,0 +1,6 @@
+repo: https://github.com/e107inc/e107#master
+primary_contact: security@e107.org
+homepage: https://e107.org
+disabled: false
+dockerfile: e107_tests/docker/Dockerfile
+threat_model: .github/SECURITY.md
