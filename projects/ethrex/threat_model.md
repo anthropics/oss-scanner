@@ -23,9 +23,10 @@ The following roles and powers are part of the design. Their documented use is n
 - **L2 sequencer:** it can order, reorder, include, or censor transactions. Forced inclusion is the documented mitigation for censorship of privileged transactions. Do not report sequencing discretion alone; do report a bypass of forced-inclusion deadlines or other inclusion guarantees.
 - **Governance, Timelock, and Security Council:** these roles can upgrade the OnChainProposer and bridge contracts through their documented paths. The Security Council can also use `emergencyExecute` and `revertBatch`. Unauthorized upgrades, role bypasses, missing timelock/authorization checks, and powers beyond those documented are in scope; exercising these intended powers is not.
 - **Validium operator:** in validium mode, transaction data is not posted to L1 and the operator is trusted to keep it available. Operator data withholding is intrinsic to that deployment model, not an implementation vulnerability. A mismatch between the documented mode and what is actually committed or verified is in scope.
-- **Consensus client:** it is trusted after passing Engine API JWT authentication. A malicious but correctly authenticated consensus client is outside the threat model; an authentication bypass or an unauthenticated request reaching the same powers is in scope.
+- **Consensus client:** only its intended chain-control powers are trusted after Engine API JWT authentication. Malformed requests, body-budget bypasses, timeouts, resource exhaustion, and state-integrity failures remain in scope even when the caller is correctly authenticated. An authentication bypass or an unauthenticated request reaching the same powers is also in scope.
 - **Operator configuration and L1 RPC endpoint:** the operator's local configuration and chosen L1 RPC endpoint are trusted. Do not model a deliberately malicious config file or endpoint as an attack by itself. On-chain calldata, events, and contract inputs supplied by other parties remain untrusted.
-- **Provers:** provers are not trusted for correctness. A false state cannot be finalized without a valid proof of the guest program, but a reachable proof coordinator that stores or submits invalid proofs can suffer verification delays. The coordinator binds loopback by default; assess remote prover attacks only when the deployment exposes them.
+- **Provers and settlement modes:** in proof-required deployments, provers are not trusted for correctness; a false state requires a valid proof of an invalid guest-program transition or a separate L1 verification/authorization failure. Settlement currently recognizes Exec, RISC0, SP1, and TDX. Exec is an intentional no-proof mode whose verification always succeeds, so its execution trust and lack of a proof are design assumptions rather than vulnerabilities. TDX uses attestation and registered-signer trust, not a zero-knowledge validity proof. A reachable proof coordinator that stores or submits invalid proofs can suffer verification delays; assess remote prover attacks only when the deployment exposes them.
+- **TDX setup:** the proof coordinator binds loopback by default, but a reachable `ProverSetup` is a privileged boundary. It processes quote material, invokes registration, and sends an L1 transaction funded and signed by the coordinator's TDX key. `TDXVerifier.register` requires the caller to be a sequencer, validates the quote and report outside dev mode, and changes the authorized signer. Review listener exposure, quote/report and measurement validation, L1 spending authority, and signer-registration authorization. `isDevMode` deliberately skips quote verification and is not itself a finding; unauthorized setup, spending, or registration outside those intentional development settings is in scope.
 - **Sponsor account:** `ethrex_sendTransaction` uses the sponsor key to sign and pay gas for permitted sponsored calls. The built-in default sponsor private key is public and must be treated as development-only; operators must set `SPONSOR_PRIVATE_KEY` for a real deployment. Loss of funds controlled by the known default key is not a finding. Disclosure of an operator-supplied key, bypass of sponsorable-address checks, or evasion of the sponsored gas limit is in scope.
 
 ## Audit scope
@@ -41,7 +42,7 @@ Audit the entire checkout, including L1 and L2 modes, optional features, product
 - `crates/networking/rpc`: public JSON-RPC, WebSocket, metrics, and authenticated Engine API handlers. Check authentication, method exposure, input bounds, transaction validation, and accidental disclosure or state changes. Record the transport, enabled namespaces, authentication, and bind configuration needed to reach a handler.
 - `crates/common`, especially RLP, trie, crypto, and SSZ users: canonical decoding, bounds checking, hashing, and consensus-critical data structures.
 - `crates/storage` and filesystem/import boundaries: persistent state integrity, recovery, path handling, snapshot/archive extraction, unsafe/native interop, and corruption caused by malformed input or interrupted operations. Name the feature and filesystem privileges required for a path to be reachable.
-- `crates/guest-program`: the highest-priority L2 correctness component. This is the program whose execution SP1, RISC0, ZisK, and OpenVM prove; L1 accepts an L2 state transition only when the corresponding proof verifies. Review initial/final state-root checks, block and witness validation, message and withdrawal commitments, blob/data-availability checks, and deterministic outputs. A malicious sequencer or prover must not be able to turn an invalid transition into an L1-finalized state.
+- `crates/guest-program`: the highest-priority L2 correctness component in proof-required deployments. The program can execute under SP1, RISC0, ZisK, and OpenVM; current settlement recognizes Exec, RISC0, SP1, and TDX, so do not assume that every execution backend is an implemented L1 proof path. Review initial/final state-root checks, block and witness validation, message and withdrawal commitments, blob/data-availability checks, and deterministic outputs. In proof-required deployments, a malicious sequencer or prover must not be able to turn an invalid transition into an L1-finalized state.
 - `crates/l2` and `cmd/ethrex/l2`: sequencer authorization, batch commitment, bridge deposits and withdrawals, message inclusion, proof verification, upgrade controls, replay protection, and L1/L2 RPC handlers. Solidity contracts under `crates/l2/contracts` are in scope.
 
 Review dependencies when ethrex makes a flaw reachable; show the call path and name the crate that needs the fix. Test-only utilities, benchmarks, release tooling, and local developer conveniences are lower priority but are not automatically excluded when they cross a real trust boundary.
@@ -50,43 +51,49 @@ Review dependencies when ethrex makes a flaw reachable; show the call path and n
 
 Assess severity from realistic reachability, attacker cost, required configuration, and impact. Do not equate a panic in a test or a performance regression with a vulnerability.
 
-- **Critical:** demonstrated loss or theft of user/bridge funds; finalization of an invalid L2 state or withdrawal, including through a guest-program validation error; remote code execution; or an unauthenticated Engine API bypass that gives an attacker block-production or state-transition control.
-- **High:** acceptance of consensus-invalid data or rejection of valid data with a credible chain-impact path; a remote unauthenticated crash or hang, persistent database corruption or resource leak, or cheap unbounded resource exhaustion; bypass of L2 sequencer, proof, bridge, or upgrade authorization; disclosure of private keys or JWT secrets. A single unauthenticated JSON-RPC request that crashes a node is High whenever the listener is reachable by untrusted users, as on an L2 or a public RPC deployment.
-- **Medium:** bounded denial of service, failures confined to loopback-only or authenticated interfaces without a broader impact, and validation or RPC correctness defects with limited downstream impact. Invalid prover output that temporarily delays batch verification is normally Medium; escalate a demonstrated cheap, sustained finalization delay to High. Invalid proofs alone cannot create a Critical state-validity impact without a separate guest-program or L1 verification failure.
+- **Critical:** demonstrated loss or theft of user/bridge funds; finalization of an invalid L2 state or withdrawal in a proof-required deployment, including through a guest-program validation error; remote code execution; or an unauthenticated Engine API bypass that gives an attacker block-production or state-transition control.
+- **High:** acceptance of consensus-invalid data or rejection of valid data with a credible chain-impact path; a remote unauthenticated crash or hang, persistent database corruption or resource leak, or cheap unbounded resource exhaustion; bypass of L2 sequencer, proof, bridge, upgrade, or TDX signer-registration authorization; unauthorized L1 spending; disclosure of private keys or JWT secrets. A single unauthenticated JSON-RPC request that crashes a node is High whenever the listener is reachable by untrusted users, as on an L2 or a public RPC deployment.
+- **Medium:** bounded denial of service, failures confined to loopback-only or authenticated interfaces without a broader impact, and validation or RPC correctness defects with limited downstream impact. In proof-required deployments, invalid prover output that temporarily delays batch verification is normally Medium; escalate a demonstrated cheap, sustained finalization delay to High. Invalid proofs alone cannot create a Critical state-validity impact without a separate guest-program or L1 verification failure.
 - **Low:** issues requiring a malicious local configuration or an already-compromised host, non-sensitive diagnostic inaccuracies, and hardening gaps without a demonstrated attack.
 
 For resource-exhaustion reports, measure input size and attacker cost against victim CPU, memory, disk, or wall time. Account for gas accounting, peer scoring and penalties, RPC work budgets, backpressure, and resource cleanup on disconnect when assessing whether input is cheap or resource use is unbounded. Protocol limits and ordinary sync cost are not vulnerabilities by themselves. Distinguish one-node denial of service from a demonstrated network-wide consensus failure.
 
-The production binary uses the `release` profile. Test binaries use `release-fast`, which can include assertions that are not present in production. Before assigning a production severity to a panic or arithmetic discrepancy, verify it against `target/release/ethrex` or against source with the extra assertions compiled out. A debug-assertion-only crash is not a High production denial of service.
+The client and all prebuilt test targets use the production `release` profile and a shared Cargo target directory. If additional debug or assertion-enabled test variants are built during analysis, confirm any panic or arithmetic discrepancy against `target/release/ethrex` before assigning production severity. A debug-assertion-only crash is not a High production denial of service.
 
 ## How to exercise it offline
 
-The checkout is `/src`; root and `tooling/` Cargo dependencies, build outputs, test binaries, official execution-spec fixtures, and `solc` are installed. `CARGO_NET_OFFLINE=true` is set. The production client is at `target/release/ethrex` and was built with `l2,l2-sql`.
+The checkout is `/src`; root and `tooling/` Cargo dependencies, build outputs, test binaries, official execution-spec fixtures, `solc`, and commit-pinned contract dependencies are installed. `CARGO_NET_OFFLINE=true` is set, and child Git operations for contract dependencies resolve only to the vendored checkouts. The production client is at `target/release/ethrex` and was built with `l2,l2-sql`.
 
-The standard L1 suite, including RocksDB-gated tests, is precompiled:
+After editing Solidity sources, rebuild them and the client with no network access:
 
 ```sh
-cargo test --locked --profile release-fast --workspace --features rocksdb \
+cargo build --locked --profile release --bin ethrex --features l2,l2-sql
+```
+
+The full L1 suite can run offline and will compile any test targets not already built on its first run:
+
+```sh
+cargo test --locked --profile release --workspace --features rocksdb \
   --exclude 'ethrex-l2*' --exclude ethrex-prover --exclude ethrex-guest-program
 ```
 
-The guest program needs no zkVM toolchain for its native tests. Run those separately, together with the execution-spec blockchain runner and its regular and stateless fixture sets:
+The guest program needs no zkVM toolchain for its native tests. Those tests, the L2 library tests, and the execution-spec blockchain runner are prebuilt with the same production profile and target directory:
 
 ```sh
-cargo test --locked --profile release-fast -p ethrex-guest-program --no-default-features
-cargo test --locked --profile release-fast --manifest-path tooling/Cargo.toml -p ef_tests-blockchain
-cargo test --locked --profile release-fast --manifest-path tooling/Cargo.toml -p ef_tests-blockchain --features stateless
+cargo test --locked --profile release -p ethrex-guest-program --no-default-features
+cargo test --locked --profile release -p ethrex-l2 --lib native_rollup
+cargo test --locked --profile release --manifest-path tooling/Cargo.toml -p ef_tests-blockchain
+cargo test --locked --profile release --manifest-path tooling/Cargo.toml -p ef_tests-blockchain --features stateless
 ```
 
 Other useful narrower commands include:
 
 ```sh
-cargo test --locked --profile release-fast -p ethrex-levm
-cargo test --locked --profile release-fast -p ethrex-rlp
-cargo test --locked --profile release-fast -p ethrex-trie
-cargo test --locked --profile release-fast -p ethrex-p2p
-cargo test --locked --profile release-fast -p ethrex-rpc
-cargo test --locked --profile release-fast -p ethrex-l2 --lib native_rollup
+cargo test --locked --profile release -p ethrex-levm
+cargo test --locked --profile release -p ethrex-rlp
+cargo test --locked --profile release -p ethrex-trie
+cargo test --locked --profile release -p ethrex-p2p
+cargo test --locked --profile release -p ethrex-rpc
 ```
 
 `target/release/ethrex --dev --datadir memory` starts a local development node without a public-network sync. Use private local networks and loopback RPC for reproducers. The image does not include a running consensus client, an L1/L2 devnet, proving services, or public network access. Hive and L2 integration suites need additional services; identify missing prerequisites rather than reporting them as client vulnerabilities. Consult `docs/known_issues.md` for intentionally skipped execution-spec cases.
