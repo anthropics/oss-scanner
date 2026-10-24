@@ -9,6 +9,14 @@ integrity of the publishing pipeline, keep generated output safe for browsers
 and feed readers, and prevent unauthorized publication or leakage of
 credentials.
 
+The production reach is first-party rather than a broad third-party library
+ecosystem: a dated GA4 snapshot for the consuming site (2026-03-04, previous
+30 days) recorded 2,178 users, 2,566 sessions, 12,571 page views, and 73.2%
+engaged sessions. The public manifest contains 3,870 frontaliere articles,
+2,100 Swiss articles, 10 RSS feeds, and the sitemap/ticker surfaces. These
+figures describe the live consumer and published surface; they are not a claim
+of independent downstream projects or critical infrastructure.
+
 ## Untrusted input and trust boundaries
 
 Treat article text, translations, editorial metadata, images, RSS/XML/HTML from
