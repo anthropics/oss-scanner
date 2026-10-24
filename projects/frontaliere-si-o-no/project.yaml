@@ -1,0 +1,4 @@
+repo: https://github.com/valerielinc-ops/frontaliere-si-o-no-oss-scanner#main
+primary_contact: info@frontaliereticino.ch
+homepage: https://frontaliereticino.ch/
+dockerfile: Dockerfile
