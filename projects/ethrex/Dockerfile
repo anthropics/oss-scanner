@@ -20,7 +20,12 @@ RUN bash <<'EOF'
 set -euo pipefail
 arch="${TARGETARCH:-$(uname -m)}"
 case "$arch" in
-    arm64|aarch64) asset=solc-static-linux-arm ;;
+    arm64|aarch64)
+        asset=solc-static-linux-arm
+        apt-get update
+        apt-get install -y --no-install-recommends qemu-user
+        rm -rf /var/lib/apt/lists/*
+        ;;
     amd64|x86_64) asset=solc-static-linux ;;
     *) echo "unsupported architecture: $arch" >&2; exit 1 ;;
 esac
@@ -28,14 +33,18 @@ base=https://github.com/ethereum/solidity/releases/download
 curl -fsSL --retry 5 --retry-all-errors --retry-connrefused --connect-timeout 30 \
     -o /usr/local/bin/solc-0.8.31 "$base/v0.8.31/$asset"
 curl -fsSL --retry 5 --retry-all-errors --retry-connrefused --connect-timeout 30 \
-    -o /usr/local/bin/solc-0.8.20 "$base/v0.8.20/$asset"
+    -o /usr/local/bin/solc-0.8.20 "$base/v0.8.20/solc-static-linux"
 chmod +x /usr/local/bin/solc-0.8.31 /usr/local/bin/solc-0.8.20
 cat > /usr/local/bin/solc <<'SCRIPT'
 #!/bin/sh
 for arg in "$@"; do
     case "$arg" in
         *sp1-contracts*|*v6.1.0*)
-            exec /usr/local/bin/solc-0.8.20 "$@"
+            if [ "$(uname -m)" = x86_64 ]; then
+                exec /usr/local/bin/solc-0.8.20 "$@"
+            else
+                exec qemu-x86_64 /usr/local/bin/solc-0.8.20 "$@"
+            fi
             ;;
     esac
 done
@@ -43,7 +52,11 @@ exec /usr/local/bin/solc-0.8.31 "$@"
 SCRIPT
 chmod +x /usr/local/bin/solc
 solc --version
-solc-0.8.20 --version
+if [ "$(uname -m)" = x86_64 ]; then
+    solc-0.8.20 --version
+else
+    qemu-x86_64 /usr/local/bin/solc-0.8.20 --version
+fi
 EOF
 
 COPY . /src
