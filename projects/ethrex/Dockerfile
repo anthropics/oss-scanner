@@ -16,16 +16,35 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 ARG TARGETARCH
-RUN arch="${TARGETARCH:-$(uname -m)}" \
-    && case "$arch" in \
-        arm64|aarch64) asset=solc-static-linux-arm ;; \
-        amd64|x86_64) asset=solc-static-linux ;; \
-        *) echo "unsupported architecture: $arch" >&2; exit 1 ;; \
-    esac \
-    && curl -fsSL --retry 5 --retry-all-errors --retry-connrefused --connect-timeout 30 \
-        -o /usr/local/bin/solc "https://github.com/ethereum/solidity/releases/download/v0.8.31/$asset" \
-    && chmod +x /usr/local/bin/solc \
-    && solc --version
+RUN bash <<'EOF'
+set -euo pipefail
+arch="${TARGETARCH:-$(uname -m)}"
+case "$arch" in
+    arm64|aarch64) asset=solc-static-linux-arm ;;
+    amd64|x86_64) asset=solc-static-linux ;;
+    *) echo "unsupported architecture: $arch" >&2; exit 1 ;;
+esac
+base=https://github.com/ethereum/solidity/releases/download
+curl -fsSL --retry 5 --retry-all-errors --retry-connrefused --connect-timeout 30 \
+    -o /usr/local/bin/solc-0.8.31 "$base/v0.8.31/$asset"
+curl -fsSL --retry 5 --retry-all-errors --retry-connrefused --connect-timeout 30 \
+    -o /usr/local/bin/solc-0.8.20 "$base/v0.8.20/$asset"
+chmod +x /usr/local/bin/solc-0.8.31 /usr/local/bin/solc-0.8.20
+cat > /usr/local/bin/solc <<'SCRIPT'
+#!/bin/sh
+for arg in "$@"; do
+    case "$arg" in
+        *sp1-contracts*|*v6.1.0*)
+            exec /usr/local/bin/solc-0.8.20 "$@"
+            ;;
+    esac
+done
+exec /usr/local/bin/solc-0.8.31 "$@"
+SCRIPT
+chmod +x /usr/local/bin/solc
+solc --version
+solc-0.8.20 --version
+EOF
 
 COPY . /src
 WORKDIR /src
