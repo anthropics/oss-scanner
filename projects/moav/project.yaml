@@ -1,0 +1,15 @@
+# MoaV (Mother of All VPNs) — multi-protocol censorship-circumvention stack.
+# Enrollment for Anthropic OSS Scanner.
+
+# REQUIRED. Scan the stable release line (what operators actually run). Swap #main -> #dev to scan pre-release.
+repo: https://github.com/MotherofallVPNs/MoaV#main
+
+# REQUIRED. Public security alias for MoaV. CONFIRM this address receives mail before merging.
+primary_contact: info@moav.sh
+
+homepage: https://moav.sh
+
+# Dockerfile and threat_model are kept here next to this file (so no files are added to the MoaV repo),
+# therefore the dockerfile:/threat_model: keys are intentionally omitted.
+
+disabled: false
