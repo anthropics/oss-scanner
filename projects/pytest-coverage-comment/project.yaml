@@ -1,0 +1,18 @@
+# REQUIRED. The ONE git repository to scan, as an https:// URL. Optionally add #branch or #tag to pin one.
+repo: https://github.com/MishaKav/pytest-coverage-comment#main
+
+# REQUIRED. Who should we email our reports to, and use as the primary contact for questions.
+# This is the address published in https://github.com/MishaKav/pytest-coverage-comment/blob/main/SECURITY.md
+primary_contact: misha.kav@gmail.com
+
+# Optional. The project's home page.
+homepage: https://github.com/marketplace/actions/pytest-coverage-comment
+
+# Optional. true pauses reports without removing the enrolment; false (or omitting it) enables your project.
+disabled: false
+
+# REQUIRED: path of the Dockerfile in the repository.
+dockerfile: .oss-scanner/Dockerfile
+
+# Optional, but strongly recommended: path of the threat model in the repository.
+threat_model: .oss-scanner/threat_model.md
