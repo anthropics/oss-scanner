@@ -1,6 +1,6 @@
-repo: https://github.com/xavbal/XB-41_MDTOPDF#main
+repo: https://github.com/xavbal/mdfolio#main
 primary_contact: xavhues@gmail.com
-homepage: https://github.com/xavbal/XB-41_MDTOPDF
+homepage: https://github.com/xavbal/mdfolio
 disabled: false
 dockerfile: .oss-scanner/Dockerfile
 threat_model: .oss-scanner/threat_model.md
