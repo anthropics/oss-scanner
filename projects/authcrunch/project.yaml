@@ -1,5 +1,6 @@
 repo: https://github.com/authcrunch/authcrunch#main
 primary_contact: greenpau@outlook.com
+disabled: false
 homepage: https://github.com/authcrunch/authcrunch
 dockerfile: .oss-scanner/Dockerfile
 threat_model: .oss-scanner/threat_model.md
