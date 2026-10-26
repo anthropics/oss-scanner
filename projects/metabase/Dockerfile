@@ -1,4 +1,4 @@
-# Metabase: Clojure backend (JVM 25) + TypeScript/ClojureScript frontend.
+# Metabase Open Source Edition: Clojure backend (JVM 25) + TypeScript/ClojureScript frontend.
 # Follows the upstream builder stage in the repository's own Dockerfile, then also pre-fetches the dev/test
 # classpath so the backend can be run from source and its tests run without network access.
 FROM node:22-bookworm
@@ -7,7 +7,7 @@ ENV DEBIAN_FRONTEND=noninteractive \
     CI=true \
     INTERACTIVE=false \
     HUSKY=0 \
-    MB_EDITION=ee
+    MB_EDITION=oss
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
       ca-certificates curl wget gpg apt-transport-https git python3 rlwrap \
@@ -31,15 +31,15 @@ RUN git config --global --add safe.directory /src
 # Frontend dependencies.
 RUN bun install --frozen-lockfile
 
-# Enterprise uberjar (includes the OSS code, the frontend bundle and all bundled drivers):
+# Open Source Edition uberjar (includes the frontend bundle and bundled drivers):
 # target/uberjar/metabase.jar
-RUN bin/build.sh '{:edition :ee}'
+RUN bin/build.sh '{:edition :oss}'
 
 # Pre-fetch everything needed to run the backend from source and to run backend tests offline:
-#   clojure -M:run:ee                                   (dev server from source)
-#   clojure -X:dev:ee:ee-dev:test :only '[some.ns-test]' (tests; app DB is in-memory H2)
-RUN clojure -P -M:dev:ee:ee-dev:drivers:drivers-dev:test:run
+#   clojure -M:run:oss                                   (dev server from source)
+#   clojure -X:dev:oss:oss-dev:test :only '[some.ns-test]' (tests; app DB is in-memory H2)
+RUN clojure -P -M:dev:oss:oss-dev:drivers:drivers-dev:test:run
 
 # Offline backend smoke test; report test failures without stopping the build.
-RUN --network=none timeout 1200 clojure -X:dev:ee:ee-dev:test :only '[metabase.session.api-test]' \
+RUN --network=none timeout 1200 clojure -X:dev:oss:oss-dev:test :only '[metabase.session.api-test]' \
     || echo "WARNING: smoke test reported failures"
