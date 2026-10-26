@@ -1,0 +1,7 @@
+# Micronaut Servlet: runs Micronaut HTTP applications on Jetty, Tomcat, Undertow, the JDK HTTP server and plain-old-Java-application (POJA) runtimes.
+# The default branch of the repository is the current development line, which is what CI builds.
+repo: https://github.com/micronaut-projects/micronaut-servlet
+primary_contact: foundation@micronaut.io
+homepage: https://micronaut-projects.github.io/micronaut-servlet/latest/guide/
+disabled: false
+# The Dockerfile and threat_model.md sit next to this file.
