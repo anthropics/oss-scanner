@@ -1,0 +1,10 @@
+# Filament is a widely used Laravel UI framework handling authenticated CRUD,
+# tenant isolation, user-supplied content, and uploads in downstream applications.
+repo: https://github.com/filamentphp/filament
+primary_contact: admin@filamentphp.com
+homepage: https://filamentphp.com
+output_format:
+  email:
+    min_severity: none
+  github_security_advisory:
+    min_severity: low
