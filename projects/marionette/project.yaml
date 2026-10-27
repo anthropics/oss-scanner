@@ -1,0 +1,10 @@
+repo: https://github.com/marionettejs/marionette#master
+homepage: https://marionettejs.com/
+primary_contact: marionettejs@gmail.com
+
+# Dockerfile and threat_model.md are supplied beside this file; omit their keys.
+# Eligibility context: Marionette is an established MIT-licensed JavaScript UI
+# library. Its rendering, event and data code can handle application-supplied
+# untrusted values. A framework defect at these boundaries could affect consuming
+# applications. Eligibility is Anthropic's decision; no critical-infrastructure
+# deployment, user count, or guaranteed security-report capacity is asserted.
