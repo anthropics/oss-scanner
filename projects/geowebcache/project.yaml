@@ -7,6 +7,13 @@ primary_contact: geoserver-security@lists.osgeo.org
 # Optional. The project's home page.
 homepage: https://geowebcache.osgeo.org
 
+# Optional. The lowest severity each channel receives: low, medium, high, critical, or none to turn it off.
+output_format:
+  email:
+    min_severity: critical
+  github_security_advisory:
+    min_severity: critical
+
 # Optional. true pauses reports without removing the enrolment; false (or omitting it) enables your project.
 disabled: false
 
