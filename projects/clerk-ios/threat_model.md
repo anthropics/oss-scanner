@@ -69,11 +69,11 @@ The attacker is a remote party, another app on the same device, or another end u
 ## How we would like reports and patches
 
 - Name the file, the function and the attacker position, and give a concrete input, such as the exact URL or response, that triggers the issue.
-- Patches should be minimal Swift changes in the style of the surrounding code, with a test in `Tests/` that uses the existing `FakeTransport` and Mocker helpers.
+- Patches should be minimal Swift changes in the style of the surrounding code, with a regression test in `Tests/` where the behavior can be tested there. Use the existing helpers that fit: `FakeTransport` and Mocker for network behavior, `InMemoryKeychain` for storage, and the helpers in `Tests/TestSupport/`. If the fix can't be tested in `Tests/`, for example because it depends on a system prompt or a paired device, say so.
 - Say whether you ran the reproducer, or reasoned about it statically because it needs Apple frameworks.
 
 ## Anything to leave alone
 
-- Do not report that ClerkKit decodes JWTs without verifying their signature (`Utils/JWTDecoder.swift`). The SDK only decodes tokens it received from the Frontend API over TLS.
+- Do not report that ClerkKit decodes JWTs without verifying their signature (`Utils/JWTDecoder.swift`). The SDK only decodes tokens it received from the Frontend API, either directly over TLS or through the proxy the app configured.
 - Do not report that a user can bypass the `Session.has(...)` checks (`Domains/Auth/Session/Session+CheckAuthorization.swift`) on their own device. It reads the `fea`, `pla` and `fva` claims without verifying them because it only gates UI, and apps must enforce authorization on their own backend. Do report a way for an attacker other than the device's own user to make `has()` trust a token they supplied.
 - Do not report that the publishable key and the Frontend API host are public. They are designed to ship in apps.
