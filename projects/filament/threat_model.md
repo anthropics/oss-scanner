@@ -73,6 +73,150 @@ themselves bypasses. In particular:
   providers have documented security implications. Show the attacker path and
   the violated guarantee instead of assuming these options are always safe.
 
+### Query controls, relationship actions, and custom data
+
+Client-controlled table filters, tabs, and query-builder rules are not mandatory
+access restrictions. A `SelectFilter`'s `options()` limits its displayed options,
+not the values accepted by its query. An over-limit query-builder tree is ignored
+rather than applied. Mandatory restrictions belong in the underlying resource or
+table query or applicable global scopes, independently of these controls.
+See `packages/tables/docs/03-filters/` and
+`docs/03-resources/02-listing-records.md`.
+
+For attach/associate actions, do not confuse the existing relation manager's
+table query, or an attachment picker's display query, with the allowed related
+record query. `recordSelectOptionsQuery()` is applied when resolving submitted
+records for attachment/association; the relation table's `modifyQueryUsing()`
+restricts existing rows, not candidates outside the relationship. Attach,
+associate, detach, and dissociate actions do not infer model-policy abilities;
+the relation manager's read-only check is not per-record authorization. See
+`docs/03-resources/07-managing-relationships.md` and
+`packages/actions/src/AttachAction.php` / `AssociateAction.php`.
+
+Nested resources require ancestor resource access and relationship-chain
+scoping, not each ancestor record's `view()` or `update()` permission. The child
+operation has its own policy checks. Do not infer an ancestor-record policy
+guarantee from nesting alone; see `docs/03-resources/08-nesting.md`.
+
+Array/API-backed tables do not gain Eloquent scopes or model policies. Their
+application-owned data callbacks and action handlers must restrict data and
+operations. An upstream API credential authenticates the application, not the
+current user's permission; see `packages/tables/docs/09-custom-data.md`.
+
+### Imports, exports, and spreadsheet output
+
+Importers and exporters do not run model policies for each processed record.
+Applications must authorize importing and exporting, restrict export queries,
+and add importer lifecycle checks where individual permissions are needed.
+Tenant-aware imports restore their panel/tenant context, but do not inherit
+custom resource query restrictions or substitute for per-record authorization.
+
+Export files and import failure CSVs preserve data by default. Spreadsheet
+formula neutralization is opt-in: `ExportColumn::preventFormulaInjection()` or
+the importer's `preventFormulaInjection()` setting. This avoids changing valid
+data and breaking failure-CSV correction/re-import. When protection is enabled,
+sign-led numeric strings such as `-5` intentionally remain unchanged. Distinguish
+this documented default from a bypass of enabled protection or an unexpected
+attacker path. See the security sections in `packages/actions/docs/11-import.md`
+and `packages/actions/docs/12-export.md`.
+
+Download controllers separately check the initiating user or a configured
+`view()` policy. This does not protect files served directly from public storage;
+storage visibility is an application deployment choice, not equivalent to
+controller authorization. Bypassing the controller's ownership/policy check
+remains in scope.
+
+### Panel access and MFA
+
+Custom panel pages default to allowing authenticated panel users unless their
+`canAccess()` method restricts them. Hiding a resource from navigation is not a
+route authorization check. Conversely, do not assume every visibility setting
+is merely cosmetic: action visibility/disabled state and inline-column disabled
+checks have server-side enforcement. Inspect the owning execution path before
+claiming that direct RPC bypasses a configured restriction.
+
+Filament's login flow challenges users with an enabled MFA provider. The
+required-MFA middleware enforces provider setup, not a fresh challenge for a user
+already authenticated elsewhere in the application. Other authentication routes
+need their own MFA enforcement. Standalone `MultiFactorChallenge` callers must
+re-check `hasEnabledProviders()` immediately before validation and apply challenge
+rate limiting: an empty challenge schema validates successfully without proving
+factor possession. Validating an enabled provider's challenge does not itself
+authenticate the user or authorize a protected operation. See
+`docs/07-users/02-multi-factor-authentication.md`.
+
+### Browser-visible model state
+
+Edit/view forms expose non-`$hidden` model attributes unless removed by
+`mutateFormDataBeforeFill()`. Browser visibility alone does not demonstrate that
+an extra model attribute can be saved: distinguish data disclosure from a proven
+write through form dehydration. Applications must hide sensitive attributes;
+see `docs/09-advanced/06-security.md` and the comments in
+`packages/panels/src/Resources/Pages/EditRecord.php` / `ViewRecord.php`.
+
+### Form state and component RPC
+
+A `Hidden` input or `readOnly()` field is still client-writable; neither is a
+server-side integrity boundary. In contrast, disabled fields are not saved by
+default, and server-hidden fields have their own saving/dehydration rules.
+Trace `saved()` / `dehydrated()` overrides, shared state paths, and whether the
+application persists schema `getState()` or raw public state. None of these
+settings makes browser-held data confidential or replaces authorization. See
+`packages/forms/docs/01-overview.md`, `02-text-input.md`, and `21-hidden.md`,
+plus `packages/schemas/src/Components/Concerns/HasState.php`.
+
+Schema component RPC dispatch allows `#[Exposed]` methods, but exposure is not
+operation authorization. Disabled components may expose read methods; evaluate
+individual mutation methods' checks rather than expecting blanket RPC denial.
+For custom Livewire components using `InteractsWithSchemas`, upload targeting is
+not restricted to registered upload fields unless
+`RestrictsFileUploadsToSchemaComponents` is enabled. Do not confuse that default
+with bypasses of enabled target restrictions or file validation/storage checks.
+See `packages/schemas/docs/09-custom-components.md` and the security guide.
+
+### Existing file paths and rich-editor attachments
+
+Storage directories, private visibility, existence checks, and disabled controls
+do not by themselves authorize client-supplied existing file paths or attachment
+IDs. Distinguish the default shared-disk behavior from enabled
+`preventFilePathTampering()` / `preventFileAttachmentPathTampering()` guards.
+These guards use original record content and explicit allow callbacks; callbacks
+approve the exact submitted string, so application prefix-only checks are not
+safe against filesystem path normalization. Check metadata/URL generation and
+removal as well as submission when evaluating enabled protection.
+
+With default disk storage, neither the rich-editor provider nor the standalone
+renderer infers attachment ownership. The Spatie media-library provider scopes
+URL resolution to the record's media collection, which is different from
+rejecting IDs during form validation. A standalone renderer does not inherit a
+field's original-content guard. See `packages/forms/docs/09-file-upload.md`,
+`10-rich-editor.md`, and
+`packages/forms/src/Components/RichEditor/RichContentRenderer.php`.
+
+### Rendering and sanitization scope
+
+The default HTML sanitizer deliberately permits inline `style`; it does not
+promise CSS isolation, prevention of external CSS requests, or prevention of
+overlays. This does not permit first-party CSS generation to accept arbitrary
+untrusted fragments: color values, rich-text colors, grid counts, and image
+dimensions have separate sanitization/coercion boundaries. Distinguish preserved
+user-authored inline CSS from injection into a generated single-value CSS slot.
+
+Do not generalize the sanitization applied by text-column/entry `html()` to
+every HTML option: `allowHtml()` on selects and trusted `Htmlable`, view, or
+custom-block output have different contracts. Application-supplied JavaScript
+such as `actionJs()` is executable trusted configuration; ordinary field values
+are not trusted executable code merely because that configuration reads them.
+
+`Str::sanitizeUrl()` checks allowed URL schemes and returns accepted input
+unchanged; attribute escaping is a separate step. It is not a host allowlist,
+same-origin guarantee, open-redirect defense, or SSRF defense. General URL
+configuration methods do not automatically call it; `FileUpload` does for its
+preview/open/download URLs. Test those promises and any separately configured
+destination restriction. See `docs/09-advanced/06-security.md`,
+`packages/tables/docs/02-columns/02-text.md`, and
+`packages/forms/docs/03-select.md`.
+
 If a default or documented limitation nevertheless creates a practical exploit,
 describe the exact deployment assumptions and impact so maintainers can assess
 it; do not silently exclude a demonstrated exploit as mere misconfiguration.
