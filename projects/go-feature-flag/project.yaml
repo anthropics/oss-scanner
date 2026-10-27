@@ -1,0 +1,7 @@
+# GO Feature Flag: a feature flag library for Go and a relay proxy that serves OpenFeature SDKs over HTTP.
+repo: https://github.com/thomaspoignant/go-feature-flag#main
+primary_contact: contact@gofeatureflag.org
+homepage: https://gofeatureflag.org
+disabled: false
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
