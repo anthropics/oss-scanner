@@ -1,0 +1,24 @@
+# Apache Cloudberry (incubating) — an MPP analytical database derived from
+# Greenplum Database and PostgreSQL.
+
+# The git repository to scan, pinned to the default development branch.
+repo: https://github.com/apache/cloudberry#main
+
+# Reports and build-failure notices go here. This is a Google Group alias
+# (membership is private); the address itself is intentionally public-safe.
+primary_contact: cloudberry-security@googlegroups.com
+
+homepage: https://cloudberry.apache.org
+
+# Where reports go, by lowest severity each channel accepts.
+output_format:
+  email:
+    min_severity: low
+  github_security_advisory:
+    min_severity: none
+
+# true pauses reports without un-enrolling.
+disabled: false
+
+# The Dockerfile and threat_model.md sit next to this file in
+# projects/cloudberry/, so no dockerfile: / threat_model: keys are set.
