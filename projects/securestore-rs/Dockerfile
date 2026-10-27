@@ -24,9 +24,9 @@ RUN cargo vendor vendor > .cargo-vendor-config.toml && \
 # ENV CARGO_NET_OFFLINE=true
 
 # Build & test with OpenSSL (default)
-# RUN cargo test --release --all-targets
+RUN cargo test --release --all-targets
 
 # Build & test with the pure-Rust stack (rustls)
-# RUN cargo test --release --all-targets --no-default-features --features rustls
+RUN cargo test --release --all-targets --no-default-features --features rustls
 
 CMD ["/bin/bash"]
