@@ -1,4 +1,6 @@
 repo: https://github.com/Automattic/woocommerce-services#trunk
 primary_contact: security@automattic.com
+auto_ccs:
+  - payments-engineering@matticspace.com
 homepage: https://wordpress.org/plugins/woocommerce-services/
 disabled: false
