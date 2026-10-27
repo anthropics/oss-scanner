@@ -31,7 +31,13 @@ Out of scope:
 * code disabled at compile time or not available in this JS shell build (includes
   JIT backends for other architectures);
 * everything in this checkout outside `js/src`. `mfbt/` and the Rust crates the engine
-  uses are in scope only when reached through the engine.
+  uses are in scope only when reached through the engine;
+* Spectre and other speculative-execution or timing side channels, including missing or
+  bypassable Spectre mitigations in the JITs. Fission (site isolation) is now our main
+  defense for these issues. A bug in mitigation code that causes real (non-speculative)
+  memory corruption is in scope like any other memory-safety bug;
+* anything that needs a pref to change mid-execution through `setPrefValue`. It's fine
+  if the bug reproduces with the setting fixed from startup through `--setpref=...`.
 
 ## How to exercise it
 

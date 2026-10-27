@@ -1,0 +1,8 @@
+# Fiber: the Go web framework built on fasthttp (github.com/gofiber/fiber/v3).
+# The Dockerfile and threat_model.md sit next to this file, so neither key is set here.
+repo: https://github.com/gofiber/fiber#main
+primary_contact: rene@gofiber.io
+auto_ccs:
+  - gaby@gofiber.io
+  - security@gofiber.io
+homepage: https://gofiber.io

@@ -1,0 +1,7 @@
+repo: https://github.com/LibreDWG/libredwg
+primary_contact: reini.urban@gmail.com
+homepage: https://savannah.gnu.org/projects/libredwg/
+output_format:
+  github_security_advisory:
+    min_severity: medium
+dockerfile: build-aux/Dockerfile

@@ -1,0 +1,9 @@
+# Waybar: highly customizable Wayland status bar for Sway, Hyprland, niri, river and other
+# wlroots-based compositors.
+repo: https://github.com/Alexays/Waybar#master
+
+primary_contact: alexisr245@gmail.com
+
+homepage: https://github.com/Alexays/Waybar
+
+disabled: false

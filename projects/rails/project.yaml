@@ -1,0 +1,4 @@
+repo: https://github.com/rails/rails#main
+primary_contact: security@rubyonrails.org
+homepage: https://rubyonrails.org
+disabled: false

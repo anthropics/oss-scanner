@@ -16,8 +16,13 @@ Fields allowed in project.yaml:
     threat_model: <path in your repo>   optional   defaults to .oss-scanner/threat_model.md
     auto_ccs: [a@b.c, ...]              optional   cannot be combined with pgp
     homepage: https://...               optional
-    pgp: <armored public key>           optional   if set, reports are encrypted to this key
+    pgp: <armored public key>           optional   if set, email reports are encrypted to this key
     disabled: true|false                optional   true pauses reports
+    output_format:                      optional   lowest severity each channel receives
+      email:
+        min_severity: low|medium|high|critical|none                   default low
+      github_security_advisory:
+        min_severity: low|medium|high|critical|none                   default none
 
 The only other files allowed next to project.yaml are a Dockerfile and a threat_model.md. Each one must
 live in exactly one place: either next to project.yaml, or in your repository at the path set by its key.
@@ -40,12 +45,14 @@ except ImportError:
 PROJECTS = pathlib.Path(__file__).resolve().parent.parent / "projects"
 
 REQUIRED_KEYS = ("repo", "primary_contact")
-OPTIONAL_KEYS = ("auto_ccs", "homepage", "pgp", "disabled", "dockerfile", "threat_model")
+OPTIONAL_KEYS = ("auto_ccs", "homepage", "pgp", "disabled", "dockerfile", "threat_model", "output_format")
 ALLOWED_KEYS = REQUIRED_KEYS + OPTIONAL_KEYS
 # Settings controlled by the scanner's operators. A pull request may not set them.
 OPERATOR_KEYS = ("workflow", "workflows", "budget", "budget_usd", "cadence", "cadence_hours", "schedule", "priority")
 # Maps each file that may sit next to project.yaml to the key that would point to it in the project's repository.
 FILE_KEYS = {"Dockerfile": "dockerfile", "threat_model.md": "threat_model"}
+OUTPUT_CHANNELS = ("email", "github_security_advisory")
+SEVERITIES = ("low", "medium", "high", "critical", "none")
 MAX_FILE_BYTES = 64 * 1024
 MAX_CONFIG_BYTES = 128 * 1024
 
@@ -141,6 +148,23 @@ def check_pgp(config):
         )
 
 
+def check_output_format(config):
+    """Yield a problem for each unknown channel or setting, and each bad severity, in output_format."""
+    output_format = config.get("output_format")
+    if output_format is None:
+        return
+    if not isinstance(output_format, dict):
+        yield f"output_format must be a mapping of channels ({', '.join(OUTPUT_CHANNELS)}) to their min_severity"
+        return
+    for channel, settings in output_format.items():
+        if channel not in OUTPUT_CHANNELS:
+            yield f"unknown output_format channel {channel!r} (allowed: {', '.join(OUTPUT_CHANNELS)})"
+        elif not isinstance(settings, dict) or set(settings) != {"min_severity"}:
+            yield f"output_format.{channel} must contain min_severity and nothing else"
+        elif settings["min_severity"] not in SEVERITIES:
+            yield f"output_format.{channel}.min_severity must be one of: {', '.join(SEVERITIES)}"
+
+
 def check_files(config, files):
     """Yield problems with the Dockerfile and threat model, whether they are next to project.yaml or in the repo.
 
@@ -180,6 +204,7 @@ def check_config(config, files):
         *check_urls(config),
         *check_addresses(config),
         *check_pgp(config),
+        *check_output_format(config),
         *check_files(config, files),
     ]
 

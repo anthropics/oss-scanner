@@ -1,0 +1,4 @@
+# uuid-rs: the `uuid` crate, a Rust library to generate and parse UUIDs (RFC 9562).
+repo: https://github.com/uuid-rs/uuid#main
+primary_contact: hey@kodraus.com
+homepage: https://docs.rs/uuid

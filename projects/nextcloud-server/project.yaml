@@ -1,0 +1,4 @@
+repo: https://github.com/nextcloud/server#master
+primary_contact: oss-scanner@nextcloud.com
+homepage: https://nextcloud.com
+disabled: false
