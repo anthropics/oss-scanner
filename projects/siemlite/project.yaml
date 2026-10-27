@@ -1,0 +1,7 @@
+# SIEMLite: a self-hosted SIEM in a single Go binary (HTTPS API, SQLite + FTS5 storage, embedded web UI).
+# The Dockerfile and threat_model.md live in the SIEMLite repository, so they can be updated without a pull request here.
+repo: https://github.com/justwaters/SIEMLite#main
+primary_contact: justin@1waters.com
+homepage: https://justwaters.github.io/SIEMLite/
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
