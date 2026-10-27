@@ -8,6 +8,8 @@ ENV DEBIAN_FRONTEND=noninteractive \
     RUST_TEST_THREADS=2 \
     RUST_BACKTRACE=1 \
     PORTABLE=ON \
+    CXX=clang++ \
+    CXXFLAGS=-gline-tables-only \
     INSTA_UPDATE=no \
     CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER=clang-lld \
     CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=clang-lld
@@ -23,7 +25,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # lld keeps node/test linking within the scanner's memory budget. Selecting a
 # linker preserves the checked-in architecture flags and unwind-table settings.
-RUN printf '#!/bin/sh\nexec clang -fuse-ld=lld "$@"\n' > /usr/local/bin/clang-lld \
+# Explicitly link libstdc++ even when librocksdb-sys reuses an existing archive
+# and therefore does not emit cc-rs's usual C++ runtime link directive.
+RUN printf '#!/bin/sh\nexec clang -fuse-ld=lld "$@" -lstdc++\n' > /usr/local/bin/clang-lld \
     && chmod +x /usr/local/bin/clang-lld
 
 COPY --exclude=.oss-scanner . /work/nearcore
@@ -39,14 +43,36 @@ RUN python3 -m venv /opt/nearcore-venv \
       -exec sh -ec 'for manifest do cargo fetch --locked --manifest-path "$manifest"; done' sh '{}' +
 ENV PATH="/opt/nearcore-venv/bin:${PATH}"
 
-# Use nearcore's existing shared build/test profile. Keep line-table debug info
-# and compiled test binaries; omit incremental caches to limit image size.
-# The node binary has default features, without adversarial test APIs or sandbox.
-RUN cargo build --locked --profile dev-artifacts -p neard -j 4 \
-    && ln -s /work/nearcore/target/dev-artifacts/neard /usr/local/bin/neard
-RUN cargo test --locked --profile dev-artifacts --features test_features \
-      -p near-network -p near-vm-runner -p near-runtime -p test-loop-tests \
-      --lib --no-run -j 4
+# Build the default-feature node first. Cargo's node/test build graphs select
+# different build-dependency features and otherwise compile identical RocksDB
+# sources twice. Reuse the first build's static archives through librocksdb-sys's
+# supported environment variables, rather than a different system RocksDB.
+# Keep both builds in one layer, retaining archives but removing native .o files
+# after linking. Rust and C++ retain line-table debug info for investigations.
+ENV ROCKSDB_STATIC=1 SNAPPY_STATIC=1
+RUN <<'SH'
+set -eu
+jobs=$(nproc)
+if [ "$jobs" -gt 8 ]; then jobs=8; fi
+cargo build --locked --profile dev-artifacts -p neard -j "$jobs"
+mkdir /opt/nearcore-native
+for library in rocksdb snappy; do
+    archive=$(find target/dev-artifacts/build -path "*/librocksdb-sys-*/out/lib${library}.a")
+    test -n "$archive"
+    test "$(printf '%s\n' "$archive" | wc -l)" -eq 1
+    cp "$archive" /opt/nearcore-native/
+done
+export ROCKSDB_LIB_DIR=/opt/nearcore-native SNAPPY_LIB_DIR=/opt/nearcore-native
+cargo test --locked --profile dev-artifacts --features test_features \
+    -p near-network -p near-vm-runner -p near-runtime -p test-loop-tests \
+    --lib --no-run -j "$jobs"
+# Refresh the default node's Cargo fingerprints for the same native-lib settings
+# used by future offline builds. This does not enable the tests' feature graph.
+cargo build --locked --profile dev-artifacts -p neard -j "$jobs"
+ln -s /work/nearcore/target/dev-artifacts/neard /usr/local/bin/neard
+find target/dev-artifacts/build -path '*/librocksdb-sys-*/out/*' -name '*.o' -delete
+SH
+ENV ROCKSDB_LIB_DIR=/opt/nearcore-native SNAPPY_LIB_DIR=/opt/nearcore-native
 RUN curl -fsSL \
       "https://github.com/nextest-rs/nextest/releases/download/cargo-nextest-0.9.150/cargo-nextest-0.9.150-$(uname -m)-unknown-linux-gnu.tar.gz" \
       -o /tmp/nextest.tar.gz \

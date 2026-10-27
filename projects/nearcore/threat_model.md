@@ -78,12 +78,17 @@ The checkout is available at /src (physical location /work/nearcore). The image
 retains Rust 1.95.0 with the checked-in toolchain components, Wasm target and
 rust-src, Python harness dependencies, locked Cargo sources including Git sources,
 built test contracts, the node binary and compiled test harnesses. Rust target
-flags are preserved. lld is used for linking.
+flags are preserved. Clang and lld are used for native compilation and linking.
 
 The existing dev-artifacts profile shares node/test artifacts. Line-table debug
 information is retained, incremental caching is disabled, and normal rebuild/test
 parallelism is two. The profile uses development assertions and dependency
 optimizations; check production-profile behavior for security-impact claims.
+Initial setup uses up to eight available CPUs. RocksDB and Snappy static archives
+are compiled once from the locked Cargo sources and reused by the node and test
+build graphs. C++ uses line-table debug information; native intermediate object
+files are removed after linking, while libraries and Rust build artifacts remain
+available for offline rebuilds. No system RocksDB replacement is used.
 
 Run the prepared baseline offline:
 
