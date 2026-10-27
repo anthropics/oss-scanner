@@ -1,4 +1,6 @@
 repo: https://github.com/woocommerce/action-scheduler#trunk
 primary_contact: security@automattic.com
+auto_ccs:
+  - payments-engineering@matticspace.com
 homepage: https://actionscheduler.org/
 disabled: false
