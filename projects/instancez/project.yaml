@@ -1,0 +1,9 @@
+repo: https://github.com/instancez/instancez#main
+primary_contact: security@instancez.ai
+homepage: https://instancez.ai
+output_format:
+  email:
+    min_severity: low
+  github_security_advisory:
+    min_severity: low
+disabled: false
