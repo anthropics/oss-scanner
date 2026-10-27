@@ -1,0 +1,16 @@
+repo: https://github.com/neosmart/securestore-rs
+
+primary_contact: mqudsi@neosmart.net
+
+auto_ccs:
+  - security@neosmart.net
+
+homepage: https://neosmart.net/blog/securestore/
+
+output_format:
+  email:
+    min_severity: low
+  github_security_advisory:
+    min_severity: none
+
+disabled: false
