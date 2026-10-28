@@ -49,7 +49,8 @@ The package lists are starting points, not limits; follow the code wherever it l
 ## How to exercise it
 
 - JUnit 5 tests in `rskj-core/src/test`. Helpers: `co.rsk.test.World` with DSL scripts in `src/test/resources/dsl`, `BlockGenerator`, `BlockChainBuilder`, `BridgeSupportBuilder`, `RskTestContext`. Run one class with `./gradlew :rskj-core:test --tests <Class>`.
-- Local node: `java -cp rskj-core/build/libs/rskj-core-*-all.jar co.rsk.Start --regtest` runs a single-node network offline, useful for RPC and P2P paths. Regtest activates upgrades that are not active on mainnet and enables the wallet, so check findings against the mainnet config.
+- Local node: `java -Dpublic.ip=127.0.0.1 -cp rskj-core/build/libs/rskj-core-*-all.jar co.rsk.Start --regtest` runs a single-node network offline, useful for RPC and P2P paths. Keep `-Dpublic.ip`: without it the node asks `checkip.amazonaws.com` for its address, which with no network stalls on DNS and logs an ERROR before falling back to `127.0.0.1` — an artifact of the sandbox, not a finding. Regtest activates upgrades that are not active on mainnet and enables the wallet, so check findings against the mainnet config.
+- The image is built and its Gradle cache is warm; Gradle is already offline by default, so no command needs `--offline`. `/src/.oss-scanner/AGENT-NOTES.md` has the build, node and resource notes for this image.
 
 ## Attackers and trust
 
