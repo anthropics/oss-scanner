@@ -1,0 +1,6 @@
+repo: https://github.com/netbirdio/netbird#main
+primary_contact: security@netbird.io
+homepage: https://netbird.io
+output_format:
+  github_security_advisory:
+    min_severity: high

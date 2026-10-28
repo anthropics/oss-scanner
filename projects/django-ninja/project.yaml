@@ -1,0 +1,16 @@
+# Django Ninja: a web framework for building APIs with Django and Python type hints.
+
+# REQUIRED. The ONE git repository to scan, as an https:// URL. Optionally add #branch or #tag to pin one.
+repo: https://github.com/vitalik/django-ninja#master
+
+# REQUIRED. Who should we email our reports to, and use as the primary contact for questions.
+# This is the address published in https://github.com/vitalik/django-ninja/blob/master/SECURITY.md
+primary_contact: ppr.vitaly@gmail.com
+
+# Optional. The project's home page.
+homepage: https://django-ninja.dev
+
+# Optional. true pauses reports without removing the enrolment; false (or omitting it) enables your project.
+disabled: false
+
+# The Dockerfile and threat_model.md are next to this file, so dockerfile: and threat_model: are omitted.

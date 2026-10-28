@@ -1,0 +1,11 @@
+# LiteLLM: a Python SDK and an AI gateway (proxy server) for calling 100+ LLM APIs in the OpenAI format.
+repo: https://github.com/BerriAI/litellm#main
+
+# LiteLLM's security team, with the security engineer who triages reports copied.
+primary_contact: security@berri.ai
+auto_ccs:
+  - oliver@berri.ai
+
+homepage: https://docs.litellm.ai
+
+disabled: false

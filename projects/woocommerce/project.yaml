@@ -1,0 +1,4 @@
+repo: https://github.com/woocommerce/woocommerce#trunk
+primary_contact: security@automattic.com
+homepage: https://woocommerce.com
+disabled: false

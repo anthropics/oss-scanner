@@ -1,6 +1,11 @@
 repo: https://github.com/rabbitmq/rabbitmq-server#main
 primary_contact: tnz-rabbitmq-core.pdl@broadcom.com
 homepage: https://www.rabbitmq.com
+output_format:
+  email:
+    min_severity: none
+  github_security_advisory:
+    min_severity: low
 disabled: false
 dockerfile: .oss-scanner/Dockerfile
 threat_model: .oss-scanner/threat_model.md

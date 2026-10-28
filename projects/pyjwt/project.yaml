@@ -1,6 +1,9 @@
 repo: https://github.com/jpadilla/pyjwt#master
 primary_contact: security@jpadilla.com
 homepage: https://pyjwt.readthedocs.io
+output_format:
+  github_security_advisory:
+    min_severity: medium
 disabled: false
 dockerfile: .oss-scanner/Dockerfile
 threat_model: .oss-scanner/threat_model.md

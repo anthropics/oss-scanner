@@ -1,0 +1,11 @@
+repo: https://github.com/googlefonts/fontations#main
+primary_contact: rsheeter@google.com
+auto_ccs:
+  - drott@google.com
+  - grieger@google.com
+  - colin.rofls@gmail.com
+  - cbrokaw@google.com
+  - clupo@google.com
+  - behdad.esfahbod@gmail.com
+  - qxliu@google.com
+homepage: https://github.com/googlefonts/fontations

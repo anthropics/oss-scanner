@@ -1,0 +1,9 @@
+repo: https://github.com/gopacket/gopacket#master
+primary_contact: hi@n0p.me
+homepage: https://github.com/gopacket/gopacket
+output_format:
+  email:
+    min_severity: none
+  github_security_advisory:
+    min_severity: low
+disabled: false

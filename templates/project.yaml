@@ -13,13 +13,22 @@ auto_ccs:
 # Optional. The project's home page.
 homepage: https://example.org
 
-# Optional. Your armored OpenPGP public key. When set, every report is encrypted to it and goes to primary_contact only
+# Optional. Your armored OpenPGP public key. When set, every email report is encrypted to it and goes to primary_contact only
 # (so it cannot be combined with auto_ccs).
 # Paste the whole block, including the BEGIN line and END line.
 # pgp: |
 #   -----BEGIN PGP PUBLIC KEY BLOCK-----
 #   mDMEZ...
 #   -----END PGP PUBLIC KEY BLOCK-----
+
+# Optional. The lowest severity each channel receives: low, medium, high, critical, or none to turn it off.
+# A channel you leave out uses the default shown here. A report can go to both channels.
+# pgp only applies to email: GitHub reports are not encrypted to your key.
+output_format:
+  email:
+    min_severity: low
+  github_security_advisory:
+    min_severity: none
 
 # Optional. true pauses reports without removing the enrolment; false (or omitting it) enables your project.
 disabled: false
