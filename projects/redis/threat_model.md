@@ -16,8 +16,8 @@ Trusted: the config file, modules loaded with `loadmodule`, and RDB or AOF files
 - Out of scope: vendored code under `deps/` other than Lua, bundled modules under `modules/` other than vector sets (they are not built by default), and the example modules under `tests/modules/`.
 
 ## How to exercise it
-- Start a server: `/src/src/redis-server --port 6379` (or `/src-asan/src/redis-server` for ASan).
-- Send commands with `/src/src/redis-cli`.
+- Start a server: `/src/redis-server --port 6379`.
+- Send commands with `/src/redis-cli`.
 - Integration tests are Tcl under `tests/`; run one with `./runtest --single unit/<name>`.
 - Keep test parallelism to `--clients 2` and wrap long runs in `timeout`.
 - Redis has no separate C unit test binary; the test suite under `tests/` is the unit-level harness.
@@ -37,6 +37,8 @@ Examples: Lua use-after-free leading to RCE is `AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/
 ## Anything to leave alone
 - Anything that requires `enable-debug-command`, `enable-protected-configs`, or `enable-module-command`. All three default to `no`.
 - Running with no password and protected mode disabled. `protected-mode` defaults to `yes`.
+- Running a cluster node with `cluster-bus-port-protected-mode no`, which accepts an unauthenticated cluster bus. It defaults to `yes`, and a node refuses to start with an unauthenticated bus unless this is set to `no`.
+- Crashes from malformed `RESTORE` or `MIGRATE` payloads when `sanitize-dump-payload` is `no`. It defaults to `no`, and Redis skips deep validation of these payloads for performance, so a crash is a known tradeoff against data validation. The scanner runs with `sanitize-dump-payload yes`, so do not report crashes that only occur with `no`.
 - Commands that are slow or memory hungry by design, such as `KEYS` on a large keyspace.
 - Reports and patches should target the `unstable` branch, the default branch, with a reproducer as a `redis-cli` command sequence or a Tcl test.
 
