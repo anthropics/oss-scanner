@@ -1,0 +1,7 @@
+repo: https://github.com/open-telemetry/opentelemetry-java-instrumentation#main
+primary_contact: security@opentelemetry.io
+output_format:
+  email:
+    min_severity: none
+  github_security_advisory:
+    min_severity: low
