@@ -1,0 +1,15 @@
+# RSKj, the reference node implementation of Rootstock: a Bitcoin merge-mined sidechain with an
+# EVM-compatible execution layer and a two-way peg that custodies the BTC backing RBTC.
+
+# No #branch: the scanner follows the repository's default branch, which is where releases are cut
+# from. Pin one here if a scan should ever track something else.
+repo: https://github.com/rsksmart/rskj
+
+primary_contact: security@rootstocklabs.com
+
+homepage: https://rootstock.io
+
+disabled: false
+
+# The Dockerfile and threat_model.md sit beside this file, so the `dockerfile:` and `threat_model:`
+# keys are deliberately absent -- tools/validate.py rejects giving a file in both places.
