@@ -10,6 +10,7 @@ COPY . /src
 WORKDIR /src
 
 COPY <<'EOF' /root/.gradle/init.d/oss-scanner.gradle
+import org.gradle.api.artifacts.component.ModuleComponentIdentifier
 import org.gradle.api.tasks.Exec
 
 allprojects { p ->
@@ -24,12 +25,32 @@ allprojects { p ->
             }
         }
     }
+
+    p.tasks.register("ossScannerResolveTestRuntime") {
+        notCompatibleWithConfigurationCache("Resolves test runtime configurations at execution time")
+        doLast {
+            // The coverage JVM agent is resolved separately from test runtime classpaths.
+            p.configurations.findAll {
+                it.canBeResolved && (
+                    (it.name.toLowerCase().contains("test") && it.name.endsWith("RuntimeClasspath")) ||
+                        it.name == "jacocoAgent")
+            }.each { configuration ->
+                // Project artifacts are built from source; cache external dependencies for offline use.
+                configuration.incoming.artifactView {
+                    componentFilter { it instanceof ModuleComponentIdentifier }
+                }.files.files
+            }
+        }
+    }
 }
 EOF
 
 RUN ./gradlew --no-daemon --console=plain \
     "-Dorg.gradle.jvmargs=-Xmx8g -XX:MaxMetaspaceSize=1g" \
-    classes testClasses :javaagent:assemble
+    classes testClasses :javaagent:assemble \
+    && ./gradlew --no-daemon --console=plain --no-configuration-cache \
+    "-Dorg.gradle.jvmargs=-Xmx8g -XX:MaxMetaspaceSize=1g" \
+    ossScannerResolveTestRuntime
 
 RUN mkdir -p /root/.gradle/init.d \
     && printf '%s\n' 'gradle.startParameter.offline = true' \
