@@ -1,0 +1,4 @@
+repo: https://github.com/signalapp/Signal-Android#main
+primary_contact: oss-scanner+android@signal.org
+homepage: https://signal.org
+disabled: false
