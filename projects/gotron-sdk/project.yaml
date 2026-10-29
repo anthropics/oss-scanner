@@ -1,0 +1,5 @@
+repo: https://github.com/fbsobreira/gotron-sdk#master
+primary_contact: hello@gotron.sh
+homepage: https://github.com/fbsobreira/gotron-sdk
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
