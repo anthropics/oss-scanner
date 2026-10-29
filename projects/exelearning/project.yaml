@@ -1,0 +1,7 @@
+# eXeLearning: AGPL-3.0 authoring tool for open educational resources (web server, desktop app and static build).
+repo: https://github.com/exelearning/exelearning#main
+primary_contact: info@exelearning.net
+homepage: https://exelearning.net
+disabled: false
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
