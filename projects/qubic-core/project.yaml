@@ -1,0 +1,7 @@
+# The Qubic Core node: consensus, peer-to-peer networking, tick/transaction
+# processing, cryptography (KangarooTwelve, FourQ) and on-chain smart contracts.
+repo: https://github.com/qubic/core#main
+primary_contact: tech@qubic.org
+homepage: https://qubic.org
+disabled: false
+# Dockerfile and threat_model.md live next to this file (projects/qubic-core/).
