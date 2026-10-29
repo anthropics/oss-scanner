@@ -1,0 +1,10 @@
+repo: https://github.com/far2l/far2l
+primary_contact: michael.lukashov@gmail.com
+homepage: https://github.com/far2l/far2l
+dockerfile: ./Dockerfile
+output_format:
+  email:
+    min_severity: low
+  github_security_advisory:
+    min_severity: none
+disabled: false
