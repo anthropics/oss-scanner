@@ -1,0 +1,5 @@
+# stratum: the Stratum V2 protocol libraries of the Stratum V2 Reference Implementation (SRI).
+# The Dockerfile and threat_model.md sit next to this file, so neither key is set here.
+repo: https://github.com/stratum-mining/stratum#main
+primary_contact: stratumv2@gmail.com
+homepage: https://stratumprotocol.org
