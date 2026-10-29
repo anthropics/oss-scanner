@@ -1,0 +1,10 @@
+repo: https://github.com/pwsafe/pwsafe
+
+primary_contact: security@pwsafe.org
+
+auto_ccs:
+  - ronys@pwsafe.org
+
+homepage: https://pwsafe.org
+
+disabled: false
