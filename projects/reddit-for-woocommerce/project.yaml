@@ -1,0 +1,5 @@
+repo: https://github.com/woocommerce/reddit-for-woocommerce#develop
+primary_contact: security@automattic.com
+auto_ccs:
+  - payments-engineering@matticspace.com
+homepage: https://woocommerce.com/products/reddit/
