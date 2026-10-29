@@ -1,0 +1,18 @@
+# REQUIRED. The ONE git repository to scan, as an https:// URL. Optionally add #branch or #tag to pin one.
+repo: https://github.com/apache/logging-log4net#master
+
+# REQUIRED. Who should we email our reports to, and use as the primary contact for questions.
+# The Apache Logging Services security team, as named in SECURITY.md.
+primary_contact: security@logging.apache.org
+
+# Optional. The project's home page.
+homepage: https://logging.apache.org/log4net/
+
+# Optional. true pauses reports without removing the enrolment; false (or omitting it) enables your project.
+disabled: false
+
+# Required: the Dockerfile lives in the repository, so it changes there without a PR here.
+dockerfile: .oss-scanner/Dockerfile
+
+# Optional. This is also the default path, so the line could be omitted.
+threat_model: .oss-scanner/threat_model.md
