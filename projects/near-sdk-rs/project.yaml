@@ -1,0 +1,5 @@
+repo: https://github.com/near/near-sdk-rs#master
+primary_contact: security@nearone.org
+auto_ccs:
+  - ricky@nearone.org
+homepage: https://docs.near.org
