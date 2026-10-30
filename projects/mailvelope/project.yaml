@@ -1,0 +1,22 @@
+repo: https://github.com/mailvelope/mailvelope#dev
+primary_contact: security@mailvelope.com
+homepage: https://mailvelope.com
+pgp: |
+  -----BEGIN PGP PUBLIC KEY BLOCK-----
+
+  mDMEatyBORYJKwYBBAHaRw8BAQdAVlVrgEJvUwuLI3/7nzw/+pyb6sSDjvfHnAD3
+  eM7ChpK0LU1haWx2ZWxvcGUgU2VjdXJpdHkgPHNlY3VyaXR5QG1haWx2ZWxvcGUu
+  Y29tPoiyBBMWCgBaFiEENVkIyOCb428PjnVWSGsIUPVZtFIFAmrcgTkbFIAAAAAA
+  BAAObWFudTIsMi41KzEuMTIsMCwzAhsDBQkFo5qABQsJCAcDBRUKCQgLBRYCAwEA
+  Ah4FAheAAAoJEEhrCFD1WbRSAD4BAK8SGDZorCnFX/9doqk2HtqM+VeJmFm45tL5
+  WpMD6SweAP9wpT0IHIoUbBLUchZgkONhhb8x57f2CbSJwuq2EzYsCLg4BGrcgTkS
+  CisGAQQBl1UBBQEBB0CirgkAISpcgjBrhuBLFH6PMNZ8gQJ1oFTrUoMWh1BFJAMB
+  CAeIlAQYFgoAPBYhBDVZCMjgm+NvD451VkhrCFD1WbRSBQJq3IE5GxSAAAAAAAQA
+  Dm1hbnUyLDIuNSsxLjEyLDAsMwIbDAAKCRBIawhQ9Vm0UpenAP98t0+bKOUgjDuD
+  dN56NJvl/d9JZhEYs7DPPPizeMFPlgD8DNDr4xwxQuleIfi5uD+/sPvrS0FODh27
+  1Cb43Rj0ug4=
+  =6FNy
+  -----END PGP PUBLIC KEY BLOCK-----
+disabled: false
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
