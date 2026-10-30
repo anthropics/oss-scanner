@@ -1,0 +1,4 @@
+repo: https://github.com/redis/redis#unstable
+primary_contact: security@redis.com
+homepage: https://redis.io
+disabled: false
