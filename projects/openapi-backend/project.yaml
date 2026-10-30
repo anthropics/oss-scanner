@@ -1,0 +1,17 @@
+# Anthropic OSS Scanner enrolment for openapi-backend. See https://openapistack.co
+# Rules: https://github.com/anthropics/oss-scanner/blob/main/README.md
+
+# The git repository to scan. Default branch (main) is the latest 5.x line; nothing else gets fixes.
+repo: https://github.com/openapistack/openapi-backend
+
+# Security contact. Public already in SECURITY.md of every openapistack repository.
+primary_contact: support@openapistack.co
+
+homepage: https://openapistack.co
+
+disabled: false
+
+# The Dockerfile and threat_model.md sit next to this file (no dockerfile: / threat_model: keys).
+# To update the build without a PR here, move them to .oss-scanner/ in the repository and set
+#   dockerfile: .oss-scanner/Dockerfile
+#   threat_model: .oss-scanner/threat_model.md
