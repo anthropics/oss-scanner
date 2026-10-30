@@ -1,0 +1,20 @@
+repo: https://git.souveraene-systeme.de/markus/souveraene-systeme.git#master
+primary_contact: security@souveraene-systeme.de
+homepage: https://souveraene-systeme.de
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
+pgp: |
+  -----BEGIN PGP PUBLIC KEY BLOCK-----
+
+  mDMEathdHRYJKwYBBAHaRw8BAQdA2g0WYEUEWuUe851LVhL6sSZCvQb+VFnlMY31
+  z5MieXa0PFNvdXZlcsOkbmUgU3lzdGVtZSBTZWN1cml0eSA8c2VjdXJpdHlAc291
+  dmVyYWVuZS1zeXN0ZW1lLmRlPoiWBBMWCgA+FiEEjUJ/gi7BGWMuIQZ2u80tSaO6
+  zDgFAmrYXR0CGwMFCQPCZwAFCwkIBwIGFQoJCAsCBBYCAwECHgECF4AACgkQu80t
+  SaO6zDh1fwEAxVlzBO9Ez7LWbYEbXow8laQrlhrwz3hUiGJnHQ9RpK8A/jSsV8ri
+  NWHIaNArpIHa/dkbLo8P2sRaVeDo9Zy6R34IuDgEathdNxIKKwYBBAGXVQEFAQEH
+  QKhg7LEK2whtyNlLP4mu9wqbIRCuP5I1PIKKN47JhZYwAwEIB4h9BBgWCgAmFiEE
+  jUJ/gi7BGWMuIQZ2u80tSaO6zDgFAmrYXTcCGwwFCQPCZwAACgkQu80tSaO6zDgu
+  bAD+IBF2gZm9MeIRBDtpQMkvUkTfAE6KGjTeNjdVv85FKCsA+PRhYHQJDUSmzHiM
+  PerJ6IvGhvOk1qM86/TYMsao8g4=
+  =qiLv
+  -----END PGP PUBLIC KEY BLOCK-----
