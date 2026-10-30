@@ -1,0 +1,5 @@
+repo: https://github.com/algorand/go-algorand
+primary_contact: security@algorand.foundation
+homepage: https://algorand.co
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
