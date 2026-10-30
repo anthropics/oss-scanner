@@ -54,4 +54,28 @@ what should happen, what actually happens and the impact on users or operators.
 
 ## How you rate severity
 
+Rate findings by the harm they can cause, how easily they can be exploited, the
+access required and the number of users or wallets affected. State any special
+conditions. Consider funds held through both the Bitcoin Lightning Network and
+onchain Bitcoin wallets.
+
+- **Critical:** Direct, practical theft or redirection of funds, exposure of
+  secrets that allow spending, manipulation of balances that enables spending
+  money never received, full control of the instance, or widespread permanent
+  loss of access to funds. An attack requiring an ordinary user account can still
+  be critical. A small balance in a test wallet does not reduce the severity of
+  an attack that can steal real funds.
+- **High:** Serious harm, such as account takeover, substantial exposure of
+  private financial information, unauthorized administrative access or sustained
+  disruption that prevents many users from using their wallets. Financial loss
+  that requires significant additional conditions also belongs here; explain
+  those conditions clearly.
+- **Medium:** Meaningful but contained harm, such as exposure of limited private
+  information, unauthorized changes that do not affect funds, or temporary
+  disruption affecting a small number of users. There is no demonstrated path
+  to unauthorized spending or account takeover.
+- **Low:** Minor security impact, such as limited exposure of non-sensitive
+  information or a brief inconvenience affecting one user. There is no
+  demonstrated risk to funds, account control or sensitive private information.
+
 ## Anything to leave alone
