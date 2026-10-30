@@ -28,10 +28,11 @@ COPY . /src
 WORKDIR /src
 
 # Build mdadm using its Makefile with debug symbols (-g) and frame pointers enabled.
-# mdadm defaults to -Werror; CXFLAGS overrides compiler flags while keeping debug symbols accessible.
+# mdadm's CWFLAGS include -Werror; CXFLAGS is appended after them, so it can add flags but not remove -Werror.
+# -Wno-unknown-attributes: bookworm's clang 14 does not know __attribute__((nonstring)) (platform-intel.h).
 RUN make -j"$(nproc)" \
     CC="$CC" \
-    CXFLAGS="-g -fno-omit-frame-pointer -O1 -DNO_COROSYNC" \
+    CXFLAGS="-g -fno-omit-frame-pointer -O1 -DNO_COROSYNC -Wno-unknown-attributes" \
     all mdmon
 
 # Verify binaries were built and exercise basic help/version commands.
