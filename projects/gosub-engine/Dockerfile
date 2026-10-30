@@ -1,4 +1,4 @@
-FROM rust:bookworm
+FROM rust:trixie
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y --no-install-recommends \
       ca-certificates git pkg-config clang \
@@ -15,5 +15,6 @@ ENV RUSTFLAGS="-C force-frame-pointers=yes"
 RUN cargo fetch --locked \
     && cargo build --locked --all --all-targets
 
-# Run the tests so we know the image works, but do not abort the build on failures.
-RUN cargo test --locked --all --no-fail-fast || echo "WARNING: cargo test reported failures"
+# Compile the tests but do not run them here: the sandbox and process-isolation tests need user namespaces,
+# which `docker build` does not grant. They pass in the scanner's privileged container: `cargo test --all`.
+RUN cargo test --locked --all --no-run
