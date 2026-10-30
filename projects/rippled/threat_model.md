@@ -119,7 +119,7 @@ commands with `nix develop .#gcc-plain --command` and run from `/src`. For an in
 cd /src && nix develop .#gcc-plain   # drops you into the toolchain shell; the build is in /src/.build
 ```
 
-The server binary is `/src/.build/xrpld` (a Release build with `-g1 -fno-omit-frame-pointer` and
+The server binary is `/src/.build/xrpld` (a Release build at `-O1` with `-g1 -fno-omit-frame-pointer` and
 `-Dassertions=ON`, so `XRPL_ASSERT` invariant checks are compiled in; the unit tests are not built). Useful entry points:
 
 - **Standalone mode.** `nix develop .#gcc-plain --command ./.build/xrpld -a --conf <cfg> --start` runs a single-node ledger

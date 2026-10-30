@@ -45,6 +45,8 @@ RUN nix develop .#gcc-plain --command true
 #     invariant checks are compiled in -- an assert that a peer or transaction can trip is a finding worth
 #     catching. build_type=Release keeps the build tractable.
 #   - cmake configures with the Conan toolchain and adds -g1 -fno-omit-frame-pointer for debuggable stacks.
+#     It also compiles at -O1 instead of Release's -O3: on a GitHub runner the -O3 compile took 37 of the 45
+#     build minutes. Raise it if the scanner's build limit grows.
 #   - cmake --build builds the default targets (the `xrpld` server).
 # A step that fails fails the build, and primary_contact gets the log.
 # The plain shell sets XRPLD_NO_PATCH_NIX_BINARY, which skips cmake/PatchNixBinary.cmake (it would run a
@@ -79,6 +81,7 @@ RUN nix develop .#gcc-plain --command bash -eux -o pipefail -c '\
         -DCMAKE_TOOLCHAIN_FILE:FILEPATH=build/generators/conan_toolchain.cmake \
         -DCMAKE_BUILD_TYPE=Release \
         -DCMAKE_CXX_FLAGS="-g1 -fno-omit-frame-pointer" \
+        -DCMAKE_CXX_FLAGS_RELEASE="-O1 -DNDEBUG" \
         -Dxrpld=ON -Dtests=OFF -Dassertions=ON \
         .. && \
       cmake --build . --parallel "$(nproc)"'
