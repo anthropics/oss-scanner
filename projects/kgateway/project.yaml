@@ -1,0 +1,5 @@
+repo: https://github.com/kgateway-dev/kgateway
+primary_contact: kgateway-vulnerability-reports@googlegroups.com
+homepage: https://kgateway.dev
+dockerfile: .oss-scanner/Dockerfile
+threat_model: THREAT_MODEL.md

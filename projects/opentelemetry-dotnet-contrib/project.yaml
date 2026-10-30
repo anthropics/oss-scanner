@@ -1,0 +1,13 @@
+repo: https://github.com/open-telemetry/opentelemetry-dotnet-contrib#main
+primary_contact: security@opentelemetry.io
+auto_ccs:
+  - dotnet-contrib-maintainers@opentelemetry.io
+homepage: https://opentelemetry.io/docs/languages/dotnet/
+disabled: false
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
+output_format:
+  email:
+    min_severity: none
+  github_security_advisory:
+    min_severity: low

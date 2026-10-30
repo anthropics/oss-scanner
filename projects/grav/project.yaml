@@ -1,0 +1,6 @@
+repo: https://github.com/getgrav/grav#develop
+primary_contact: security@getgrav.org
+homepage: https://getgrav.org
+disabled: false
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md

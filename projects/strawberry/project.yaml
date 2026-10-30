@@ -1,0 +1,7 @@
+# A Python library for building GraphQL APIs.
+repo: https://github.com/strawberry-graphql/strawberry#main
+primary_contact: security@strawberry.rocks
+homepage: https://strawberry.rocks
+disabled: false
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
