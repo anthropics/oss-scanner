@@ -56,3 +56,8 @@ pgp: |
   tOx4QepgC+Y=
   =bZwa
   -----END PGP PUBLIC KEY BLOCK-----
+output_format:
+  email:
+    min_severity: low
+  github_security_advisory:
+    min_severity: high
