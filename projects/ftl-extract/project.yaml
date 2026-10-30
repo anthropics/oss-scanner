@@ -1,0 +1,10 @@
+repo: https://github.com/andrew000/FTL-Extract#dev
+primary_contact: help.kusbot@gmail.com
+homepage: https://ftl-extract.readthedocs.io/
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
+output_format:
+  email:
+    min_severity: none
+  github_security_advisory:
+    min_severity: low
