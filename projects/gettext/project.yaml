@@ -1,0 +1,7 @@
+repo: https://https.git.savannah.gnu.org/git/gettext.git#master
+
+primary_contact: bruno@clisp.org
+
+homepage: https://www.gnu.org/software/gettext/
+
+disabled: false
