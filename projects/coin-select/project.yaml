@@ -1,0 +1,9 @@
+repo: https://github.com/bitcoindevkit/coin-select#master
+primary_contact: security@bitcoindevkit.org
+homepage: https://bitcoindevkit.org
+disabled: false
+output_format:
+  email:
+    min_severity: low
+  github_security_advisory:
+    min_severity: high
