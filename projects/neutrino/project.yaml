@@ -1,0 +1,16 @@
+# OSS Scanner enrolment for neutrino. Schema: templates/project.yaml.
+repo: https://github.com/lightninglabs/neutrino#master
+
+# Reports and build failures go to the Lightning Labs security alias. This address is already
+# public in the SECURITY.md of lnd, btcd and loop.
+primary_contact: security@lightning.engineering
+
+homepage: https://github.com/lightninglabs/neutrino
+
+output_format:
+  email:
+    min_severity: medium
+  github_security_advisory:
+    min_severity: none
+
+disabled: false
