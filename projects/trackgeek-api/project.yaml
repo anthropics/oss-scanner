@@ -1,0 +1,8 @@
+repo: https://github.com/TrackGeek/api#main    # required: the git repository to scan; add #branch to pin one
+primary_contact: trackgeek@proton.me       # required: reports and build problems go here (one address)
+# auto_ccs:                                   # optional: more addresses on every mail
+  # - maintainer@example.org
+homepage: https://trackgeek.net               # optional
+disabled: false                             # optional: true pauses reports without removing the enrolment
+dockerfile: .oss-scanner/Dockerfile         # required unless a Dockerfile sits in this repo next to your project.yaml
+threat_model: .oss-scanner/threat_model.md  # optional; also supports placing the file in this repository
