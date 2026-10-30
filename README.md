@@ -33,12 +33,21 @@ threat_model: .oss-scanner/threat_model.md  # optional; also supports placing th
 
 The email addresses in `project.yaml` are public. Use addresses you are happy to see published, such as a security alias.
 
-To receive reports encrypted, add your armored OpenPGP public key. Reports then go to `primary_contact` only; pgp cannot be combined with `auto_ccs`:
+To receive email reports encrypted, add your armored OpenPGP public key. They then go to `primary_contact` only; pgp cannot be combined with `auto_ccs`:
 ```
 pgp: |
   -----BEGIN PGP PUBLIC KEY BLOCK-----
   mQINBF...
   -----END PGP PUBLIC KEY BLOCK-----
+```
+
+To choose where reports go, set the lowest severity each channel receives: `low`, `medium`, `high`, `critical`, or `none` to turn the channel off. A channel you leave out uses the default shown here, and a report at or above both minimums goes to both channels. `pgp` only applies to email, so GitHub reports are not encrypted to your key:
+```
+output_format:
+  email:
+    min_severity: low
+  github_security_advisory:          # GitHub private vulnerability reporting
+    min_severity: none
 ```
 
 You must provide a Dockerfile, in exactly one of two places:

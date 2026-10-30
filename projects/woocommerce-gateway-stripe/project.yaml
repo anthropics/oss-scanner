@@ -1,0 +1,4 @@
+repo: https://github.com/woocommerce/woocommerce-gateway-stripe#develop
+primary_contact: security@automattic.com
+homepage: https://woocommerce.com/products/stripe/
+disabled: false

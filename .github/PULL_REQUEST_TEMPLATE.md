@@ -1,6 +1,6 @@
 ## Enrol `projects/<name>`
 
-I have verified each of the following before submitting this project:
+I have verified each of the following before submitting this project (tick each box by changing `[ ]` to `[x]`):
 
 - [ ] I am a core maintainer of this project.
 - [ ] I accept the [OSS Scanner terms](https://red.anthropic.com/oss-scanner/terms/).
@@ -10,6 +10,8 @@ I have verified each of the following before submitting this project:
 - [ ] `primary_contact` must be the email address of the primary security contact.
 - [ ] There is a `Dockerfile` that builds the project (required) in one of two places: in the project's repository at the path `dockerfile:` names, or next to `project.yaml` in this repo.
 - [ ] `threat_model.md` is written for this project (recommended but optional), placed in the same way: in the repository at the path `threat_model:` names, or next to `project.yaml` in this repo.
+
+To sign the [CLA](https://github.com/anthropics/oss-scanner/blob/main/CLA.md), post a comment on this pull request that contains only this line: `I have read the CLA Document and I hereby sign the CLA`
 
 To change an enrolment, edit `project.yaml`; to pause reports, set `disabled: true`; to withdraw the project, remove `projects/<name>/`.
 

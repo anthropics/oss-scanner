@@ -1,0 +1,5 @@
+repo: https://github.com/discourse/discourse#main
+primary_contact: team@discourse.org
+auto_ccs:
+  - tgxworld@discourse.org
+homepage: https://www.discourse.org

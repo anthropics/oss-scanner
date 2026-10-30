@@ -1,0 +1,5 @@
+repo: https://github.com/willamowius/gnugk
+primary_contact: jan@willamowius.de
+homepage: https://www.gnugk.org
+disabled: false
+dockerfile: .oss-scanner/Dockerfile

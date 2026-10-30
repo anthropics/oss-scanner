@@ -9,7 +9,7 @@
 # The site is served by Apache with mod_rewrite and AllowOverride All, so Drupal's .htaccess protections apply as they
 # do in production. The database is MariaDB, as on most production Drupal sites. Start both with `drupal-start`; the
 # site listens on http://127.0.0.1/.
-FROM php:8.4-apache-trixie
+FROM php:8.5-apache-trixie
 
 ENV DEBIAN_FRONTEND=noninteractive \
     COMPOSER_ALLOW_SUPERUSER=1 \
@@ -58,13 +58,19 @@ RUN printf '%s\n' '#!/bin/sh' 'set -e' \
 COPY . /src
 WORKDIR /src
 
-# Build the site per drupal.org's Composer instructions, using the latest stable Drupal 11 release.
-RUN composer create-project --no-progress drupal/recommended-project:^11 /opt/drupal
+# Build the site per drupal.org's Composer instructions, tracking Drupal core's main branch.
+#
+# Drupal 12 marks `tests` as `export-ignore` in core/.gitattributes, so the composer dist archive omits
+# core/tests (including tests/bootstrap.php) and every module's tests. Install drupal/core from source
+# (`preferred-install`) so PHPUnit can bootstrap and core's tests are present; everything else stays dist.
+RUN composer create-project --no-install --no-progress --stability=dev drupal/recommended-project:dev-main /opt/drupal
 WORKDIR /opt/drupal
+RUN composer config preferred-install.drupal/core source \
+    && composer install --no-progress
 RUN composer require --no-progress drush/drush
 
 # Test tooling (PHPUnit and friends), so core's unit, kernel and functional tests run offline.
-RUN composer require --dev --no-progress -W drupal/core-dev:^11
+RUN composer require --dev --no-progress -W drupal/core-dev:dev-main
 
 # Install a working site on MariaDB with the standard profile, a private file system, and a non-admin user for
 # access-control reproductions:

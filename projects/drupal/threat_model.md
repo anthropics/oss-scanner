@@ -16,9 +16,9 @@ contact form messages, and so on).
 
 | Path | What it is |
 | --- | --- |
-| `/src` | The Drupal core git checkout (the `11.4.x` branch, from which 11.4 releases and security fixes are cut). Patches for core belong here. |
-| `/opt/drupal` | A working site, built the way drupal.org documents (`composer create-project drupal/recommended-project`), on the latest stable Drupal 11 release, served by Apache with `.htaccess` enabled, on MariaDB. |
-| `/opt/drupal/web/core` | Core as the site runs it: the latest 11.4 release, so it can be a few commits behind `/src`. Reproduce against the site, then confirm the code is unchanged in `/src` and write the patch there. |
+| `/src` | The Drupal core git checkout (the `main` branch, Drupal 12.0-dev, where core development happens). Patches for core belong here. |
+| `/opt/drupal` | A working site, built the way drupal.org documents (`composer create-project drupal/recommended-project`), on the current Drupal 12 development build, served by Apache with `.htaccess` enabled, on MariaDB. |
+| `/opt/drupal/web/core` | Core as the site runs it: the current `dev-main` build (Drupal 12.0-dev), so it can be a few commits behind `/src`. Reproduce against the site, then confirm the code is unchanged in `/src` and write the patch there. |
 
 Contributed modules and themes are out of scope.
 

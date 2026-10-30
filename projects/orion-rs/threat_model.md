@@ -1,3 +1,5 @@
+## Threat model
+
 The following are threats, which are considered out-of-scope for Orion.
 
 Any side-channel other than timing-based
@@ -7,3 +9,6 @@ Timing-based side-channels when not building in release mode
 
 [1] Wiping sensitive memory is performed on a best-effort approach. However, sensitive memory being wiped or not leaked, cannot be guaranteed.
 
+## Additional testing infrastructure
+
+Differntial fuzz-tests are located at `/opt/orion-fuzz` and constant-time benchmarking tests are located at `/opt/orion-dudect`.

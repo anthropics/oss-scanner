@@ -1,0 +1,8 @@
+# Fiber contrib: third-party middleware and service implementations for Fiber v3 (github.com/gofiber/contrib/v3/...),
+# 24 independent Go modules in one repository. The Dockerfile and threat_model.md sit next to this file, so neither key is set here.
+repo: https://github.com/gofiber/contrib#main
+primary_contact: rene@gofiber.io
+auto_ccs:
+  - gaby@gofiber.io
+  - security@gofiber.io
+homepage: https://gofiber.io

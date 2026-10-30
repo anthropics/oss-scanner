@@ -1,0 +1,12 @@
+# Uvicorn: an ASGI web server implementation for Python.
+
+repo: https://github.com/Kludex/uvicorn#main
+
+# The project's SECURITY.md routes reports to GitHub private vulnerability reporting; this is the maintainer's address.
+primary_contact: marcelotryle@gmail.com
+
+homepage: https://uvicorn.dev
+
+disabled: false
+
+# The Dockerfile and threat_model.md are next to this file, so dockerfile: and threat_model: are omitted.

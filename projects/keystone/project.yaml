@@ -1,0 +1,4 @@
+repo: https://opendev.org/openstack/keystone
+primary_contact: xek@redhat.com
+homepage: https://docs.openstack.org/keystone/latest/
+disabled: false

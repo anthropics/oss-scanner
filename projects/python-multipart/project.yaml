@@ -1,0 +1,12 @@
+# python-multipart: a streaming multipart/form-data parser for Python.
+
+repo: https://github.com/Kludex/python-multipart#main
+
+# The project's SECURITY.md routes reports to GitHub private vulnerability reporting; this is the maintainer's address.
+primary_contact: marcelotryle@gmail.com
+
+homepage: https://multipart.fastapiexpert.com
+
+disabled: false
+
+# The Dockerfile and threat_model.md are next to this file, so dockerfile: and threat_model: are omitted.

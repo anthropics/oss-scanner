@@ -1,0 +1,23 @@
+# Copy this file to projects/<name>/project.yaml and fill in the fields below.
+
+# REQUIRED. The ONE git repository to scan, as an https:// URL. Optionally add #branch or #tag to pin one.
+repo: https://github.com/diesel-rs/diesel#main
+
+# REQUIRED. Who should we email our reports to, and use as the primary contact for questions.
+primary_contact: diesel-security@weiznich.de
+
+# Optional. The project's home page.
+homepage: https://diesel.rs
+
+# Optional. Your armored OpenPGP public key. When set, every report is encrypted to it and goes to primary_contact only
+# (so it cannot be combined with auto_ccs).
+# Paste the whole block, including the BEGIN line and END line.
+# pgp: |
+#   -----BEGIN PGP PUBLIC KEY BLOCK-----
+#   mDMEZ...
+#   -----END PGP PUBLIC KEY BLOCK-----
+
+# Optional. true pauses reports without removing the enrolment; false (or omitting it) enables your project.
+disabled: false
+
+

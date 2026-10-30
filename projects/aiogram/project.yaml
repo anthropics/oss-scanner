@@ -1,0 +1,19 @@
+# aiogram: a modern and fully asynchronous framework for the Telegram Bot API in Python.
+
+repo: https://github.com/aiogram/aiogram#dev-3.x
+
+# Lead maintainer; SECURITY.md lists this address alongside GitHub private vulnerability reporting.
+primary_contact: jroot.junior@gmail.com
+
+homepage: https://aiogram.dev
+
+output_format:
+  email:
+    min_severity: low
+  github_security_advisory:
+    min_severity: high
+
+disabled: false
+
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md

@@ -1,0 +1,4 @@
+repo: https://github.com/php/frankenphp#main
+primary_contact: kevin+frankenphp-security@dunglas.dev
+homepage: https://frankenphp.dev
+dockerfile: dev.Dockerfile

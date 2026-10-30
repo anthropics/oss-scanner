@@ -1,0 +1,10 @@
+homepage: https://about.gitea.com
+repo: https://github.com/go-gitea/gitea#main
+
+primary_contact: security@gitea.io
+auto_ccs:
+  - security@gitea.com
+  - techknowlogick@gitea.com
+
+# not included as it'd disable `auto_ccs`
+# pgp:

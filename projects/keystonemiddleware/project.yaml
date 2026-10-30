@@ -1,0 +1,4 @@
+repo: https://opendev.org/openstack/keystonemiddleware
+primary_contact: xek@redhat.com
+homepage: https://docs.openstack.org/keystonemiddleware/latest/
+disabled: false
