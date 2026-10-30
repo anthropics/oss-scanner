@@ -1,0 +1,17 @@
+# REQUIRED. The ONE git repository to scan, as an https:// URL. Optionally add #branch or #tag to pin one.
+repo: https://github.com/LibreChat-AI/LibreChat#dev
+
+# REQUIRED. Who should we email our reports to, and use as the primary contact for questions.
+primary_contact: danny.avila@clickhouse.com
+
+# Optional. The project's home page.
+homepage: https://librechat.ai
+
+# Optional. true pauses reports without removing the enrolment; false (or omitting it) enables your project.
+disabled: false
+
+# The Dockerfile lives in the LibreChat repository (added in LibreChat-AI/LibreChat#17645).
+dockerfile: .oss-scanner/Dockerfile
+
+# The threat model lives in the LibreChat repository next to the Dockerfile.
+threat_model: .oss-scanner/threat_model.md
