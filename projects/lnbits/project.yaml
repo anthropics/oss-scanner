@@ -16,5 +16,3 @@ output_format:
 
 
 disabled: false
-
-dockerfile: ./Dockerfile
