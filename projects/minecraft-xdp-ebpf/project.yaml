@@ -1,0 +1,9 @@
+repo: https://github.com/Outfluencer/Minecraft-XDP-eBPF#main
+primary_contact: admin@outfluencer.dev
+homepage: https://github.com/Outfluencer/Minecraft-XDP-eBPF
+disabled: false
+output_format:
+  email:
+    min_severity: low
+  github_security_advisory:
+    min_severity: none
