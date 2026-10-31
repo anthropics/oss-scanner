@@ -1,0 +1,25 @@
+repo: https://github.com/Spomky-Labs/cbor-php
+primary_contact: security@spomky-labs.com
+pgp: |
+  -----BEGIN PGP PUBLIC KEY BLOCK-----
+
+  xjMEYoAF5BYJKwYBBAHaRw8BAQdAKTsHRvdQtK998OPhnewpYSoMpN7BQUBy
+  chsYxtCcANXNM3NlY3VyaXR5QHNwb21reS1sYWJzLmNvbSA8c2VjdXJpdHlA
+  c3BvbWt5LWxhYnMuY29tPsKPBBAWCgAgBQJigAXkBgsJBwgDAgQVCAoCBBYC
+  AQACGQECGwMCHgEAIQkQPN9XckxH2Q4WIQSLjZOpeiuQ2OEHwLc831dyTEfZ
+  Dh7/AQCmcD7TtOcO735tqmpA+Wr9vmN8OVy2NbsZJFJxrR03iAD/S47WzfzJ
+  wxTZ35xQpxnImpeTtId6wDxCmm2GzTE3jAHOOARigAXkEgorBgEEAZdVAQUB
+  AQdAYrsgimHW8unbsVX4NYvvrwIf+m9oq96tjclyywEUrxUDAQgHwngEGBYI
+  AAkFAmKABeQCGwwAIQkQPN9XckxH2Q4WIQSLjZOpeiuQ2OEHwLc831dyTEfZ
+  DpaUAP9itOcvXLJkrckAAteFcREC10/8QdUVYF9OtBf3Q5bukQD+JatfFc82
+  yxPrxG5fExhH+l1vII4nwwWrU8crg4XXtgE=
+  =/eHc
+  -----END PGP PUBLIC KEY BLOCK-----
+output_format:
+  email:
+    min_severity: low
+  github_security_advisory:
+    min_severity: high
+disabled: false
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
