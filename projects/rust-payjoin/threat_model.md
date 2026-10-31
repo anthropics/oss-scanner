@@ -1,0 +1,27 @@
+# rust-payjoin
+
+rust-payjoin implements Payjoin, a Bitcoin transaction protocol in which the sender and receiver of a payment both contribute inputs. It covers BIP 77 (asynchronous Payjoin) and BIP 78 (synchronous Payjoin). The project ships a library that wallets embed, a server that combines a BIP 77 directory with an OHTTP relay, language bindings over the library, and a reference command line wallet. The library leaves the wallet, storage, chain access and HTTP client to the application that embeds it.
+
+## High-Level Security Model
+
+Payjoin has a wallet build, sign and broadcast a transaction together with a counterparty it has no reason to trust. That counterparty may be an anonymous stranger, and receivers may respond automatically. Each side must treat everything the other sends as hostile. A flaw in how a proposal is validated can cost a sender funds or trick them into signing something they did not intend, and a flaw on the receiving side can cost the receiver funds or a payment they were promised. Because the library is embedded in wallets, a single mistake reaches the users of all of them.
+
+Privacy is a core goal of the project, and a privacy failure can be serious. Payjoin exists to break the common-input-ownership heuristic used for chain surveillance, and BIP 77 aims to keep a client's network identity separate from its session. Attacks that let a counterparty enumerate a receiver's coins beyond what the protocol allows, make Payjoin transactions or clients easy to fingerprint, or link a client's network identity to its session all undermine that purpose, even when no funds move.
+
+BIP 77 is designed so that its servers are untrusted. The directory stores and forwards end-to-end encrypted messages of a fixed size, and clients reach it through an OHTTP relay, so that the relay sees who is connecting but not what they send, and the directory sees encrypted messages and their timing but not who sent them. On its own, a malicious relay or directory must not be able to read or undetectably alter the contents of a BIP 77 session, or to link a client to its session. Clients must therefore treat everything received from these servers as hostile, including key configurations.
+
+The server software is itself exposed to arbitrary Internet traffic, and the wallets depending on it need it to stay up. It should withstand hostile clients and hostile third parties, and it must not become a tool for attacking others, including the internal networks of whoever operates it. Denial-of-service issues matter most when they are cheap for an attacker or when they stop an operator's service in a way that is hard to recover from.
+
+The library has a large API surface that integrators must use correctly, and many of its safety properties depend on the application doing its part. If an API is documented incompletely, or is easy to misuse in a way that loses funds or privacy, that may be a real issue in its own right. Panics that a remote party can trigger also matter, since they can take down a wallet.
+
+Severity is a judgment call that depends on who the attacker is, what they must already control, and what they gain. Please state those in reports, and include a reproducer through the public interfaces or a running service. A deviation from the BIPs that weakens any of the above is worth reporting even if the reproducer moves no funds.
+
+## Generally Non-Issues
+
+The application driving the library *is* the wallet, and is trusted to behave according to the API documentation. It owns keys, signing, persistent storage and chain access, and it answers the questions the library asks it, such as which coins it owns and which inputs it has seen before. If the documentation is unclear or the interface hard to use correctly, that may be a vulnerability, but an application simply misusing an obvious interface or giving a wrong answer is not a vulnerability in this project. Interfaces that explicitly skip a check, for callers who have a stated reason to, are working as designed.
+
+Persistent storage is trusted in the same way, including protecting any session data at rest. While the library should fail cleanly on corrupted session state, an attacker who controls the application's storage already controls the wallet.
+
+Well known limits of the protocols don't need to be reported. BIP 78 has no end-to-end encryption of its own, so its payloads rely on the transport to the receiver's endpoint, and they are plaintext to a BIP 77 directory that carries them. A BIP 78 sender also connects to that endpoint or directory directly. A relay or directory can always drop messages or go offline, and either party can abandon a session at any time, which is why the original payment remains available as a fallback. The privacy of BIP 77 depends on the relay and directory being run by different parties, so one operator running both is outside the model, as is traffic analysis by a global network observer. Timing correlation and chain analysis heuristics that remain after a correct Payjoin count only where this project departs from the BIPs or from a mitigation it documents.
+
+Test code, fixtures, examples and anything behind clearly internal, non-production build options are out of scope, as are failures of debug assertions, unless the same defect reaches a release build. The reference command line wallet is not generally used in production, but implementers copy from it, so its correctness still matters.
