@@ -1,0 +1,10 @@
+repo: https://github.com/swc-project/swc-next
+primary_contact: kdy.1997.dev@gmail.com
+homepage: https://next.swc.rs/
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
+output_format:
+  email:
+    min_severity: low
+  github_security_advisory:
+    min_severity: none
