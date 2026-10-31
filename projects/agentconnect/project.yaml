@@ -1,0 +1,7 @@
+# AgentConnect: bridges Slack, Telegram, Discord, Lark/Feishu and Google Chat to AI coding agents over ACP.
+repo: https://github.com/agentconnect-md/agentconnect
+primary_contact: security@agentconnect.md
+homepage: https://agentconnect.md
+disabled: false
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
