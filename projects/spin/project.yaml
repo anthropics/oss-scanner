@@ -1,0 +1,5 @@
+# Spin: a framework for building and running serverless WebAssembly (component model) applications on Wasmtime.
+# The Dockerfile and threat_model.md sit next to this file, so neither key is set here.
+repo: https://github.com/spinframework/spin#main
+primary_contact: cncf-spin-framework-security@lists.cncf.io
+homepage: https://spinframework.dev
