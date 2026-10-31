@@ -1,0 +1,17 @@
+# REQUIRED. The ONE git repository to scan, as an https:// URL. Optionally add #branch or #tag to pin one.
+repo: https://github.com/readthedocs/readthedocs.org#main
+
+# REQUIRED. Who should we email our reports to, and use as the primary contact for questions.
+primary_contact: security@readthedocs.org
+
+# Optional. The project's home page.
+homepage: https://about.readthedocs.com
+
+# Optional. true pauses reports without removing the enrolment; false (or omitting it) enables your project.
+disabled: false
+
+# The Dockerfile and threat_model.md live in the Read the Docs repository.
+# REQUIRED: a Dockerfile
+dockerfile: .oss-scanner/Dockerfile
+# Optional, but strongly recommended.
+threat_model: .oss-scanner/threat_model.md
