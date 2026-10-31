@@ -1,0 +1,9 @@
+repo: https://github.com/clerk/clerk-ios#main
+
+primary_contact: security@clerk.dev
+
+auto_ccs:
+  - sean@clerk.dev
+  - mike@clerk.dev
+
+homepage: https://clerk.com
