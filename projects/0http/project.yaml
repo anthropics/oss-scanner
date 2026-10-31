@@ -1,0 +1,24 @@
+# REQUIRED. The ONE git repository to scan, as an https:// URL. Optionally add #branch or #tag to pin one.
+repo: https://github.com/BackendStack21/0http#master
+
+# REQUIRED. Who should we email our reports to, and use as the primary contact for questions.
+primary_contact: contact@21no.de
+
+# Optional. The project's home page.
+homepage: https://github.com/BackendStack21/0http
+
+# Optional. The lowest severity each channel receives: low, medium, high, critical, or none to turn it off.
+output_format:
+  email:
+    min_severity: low
+  github_security_advisory:
+    min_severity: none
+
+# Optional. true pauses reports without removing the enrolment; false (or omitting it) enables your project.
+disabled: false
+
+# REQUIRED: the Dockerfile lives in the project's repository at this path.
+dockerfile: .oss-scanner/Dockerfile
+
+# Optional: the threat model lives in the project's repository at this path.
+threat_model: .oss-scanner/threat_model.md
