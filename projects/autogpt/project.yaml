@@ -10,6 +10,9 @@ auto_ccs:
   - nicholas.tindle@agpt.co
 
 homepage: https://agpt.co
+output_format:
+  github_security_advisory:
+    min_severity: high
 
 disabled: false
 
