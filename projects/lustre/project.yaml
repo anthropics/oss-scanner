@@ -1,0 +1,7 @@
+# Lustre: the parallel filesystem behind most of the world's largest supercomputers and
+# many HPC/AI storage clusters. Servers accept RPCs over LNet (TCP and InfiniBand/RoCE) from
+# every client node; clients parse server replies and expose ioctls to unprivileged users.
+repo: https://github.com/TheLustreCollective/lustre-release#master
+primary_contact: security@thelustrecollective.com
+homepage: https://www.lustre.org/
+disabled: false
