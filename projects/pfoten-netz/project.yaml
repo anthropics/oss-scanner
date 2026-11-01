@@ -1,0 +1,3 @@
+repo: https://github.com/knobi4711/PfotenNetz
+primary_contact: knoblauch@web.de
+dockerfile: .oss-scanner/Dockerfile
