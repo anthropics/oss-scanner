@@ -1,0 +1,10 @@
+repo: https://github.com/ahmadrosid/nakama#main
+primary_contact: security@withnakama.com
+homepage: https://github.com/ahmadrosid/nakama
+output_format:
+  email:
+    min_severity: low
+  github_security_advisory:
+    min_severity: none
+disabled: false
+# Dockerfile and threat_model.md sit next to this file.
