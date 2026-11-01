@@ -1,0 +1,13 @@
+repo: https://github.com/FreshRSS/FreshRSS#edge
+primary_contact: alexandre@alapetite.fr # GitHub ID: @Alkarex
+auto_ccs:
+  - fransdejonge@gmail.com # GitHub ID: @Frenzie
+  - inverle@proton.me # GitHub ID: @Inverle
+output_format:
+  email:
+    min_severity: none # Disable email reports
+  github_security_advisory:
+    min_severity: low
+homepage: https://freshrss.org/
+#dockerfile: Included next to project.yaml
+threat_model: docs/threat_model.md
