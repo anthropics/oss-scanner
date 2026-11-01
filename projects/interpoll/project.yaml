@@ -1,0 +1,9 @@
+repo: https://github.com/Interpoll1/decentralised#master
+primary_contact: viktvik882@gmail.com
+homepage: https://endless.sbs
+output_format:
+  email:
+    min_severity: low
+  github_security_advisory:
+    min_severity: none
+disabled: false
