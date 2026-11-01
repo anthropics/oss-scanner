@@ -1,0 +1,5 @@
+repo: https://github.com/vstorm-co/agenticos#main
+primary_contact: kacper.wlodarczyk@vstorm.co
+homepage: https://vstorm-co.github.io/agenticos/
+disabled: false
+# The Dockerfile and threat_model.md sit next to this file, so dockerfile: and threat_model: are omitted.
