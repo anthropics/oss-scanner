@@ -1,0 +1,11 @@
+# Tesseract: the open-source OCR engine (https://tesseract-ocr.github.io/).
+repo: https://github.com/tesseract-ocr/tesseract#main
+
+primary_contact: sw@weilnetz.de
+
+auto_ccs:
+  - sw@weilnetz.de
+
+homepage: https://tesseract-ocr.github.io/
+
+disabled: false
