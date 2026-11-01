@@ -1,7 +1,7 @@
 # OSS Scanner build for laravolt/indonesia (https://github.com/laravolt/indonesia).
 # Built with the laravolt/indonesia checkout as build context. Network is available only during this
-# build; the audit runs offline. The repo has no GitHub Actions workflow; .travis.yml (legacy) runs
-# `composer update` + `vendor/bin/phpunit -c phpunit.xml`, which is what this file does on PHP 8.3.
+# build; the audit runs offline. Mirrors .github/workflows/run-tests.yml (PHP 8.3 job, prefer-stable):
+# `composer update` + `vendor/bin/phpunit`.
 FROM php:8.3-cli-bookworm
 
 ENV DEBIAN_FRONTEND=noninteractive \
