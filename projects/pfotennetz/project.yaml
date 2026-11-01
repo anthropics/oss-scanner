@@ -1,0 +1,17 @@
+# Enrolment for the Anthropic OSS Scanner.
+#
+# Submit this directory as projects/pfotennetz/ in a pull request to
+# https://github.com/anthropics/oss-scanner (only changes under projects/ are accepted).
+# The Dockerfile and the threat model stay in this repository, which is why
+# `dockerfile` and `threat_model` point at them instead of shipping copies.
+
+repo: https://github.com/knobi4711/PfotenNetz
+primary_contact: knoblauch@web.de
+homepage: https://pfotennetz.app
+
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
+
+# Reports go to primary_contact by email at every severity (the default).
+# Uncomment to pause reports without withdrawing the enrolment:
+# disabled: true
