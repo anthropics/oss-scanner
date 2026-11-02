@@ -1,0 +1,5 @@
+# FFmpeg decodes, demuxes, filters, encodes and muxes media; all of its input is untrusted.
+repo: https://github.com/FFmpeg/FFmpeg#master
+primary_contact: ffmpeg-security@ffmpeg.org
+homepage: https://ffmpeg.org
+disabled: false
