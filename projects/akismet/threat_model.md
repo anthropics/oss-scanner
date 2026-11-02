@@ -7,9 +7,14 @@ service (`rest.akismet.com`) for spam classification, stores the verdict and a p
 and lets moderators report missed spam and false positives back. It also adds an admin settings and stats screen,
 a dashboard widget, a "Check for spam" queue recheck, a front-end widget, WP-CLI commands, Abilities API
 registrations, a Connectors registration, and integrations with Jetpack Contact Form, Gravity Forms, Contact Form 7,
-Formidable and Fluent Forms. This enrollment covers the plugin code in the
-`Automattic/akismet-plugin-wordpress` mirror on the `trunk` branch. The Akismet service itself is out of scope, but
-everything it sends back to the plugin is input the plugin must handle safely.
+Formidable and Fluent Forms. Akismet is bundled with WordPress core: every WordPress download ships it in
+`wp-content/plugins/akismet`, so a vulnerability in it reaches a very large number of sites.
+
+The canonical repository is the WordPress.org plugin SVN repository
+(`https://plugins.svn.wordpress.org/akismet/`). The GitHub repository scanned here,
+`Automattic/akismet-plugin-wordpress` (`trunk` branch), is a read-only mirror of it, so fixes land in SVN, not
+through pull requests to the mirror. The Akismet service itself is out of scope, but everything it sends back to
+the plugin is input the plugin must handle safely.
 
 Untrusted input enters through:
 
