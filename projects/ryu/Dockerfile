@@ -42,6 +42,10 @@ RUN cargo test --locked --no-run --manifest-path apps/gateway/Cargo.toml \
  && cargo test --locked --no-run --manifest-path apps/core/Cargo.toml --features sandbox-wasmtime \
       --bin ryu-core --jobs 2
 
+# Some async tests overflow the default 2 MiB test-thread stack in debug builds, and one overflow
+# aborts the whole ryu-core test binary. Read at run time only, so nothing recompiles.
+ENV RUST_MIN_STACK=8388608
+
 # Run the cheap tests so we know the image works, with a time bound, and never fail the build.
 RUN (timeout -k 30 240 cargo test --locked --manifest-path apps/gateway/Cargo.toml --no-fail-fast \
       -- --test-threads=4 || echo "WARNING: gateway tests reported failures or timed out") \
