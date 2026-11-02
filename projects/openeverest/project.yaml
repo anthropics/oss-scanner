@@ -1,0 +1,14 @@
+# OpenEverest: open-source platform for running and managing databases on Kubernetes (CNCF Landscape).
+# Its API server holds a privileged in-cluster ServiceAccount and hands out database credentials, so auth and
+# RBAC bugs can expose every managed database.
+repo: https://github.com/openeverest/openeverest#main
+primary_contact: it@solanica.io
+homepage: https://openeverest.io
+output_format:
+  email:
+    min_severity: low
+  github_security_advisory:
+    min_severity: none
+disabled: false
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
