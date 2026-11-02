@@ -43,11 +43,13 @@ Out of scope:
 - `vendor/` (third-party code) and `generated/` (generated files).
 
 ## How to exercise it
-- `cargo test --manifest-path apps/core/Cargo.toml --features sandbox-wasmtime` and
-  `cargo test --manifest-path apps/gateway/Cargo.toml`; test binaries are prebuilt in the image.
+- `cargo test --manifest-path apps/gateway/Cargo.toml` runs the Gateway tests.
 - Run with `RYU_PROFILE=dev RYU_KEYCHAIN=off RYU_DIR=/tmp/<dir>` so tests use an isolated data
   directory and never touch an OS keychain.
-- Binaries are in `/src/target/debug/` (`ryu-core`, `ryu-gateway`).
+- The shipped binaries are in `/usr/local/bin/` (`ryu-core`, `ryu-gateway`). Test binaries are
+  prebuilt under `/src/target/debug/`; run Core's with
+  `cargo test --manifest-path apps/core/Cargo.toml --features sandbox-wasmtime --bin ryu-core`
+  so nothing recompiles.
 
 ## How you rate severity
 - Critical: sandbox escape to host code execution, or unauthenticated remote access to Core or
