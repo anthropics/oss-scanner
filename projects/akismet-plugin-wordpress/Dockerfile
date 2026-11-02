@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 # Akismet Anti-spam (akismet), scanned as a plugin inside a working WordPress site.
 #
 # /src                        the akismet-plugin-wordpress checkout (the repository named in project.yaml). It is the
@@ -66,7 +67,7 @@ COPY . /src
 WORKDIR /src
 
 # Akismet has no build step. Lint every PHP file so a broken checkout fails the build.
-RUN find /src -name '*.php' -not -path '*/.git/*' -print0 | xargs -0 -n1 php -l >/dev/null \
+RUN find /src -name '*.php' -not -path '*/.git/*' -print0 | xargs -0 -n1 -P"$(nproc)" php -l >/dev/null \
     && test -f /src/akismet.php
 
 # Install a working single-site WordPress on MariaDB, with one user per default role for access-control reproductions:
@@ -81,7 +82,6 @@ RUN wp-start \
     && mariadb -e "CREATE DATABASE wordpress; \
          CREATE USER 'wordpress'@'%' IDENTIFIED BY 'wordpress'; \
          GRANT ALL ON wordpress.* TO 'wordpress'@'%';" \
-    && rm -rf "$WP_ROOT"/* \
     && wp core download --path="$WP_ROOT" \
     && wp config create --path="$WP_ROOT" --dbname=wordpress --dbuser=wordpress --dbpass=wordpress \
          --dbhost=127.0.0.1 --skip-check \
@@ -95,7 +95,6 @@ RUN wp-start \
     && wp plugin activate akismet --path="$WP_ROOT" \
     && wp option update --path="$WP_ROOT" wordpress_api_key 0123456789ab \
     && wp option update --path="$WP_ROOT" users_can_register 1 \
-    && wp option update --path="$WP_ROOT" comment_moderation 0 \
     && wp option update --path="$WP_ROOT" comment_previously_approved 0 \
     && wp option update --path="$WP_ROOT" akismet_comment_form_privacy_notice display \
     && wp rewrite structure --path="$WP_ROOT" '/%postname%/' \
@@ -115,49 +114,63 @@ RUN wp-start \
 #   comment-check            "true" (spam) when the author is "akismet-guaranteed-spam" or the content contains
 #                            "akismet-guaranteed-spam"; "false" (ham) otherwise; always with an X-akismet-guid
 #   submit-spam, submit-ham  the usual thank-you body
+#   test                     "connected" (the admin screen's server connectivity check)
 #   anything else            falls through to the (absent) network, so it fails
 # `wp option update oss_scanner_akismet_mock off` turns it off; the last request it saw is in the option
 # oss_scanner_akismet_mock_last.
-RUN mkdir -p "$WP_ROOT/wp-content/mu-plugins" \
-    && printf '%s\n' \
-      '<?php' \
-      '// OSS Scanner: offline mock of the Akismet API. Not part of Akismet.' \
-      'add_filter( "pre_http_request", function ( $pre, $args, $url ) {' \
-      '	if ( "off" === get_option( "oss_scanner_akismet_mock" ) || "rest.akismet.com" !== wp_parse_url( $url, PHP_URL_HOST ) ) {' \
-      '		return $pre;' \
-      '	}' \
-      '	$path = basename( (string) wp_parse_url( $url, PHP_URL_PATH ) );' \
-      '	parse_str( is_string( $args["body"] ) ? $args["body"] : http_build_query( (array) $args["body"] ), $req );' \
-      '	update_option( "oss_scanner_akismet_mock_last", array( "path" => $path, "request" => $req ), false );' \
-      '	$headers = array();' \
-      '	switch ( $path ) {' \
-      '		case "verify-key":' \
-      '			$body = ( isset( $req["key"] ) && $req["key"] === get_option( "wordpress_api_key" ) ) ? "valid" : "invalid";' \
-      '			break;' \
-      '		case "comment-check":' \
-      '			$author  = isset( $req["comment_author"] ) ? $req["comment_author"] : "";' \
-      '			$content = isset( $req["comment_content"] ) ? $req["comment_content"] : "";' \
-      '			$body    = ( "akismet-guaranteed-spam" === $author || false !== strpos( $content, "akismet-guaranteed-spam" ) ) ? "true" : "false";' \
-      '			$headers["x-akismet-guid"] = md5( wp_generate_uuid4() );' \
-      '			break;' \
-      '		case "submit-spam":' \
-      '		case "submit-ham":' \
-      '			$body = "Thanks for making the web a better place.";' \
-      '			break;' \
-      '		default:' \
-      '			return $pre;' \
-      '	}' \
-      '	$headers = new WpOrg\Requests\Utility\CaseInsensitiveDictionary( $headers );' \
-      '	return array( "headers" => $headers, "body" => $body, "response" => array( "code" => 200, "message" => "OK" ), "cookies" => array(), "filename" => null );' \
-      '}, 10, 3 );' \
-      > "$WP_ROOT/wp-content/mu-plugins/oss-scanner-akismet-mock.php" \
-    && php -l "$WP_ROOT/wp-content/mu-plugins/oss-scanner-akismet-mock.php"
+COPY <<'EOF' /var/www/html/wp-content/mu-plugins/oss-scanner-akismet-mock.php
+<?php
+// OSS Scanner: offline mock of the Akismet API. Not part of Akismet.
+add_filter( 'pre_http_request', function ( $pre, $args, $url ) {
+	// Akismet_Admin::check_server_connectivity() puts an IP in the URL and the real host in the Host header.
+	$host = isset( $args['headers']['Host'] ) ? $args['headers']['Host'] : wp_parse_url( $url, PHP_URL_HOST );
+	if ( 'off' === get_option( 'oss_scanner_akismet_mock' ) || 'rest.akismet.com' !== $host ) {
+		return $pre;
+	}
 
-# Smoke test: check the key, then submit one ham and one spam comment through the real comment form, so you know the
-# plugin is wired up. Do not let a failure abort the build.
+	$path = basename( (string) wp_parse_url( $url, PHP_URL_PATH ) );
+	parse_str( is_string( $args['body'] ) ? $args['body'] : http_build_query( (array) $args['body'] ), $req );
+	update_option( 'oss_scanner_akismet_mock_last', array( 'path' => $path, 'request' => $req ), false );
+
+	$headers = array();
+	switch ( $path ) {
+		case 'verify-key':
+			$body = ( isset( $req['key'] ) && $req['key'] === get_option( 'wordpress_api_key' ) ) ? 'valid' : 'invalid';
+			break;
+		case 'comment-check':
+			$author  = isset( $req['comment_author'] ) ? $req['comment_author'] : '';
+			$content = isset( $req['comment_content'] ) ? $req['comment_content'] : '';
+			$body    = ( 'akismet-guaranteed-spam' === $author || false !== strpos( $content, 'akismet-guaranteed-spam' ) ) ? 'true' : 'false';
+			$headers['x-akismet-guid'] = md5( wp_generate_uuid4() );
+			break;
+		case 'test':
+			$body = 'connected';
+			break;
+		case 'submit-spam':
+		case 'submit-ham':
+			$body = 'Thanks for making the web a better place.';
+			break;
+		default:
+			return $pre;
+	}
+
+	return array(
+		'headers'  => new WpOrg\Requests\Utility\CaseInsensitiveDictionary( $headers ),
+		'body'     => $body,
+		'response' => array( 'code' => 200, 'message' => 'OK' ),
+		'cookies'  => array(),
+		'filename' => null,
+	);
+}, 10, 3 );
+EOF
+RUN php -l "$WP_ROOT/wp-content/mu-plugins/oss-scanner-akismet-mock.php"
+
+# Smoke test: check the key, then submit one ham and one spam comment through the real comment form, and check that
+# each landed where it should, so you know the plugin and the mock are wired up. Do not let a failure abort the build.
+# The pause is WordPress's 15-second comment flood limit (both comments come from 127.0.0.1).
 RUN wp-start \
     && post_id="$(wp post list --path="$WP_ROOT" --post_type=post --field=ID --posts_per_page=1)" \
-    && ( wp eval --path="$WP_ROOT" 'echo "verify-key: ", Akismet::verify_key( Akismet::get_api_key() ), "\n";' \
+    && { wp eval --path="$WP_ROOT" 'echo "verify-key: ", Akismet::verify_key( Akismet::get_api_key() ), "\n";' \
          && curl -fsS -o /dev/null -X POST http://127.0.0.1/wp-comments-post.php \
               --data-urlencode "comment_post_ID=$post_id" --data-urlencode 'author=Ham Tester' \
               --data-urlencode 'email=ham@example.com' --data-urlencode 'comment=A perfectly normal comment.' \
@@ -165,7 +178,8 @@ RUN wp-start \
          && curl -fsS -o /dev/null -X POST http://127.0.0.1/wp-comments-post.php \
               --data-urlencode "comment_post_ID=$post_id" --data-urlencode 'author=akismet-guaranteed-spam' \
               --data-urlencode 'email=spam@example.com' --data-urlencode 'comment=Buy now.' \
-         ; wp comment list --path="$WP_ROOT" --status=approve --fields=comment_ID,comment_author,comment_approved \
-         && wp comment list --path="$WP_ROOT" --status=spam --fields=comment_ID,comment_author,comment_approved \
-         || echo "WARNING: Akismet smoke test reported failures" ) \
-    && wp-stop
+         && test "$(wp comment list --path="$WP_ROOT" --status=spam --author_email=spam@example.com --format=count)" = 1 \
+         && test "$(wp comment list --path="$WP_ROOT" --status=approve --author_email=ham@example.com --format=count)" = 1 \
+         && echo "Akismet smoke test passed: ham approved, spam caught"; \
+       } || echo "WARNING: Akismet smoke test failed (check the mock in wp-content/mu-plugins)"; \
+    wp-stop

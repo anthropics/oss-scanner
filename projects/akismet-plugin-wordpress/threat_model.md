@@ -87,7 +87,7 @@ part of Akismet).
   `rest.akismet.com` locally: `verify-key` is valid for that key, `comment-check` returns spam when the author is
   `akismet-guaranteed-spam` or the content contains `akismet-guaranteed-spam` and ham otherwise (with a random
   `X-akismet-guid` header, as the real service sends; the webhook matches comments by that guid), and
-  `submit-spam`/`submit-ham` succeed. Other endpoints (stats, token, etc.) fail as if the service were down. Turn the
+  `submit-spam`/`submit-ham` and the connectivity `test` succeed. Other endpoints (stats, token, etc.) fail as if the service were down. Turn the
   mock off with `wp option update oss_scanner_akismet_mock off` to exercise the "server unreachable" paths. The last
   request the mock saw is stored in the option `oss_scanner_akismet_mock_last`. To test how the plugin handles a
   hostile API response, write your own `pre_http_request` filter that returns it; say so in the report.
@@ -157,7 +157,6 @@ the high band), and (2) does it work in a default configuration with Akismet act
 - Anything an administrator can already do.
 - Findings that need `WP_DEBUG` / `display_errors` on, a plugin not installed in this image, a server
   misconfiguration, or an already-compromised host.
-- The behaviour of the Akismet service, its classification quality, and the offline mock in this image.
 - Version disclosure, missing security headers, clickjacking without impact, self-XSS, CSRF on login or logout,
   brute force, denial of service, phishing.
 - Theoretical issues with no demonstrated, significant security impact.
