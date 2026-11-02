@@ -1,0 +1,7 @@
+# CoolProp: thermophysical property library (pure fluids, mixtures, humid air, incompressibles) in C++,
+# with a C API and wrappers for Python, Excel, MATLAB, Julia, Rust, Fortran, LabVIEW and others.
+# master is the development branch; releases are tagged from it.
+repo: https://github.com/CoolProp/CoolProp#master
+primary_contact: ian.h.bell@gmail.com
+homepage: https://coolprop.org
+disabled: false
