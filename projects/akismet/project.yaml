@@ -1,0 +1,4 @@
+repo: https://github.com/Automattic/akismet-plugin-wordpress#trunk
+primary_contact: security@automattic.com
+homepage: https://akismet.com
+disabled: false
