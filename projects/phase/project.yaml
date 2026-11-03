@@ -1,0 +1,24 @@
+# phase.rs: an open-source Magic: The Gathering rules engine and game client
+# (Rust + WASM + React). The network-facing surface is the Rust WebSocket
+# multiplayer server; the same engine also runs in the browser as WASM.
+# The Dockerfile and threat_model.md sit next to this file, so neither key
+# is set here.
+repo: https://github.com/phase-rs/phase#main
+
+# Security alias for phase.rs. Build failures are emailed here; vulnerability
+# reports are not (see output_format below).
+primary_contact: security@phase-rs.dev
+
+homepage: https://phase-rs.dev
+
+# All vulnerability reports go to GitHub private vulnerability reporting on
+# phase-rs/phase (enabled on the repository, and the channel SECURITY.md
+# already lists as preferred), at every severity. Email is turned off for
+# reports; primary_contact still receives build-failure mail.
+output_format:
+  email:
+    min_severity: none
+  github_security_advisory:
+    min_severity: low
+
+disabled: false
