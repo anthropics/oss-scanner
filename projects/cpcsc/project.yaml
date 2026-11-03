@@ -1,0 +1,16 @@
+# CPCSC Assessment Tool: offline, single-file self-assessment for Canada's CPCSC program (ITSP.10.171).
+
+repo: https://github.com/vbeitner/cpcsc-assessment
+
+primary_contact: victor@vbs.ca
+
+output_format:
+  email:
+    min_severity: low
+  github_security_advisory:
+    min_severity: none
+
+disabled: false
+
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
