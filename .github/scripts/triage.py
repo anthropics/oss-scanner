@@ -19,6 +19,7 @@ Requires PyYAML, as tools/validate.py does.
 from __future__ import annotations
 
 import argparse
+import functools
 import http.client
 import json
 import math
@@ -47,6 +48,7 @@ MAX_TEXT_BYTES = 256 * 1024
 # The workflow finds the comment to update by this first line.
 MARKER = "<!-- oss-scanner-triage -->"
 CRITERIA = "https://red.anthropic.com/oss-scanner"
+OUTPUT_FORMAT_DOCS = "https://github.com/anthropics/oss-scanner#projectyaml"
 
 OK, WARN, FAIL, INFO = "✅", "⚠️", "❌", "ℹ️"
 NOW = datetime.now(timezone.utc)
@@ -72,6 +74,13 @@ LOGIN = re.compile(r"[A-Za-z0-9-]+")
 # crosses a line: a long run of one character must not make them slow.
 CHECKBOX = re.compile(r"^[ \t]*[-*][ \t]+\[([ xX])\][ \t]+(.+)$", re.MULTILINE)
 EMAIL = re.compile(r"(?<![A-Za-z0-9._%+-])[A-Za-z0-9._%+-]{1,64}@[A-Za-z0-9-]{1,63}(?:\.[A-Za-z0-9-]{1,63}){1,8}")
+# A security policy that mentions GitHub's private reporting. "GHSA-" is the id of a past advisory.
+GITHUB_REPORTING = re.compile(
+    r"/security/advisories(?!/GHSA)|private\svulnerability\sreport"
+    r"|github(?:'s)?\s(?:private\s|repository\s)?(?:security\s)?advisor"
+    r"|report\sa\svulnerability\W{0,4}button|security\W{0,3}tab|\bGHSA\b(?!-)",
+    re.IGNORECASE,
+)
 # How many OSS-Fuzz projects with a name like the repository's are read to see whether one is for it.
 OSS_FUZZ_CANDIDATES = 5
 # A GitHub repository as OSS-Fuzz's project.yaml files name it in main_repo: any scheme, often with .git.
@@ -561,6 +570,7 @@ def maintainer_row(gh: GitHub, slug: str, meta: dict, login: str) -> tuple[str, 
     return (WARN if roles or recent else FAIL), evidence
 
 
+@functools.cache  # read by contact_row() and maintainer_notes()
 def security_policy(gh: GitHub, slug: str, owner: str) -> tuple[str, str] | None:
     """Find the security policy that applies to the repository: its own, or else the one its owner keeps for all
     their repositories in <owner>/.github. Return the policy's repository and its text, or None."""
@@ -572,6 +582,20 @@ def security_policy(gh: GitHub, slug: str, owner: str) -> tuple[str, str] | None
     return None
 
 
+def policy_name(repo: str, slug: str) -> str:
+    return "`SECURITY.md`" if repo == slug else f"`SECURITY.md` of {code(repo)}"
+
+
+def policy_addresses(text: str) -> list[str]:
+    """The addresses a security policy gives. Whole addresses, so that security@example.org is not found inside
+    another address."""
+    return sorted({address.lower() for address in EMAIL.findall(text)})
+
+
+def shown_addresses(addresses: list[str]) -> str:
+    return ", ".join(code(address) for address in addresses[:3]) + (" …" if len(addresses) > 3 else "")
+
+
 def contact_row(gh: GitHub, slug: str, meta: dict, config: dict) -> tuple[str, str]:
     """Does the repository's own security policy name the address that reports would go to?"""
     contact = config.get("primary_contact")
@@ -581,16 +605,45 @@ def contact_row(gh: GitHub, slug: str, meta: dict, config: dict) -> tuple[str, s
     if policy is None:
         return INFO, f"no `SECURITY.md` to check {code(contact)} against"
     repo, text = policy
-    where = "`SECURITY.md`" if repo == slug else f"`SECURITY.md` of {code(repo)}"
-    # Whole addresses are compared, so that security@example.org is not found inside another address.
-    given = sorted({address.lower() for address in EMAIL.findall(text)})
+    where = policy_name(repo, slug)
+    given = policy_addresses(text)
     if contact.lower() in given:
         return OK, f"{code(contact)} is in {where}"
     # Many policies ask for reports through GitHub and give no address at all; that is not a mismatch.
     if not given:
         return INFO, f"{where} gives no email address to check {code(contact)} against"
-    shown = ", ".join(code(address) for address in given[:3]) + (" …" if len(given) > 3 else "")
-    return WARN, f"{code(contact)} is not in {where}, which gives {shown}"
+    return WARN, f"{code(contact)} is not in {where}, which gives {shown_addresses(given)}"
+
+
+def maintainer_notes(gh: GitHub, slug: str, meta: dict, config: dict) -> list[str]:
+    """What to tell whoever opened the pull request, as Markdown."""
+    output_format = config.get("output_format")
+    advisories = output_format.get("github_security_advisory") if isinstance(output_format, dict) else None
+    severity = advisories.get("min_severity") if isinstance(advisories, dict) else None
+    try:
+        repo, text = security_policy(gh, slug, meta["owner"]["login"]) or (slug, "")
+    except ApiError:  # the contact row says it could not be checked
+        repo, text = slug, ""
+    where = policy_name(repo, slug)
+
+    notes = []
+    contact, given = config.get("primary_contact"), policy_addresses(text)
+    if isinstance(contact, str) and given and contact.lower() not in given:
+        notes.append(
+            f"`primary_contact` ({code(contact)}) does not match the email in {where} ({shown_addresses(given)}). "
+            "Any discrepancy in that email will delay review."
+        )
+    if severity in validate.SEVERITIES and severity != "none":
+        notes.append(
+            f"`project.yaml` turns on GitHub security advisories: please add `oss-scanner` as a trusted reporter on "
+            f"{code(slug)}, under Settings → Advanced Security → Private vulnerability reporting."
+        )
+    elif advisories is None and GITHUB_REPORTING.search(text):
+        notes.append(
+            f"{where} mentions GitHub security advisories, but `project.yaml` does not configure them. "
+            f"As a reminder, this can be added with [`output_format`]({OUTPUT_FORMAT_DOCS})."
+        )
+    return notes
 
 
 def squash(name: str) -> str:
@@ -860,26 +913,28 @@ def row(check: str, function, *arguments) -> tuple[str, str, str]:
     return mark, check, result
 
 
-def repository_rows(gh: GitHub, config: dict, beside: set[str], login: str) -> tuple[str, list[tuple]]:
-    """Return a Markdown description of the repository being enrolled, and the rows about it."""
+def repository_rows(gh: GitHub, config: dict, beside: set[str], login: str) -> tuple[str, list[tuple], list[str]]:
+    """Return a Markdown description of the repository being enrolled, the rows about it, and the notes for whoever
+    opened the pull request."""
     repo = config.get("repo")
     if not repo:
-        return "unknown", [(WARN, "Repository", "no project.yaml that names one")]
+        return "unknown", [(WARN, "Repository", "no project.yaml that names one")], []
     match = GITHUB_REPO.fullmatch(repo) if isinstance(repo, str) else None
     if not match:
         note = "not a github.com repository: check stars, maintainer, license and criticality by hand"
-        return code(repo), [(WARN, "Repository", note)]
+        return code(repo), [(WARN, "Repository", note)], []
 
     owner, name, ref = match.groups()
     try:
         meta = gh.find(f"repos/{quote(owner, safe='')}/{quote(name, safe='')}")
     except ApiError as error:
-        return code(repo), [(WARN, "Repository", f"could not be checked: {code(str(error))}")]
+        return code(repo), [(WARN, "Repository", f"could not be checked: {code(str(error))}")], []
     if meta is None:
-        return code(repo), [(FAIL, "Repository", "not found on GitHub, or not public")]
+        return code(repo), [(FAIL, "Repository", "not found on GitHub, or not public")], []
 
     slug = meta["full_name"]  # from GitHub: the canonical name, also after a rename
-    return f"[{slug}]({meta['html_url']})" + (f" at {code(ref)}" if ref else ""), [
+    described = f"[{slug}]({meta['html_url']})" + (f" at {code(ref)}" if ref else "")
+    rows = [
         row("Repository", standing_row, meta),
         row("Stars / forks", popularity_row, meta),
         row("Outside participants", outsiders_row, gh, slug, meta, login),
@@ -891,6 +946,15 @@ def repository_rows(gh: GitHub, config: dict, beside: set[str], login: str) -> t
         row("OSS-Fuzz", oss_fuzz_row, gh, slug, config),
         row("`.oss-scanner/` in the repository", scanner_files_row, gh, slug, ref, config, beside),
     ]
+    return described, rows, maintainer_notes(gh, slug, meta, config)
+
+
+def notes_section(login: str, notes: list[str]) -> str:
+    if not notes:
+        return ""
+    # A bot's login has brackets, and is not worth a mention anyway.
+    greeting = f"@{login}, please note:" if LOGIN.fullmatch(login) else "Please note:"
+    return greeting + "\n\n" + "".join(f"- {WARN} {note}\n" for note in notes) + "\n"
 
 
 def triage(gh: GitHub, repo: str, number: int) -> str:
@@ -911,7 +975,7 @@ def triage(gh: GitHub, repo: str, number: int) -> str:
         config = read_config(directory)
         beside = {path.name for path in directory.glob("*")}
 
-    described, rows = repository_rows(gh, config, beside, login)
+    described, rows, notes = repository_rows(gh, config, beside, login)
     rows += [
         row("Pull request scope", scope_row, names, outside, pull["changed_files"]),
         row("`tools/validate.py`", validate_row, problems),
@@ -919,7 +983,7 @@ def triage(gh: GitHub, repo: str, number: int) -> str:
     ]
     table = "\n".join(f"| {mark} | {check} | {result} |" for mark, check, result in rows)
     return (
-        f"{heading}Repository: {described} · opened by {code(login)}\n\n"
+        f"{heading}{notes_section(login, notes)}Repository: {described} · opened by {code(login)}\n\n"
         f"| | Check | Result |\n|:-:|---|---|\n{table}\n\n"
         f"<sub>Automated, from public data, to help reviewers. Enrolment is decided case by case against "
         f"the [criteria]({CRITERIA}). If you think we got something wrong, please tell us in a reply.</sub>\n"

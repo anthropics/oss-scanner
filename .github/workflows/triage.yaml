@@ -6,6 +6,10 @@ name: "Triage"
 # whether projects/<name>/ follows the rules. The comment informs the review and decides nothing. A pull request
 # that touches nothing under projects/ gets no comment.
 #
+# It also @-mentions whoever opened the pull request when SECURITY.md gives other addresses than primary_contact,
+# when project.yaml turns on GitHub advisories (add oss-scanner as a trusted reporter), or when SECURITY.md mentions
+# them and project.yaml does not configure them.
+#
 # pull_request_target, not pull_request: a pull request from a fork gets a read-only token, which cannot comment.
 # That makes this workflow run with the base repository's token on input from anyone, so it is split in two:
 #   gather   reads the pull request through the GitHub API, as data, with a read-only token. Its checkout is the base
