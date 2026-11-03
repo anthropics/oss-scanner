@@ -1,0 +1,9 @@
+repo: 'https://gitlab.isc.org/isc-projects/bind9.git'
+primary_contact: "bind9-scan-reports@isc.org"
+homepage: "https://gitlab.isc.org/isc-projects/bind9"
+output_format:
+  email:
+    min_severity: medium
+  github_security_advisory:
+    min_severity: none
+threat_model: doc/arm/threat-model.inc.rst
