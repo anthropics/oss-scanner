@@ -66,6 +66,29 @@ RUN (timeout 1200 cargo test -p server-core -p lobby-broker \
        -p draft-core -p seat-reducer \
      || echo "WARNING: cargo test reported failures")
 
+# Verify the documented fixture-backed server startup without network or a
+# generated production card-data.json. PHASE_DEV_FIXTURE=1 loads the
+# committed data/mtgjson/test_fixture.json and disables the download
+# bootstrap; /health must answer on the smoke-test port. (The scanner
+# strips the checkout's root .dockerignore for this beside-project.yaml
+# build, so the fixture is present here; the in-repo copy additionally
+# ships .oss-scanner/Dockerfile.dockerignore for the same guarantee.)
+RUN set -eu; \
+    PHASE_DEV_FIXTURE=1 ./target/debug/phase-server \
+      --bind 127.0.0.1 --port 19374 --games-db /tmp/phase-server-smoke.db \
+      >/tmp/phase-server-smoke.log 2>&1 & \
+    pid=$!; \
+    ok=0; \
+    for _ in $(seq 1 30); do \
+      if python3 -c "import urllib.request; raise SystemExit(0 if urllib.request.urlopen('http://127.0.0.1:19374/health', timeout=1).read() == b'ok' else 1)" 2>/dev/null; then \
+        ok=1; break; \
+      fi; \
+      sleep 1; \
+    done; \
+    kill "$pid" 2>/dev/null || true; \
+    wait "$pid" 2>/dev/null || true; \
+    if [ "$ok" != 1 ]; then cat /tmp/phase-server-smoke.log; exit 1; fi
+
 # Everything is fetched and built. From here on cargo must not wait
 # for a registry it cannot reach.
 ENV CARGO_NET_OFFLINE=true
