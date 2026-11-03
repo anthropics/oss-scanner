@@ -50,11 +50,12 @@ RUN cargo fetch
 # Build the server stack as its maintainers build it: the WebSocket
 # server binary (phase-server), the wire-protocol guards and session
 # logic (server-core, lobby-broker, seat-reducer), the draft logic
-# (draft-core), the AI seats (phase-ai) and the rules engine (engine).
+# (draft-core), the AI seats (phase-ai) and the rules engine
+# (phase-engine; its library target is named `engine`).
 # Debug info and frame pointers keep audit stack traces readable.
 ENV RUSTFLAGS="-C force-frame-pointers=yes"
 RUN cargo build -p phase-server -p server-core -p lobby-broker \
-    && cargo test -p engine -p server-core -p lobby-broker \
+    && cargo test -p phase-engine -p server-core -p lobby-broker \
          -p draft-core -p seat-reducer --no-run
 
 # Run the fast, security-adjacent suites (the wire guards, draft and

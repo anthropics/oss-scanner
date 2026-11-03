@@ -89,8 +89,8 @@ test binaries are already built in `/src`.
 - **Tests**: `cargo test -p server-core -p lobby-broker -p draft-core
   -p seat-reducer` runs the wire-guard and session suites (already run
   once in the build). Engine behaviour is covered by
-  `cargo test -p engine` (large; run targeted modules, e.g.
-  `cargo test -p engine parser`, rather than the whole suite).
+  `cargo test -p phase-engine` (large; run targeted modules, e.g.
+  `cargo test -p phase-engine parser`, rather than the whole suite).
 - **A server to attack**: `./target/debug/phase-server` listens for
   WebSocket connections on loopback (see `--help` for the port and
   data-dir flags; it needs a card-data directory, pointed to by
