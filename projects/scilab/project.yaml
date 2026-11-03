@@ -1,0 +1,5 @@
+repo: https://gitlab.com/scilab/scilab
+primary_contact: contact@scilab.org
+auto_ccs:
+  - clement.david@scilab.org
+homepage: https://www.scilab.org
