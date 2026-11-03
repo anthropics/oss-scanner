@@ -1,0 +1,5 @@
+# tokenizers: Hugging Face's tokenization library (Rust workspace and PyO3 Python bindings).
+# The Dockerfile and threat_model.md sit next to this file, so neither key is set here.
+repo: https://github.com/huggingface/tokenizers#main
+primary_contact: security@huggingface.co
+homepage: https://huggingface.co/docs/tokenizers
