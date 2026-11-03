@@ -38,8 +38,8 @@ hostile. Treat all of the following as attacker-controlled:
   `server-core` handle draft creation (including passwords), picks
   and spectator joins from remote participants.
 - **Card data.** The engine loads card data derived from MTGJSON and
-  parses Oracle rules text with a `nom` parser (`crates/engine/src/
-  parser/`, the card database in `crates/engine/src/database/`).
+  parses Oracle rules text with a `nom` parser (`crates/phase-parser/
+  src/parser/`, the card database in `crates/engine/src/database/`).
   This data is upstream-produced and shipped to every client; a
   malformed or malicious card text or record must not panic, hang or
   corrupt the engine. The maintainer-run `crates/feed-scraper` also
@@ -66,9 +66,9 @@ Most important, in this order:
 2. `crates/phase-server`: the WebSocket dispatch itself, the admin
    and persistence paths (`persistence.rs`, bundled SQLite via
    `rusqlite`), and anything reachable before the guards run.
-3. `crates/engine`: the game reducer's authority checks (who may act,
-   and what an action may change), the Oracle-text parser and the
-   card-database loader. The parser faces 34,000+ upstream card texts;
+3. `crates/engine` and `crates/phase-parser`: the game reducer's
+   authority checks (who may act, and what an action may change), the
+   Oracle-text parser and the card-database loader. The parser faces 34,000+ upstream card texts;
    the reducer faces a hostile seated player.
 4. `crates/draft-core` and `crates/lobby-broker`: draft state
    transitions, pack/pick handling, lobby reservations.
@@ -102,7 +102,7 @@ test binaries are already built in `/src`.
   reproducer shows a field from one player's hidden zone present in
   another player's filtered view or broadcast.
 - **Parser**: the Oracle parser entry points under
-  `crates/engine/src/parser/` accept arbitrary card text; feeding
+  `crates/phase-parser/src/parser/` accept arbitrary card text; feeding
   hostile text (deeply nested, huge, or pathological) and observing a
   panic, hang or unbounded allocation is in scope.
 - **Patches**: propose a minimal patch against `main` with a
