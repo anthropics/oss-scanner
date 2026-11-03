@@ -1,0 +1,8 @@
+repo: https://github.com/vyperlang/vyper
+primary_contact: security@vyperlang.org
+auto_ccs:
+  - tanguy.rocher@chainsecurity.com
+  - anthropicossscanner.animation266@passmail.net
+homepage: https://vyperlang.org
+disabled: false
+dockerfile: .oss-scanner/Dockerfile
