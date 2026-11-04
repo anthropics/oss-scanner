@@ -1,0 +1,11 @@
+repo: https://github.com/Recidiviz/pulse-dashboards#main
+
+# Recidiviz's published security contact (see the org-wide SECURITY.md). Addresses here are public.
+primary_contact: security@recidiviz.org
+
+homepage: https://recidiviz.org
+
+disabled: false
+
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
