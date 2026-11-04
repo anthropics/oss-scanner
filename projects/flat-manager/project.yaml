@@ -1,0 +1,9 @@
+repo: https://github.com/flatpak/flat-manager
+
+primary_contact: security@flathub.org
+
+homepage: https://github.com/flatpak/flat-manager
+
+output_format:
+  email:
+    min_severity: low
