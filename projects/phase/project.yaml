@@ -1,9 +1,8 @@
 # phase.rs: an open-source Magic: The Gathering rules engine and game client
 # (Rust + WASM + React). The network-facing surface is the Rust WebSocket
 # multiplayer server; the same engine also runs in the browser as WASM.
-# The Dockerfile and threat model live in the phase repository under
-# .oss-scanner/, so both keys are set here and no copies sit beside this
-# file.
+# The Dockerfile and threat_model.md sit next to this file, so neither key
+# is set here.
 repo: https://github.com/phase-rs/phase#main
 
 # Security alias for phase.rs. Build failures are emailed here; vulnerability
@@ -21,8 +20,5 @@ output_format:
     min_severity: none
   github_security_advisory:
     min_severity: low
-
-dockerfile: .oss-scanner/Dockerfile
-threat_model: .oss-scanner/threat_model.md
 
 disabled: false
