@@ -1,0 +1,9 @@
+repo: https://github.com/flathub-infra/flat-manager-hooks
+
+primary_contact: security@flathub.org
+
+homepage: https://github.com/flathub-infra/flat-manager-hooks
+
+output_format:
+  email:
+    min_severity: low
