@@ -1,0 +1,6 @@
+repo: https://github.com/rauc/rauc#master
+primary_contact: security@pengutronix.de
+auto_ccs:
+  - ejo@pengutronix.de
+  - jlu@pengutronix.de
+homepage: https://rauc.io
