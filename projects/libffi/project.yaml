@@ -1,0 +1,21 @@
+# libffi: a portable Foreign Function Interface library. It supplies the low-level
+# machinery (call trampolines, closures, executable-memory handling) that language
+# runtimes and FFI bridges use to call between C and other languages at runtime.
+repo: https://github.com/libffi/libffi#master
+
+primary_contact: green@moxielogic.com
+
+homepage: https://sourceware.org/libffi/
+
+# Findings route primarily through GitHub private vulnerability reporting; email is
+# reserved for high/critical so a report of any severity still lands via GitHub.
+output_format:
+  email:
+    min_severity: high
+  github_security_advisory:
+    min_severity: low
+
+disabled: false
+
+# The Dockerfile and threat_model.md sit next to this file (projects/libffi/), so no
+# dockerfile: or threat_model: key is set.

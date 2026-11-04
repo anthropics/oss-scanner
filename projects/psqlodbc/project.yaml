@@ -1,0 +1,11 @@
+repo: https://github.com/postgresql-interfaces/psqlodbc#main
+
+primary_contact: pgsql-odbc-security@lists.postgresql.org
+
+homepage: https://odbc.postgresql.org
+
+dockerfile: .oss-scanner/Dockerfile
+
+threat_model: .oss-scanner/threat_model.md
+
+disabled: false
