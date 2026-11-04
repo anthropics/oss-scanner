@@ -1,0 +1,17 @@
+# clvm_rs (crate clvmr): the CLVM interpreter, cost model and serialization that Chia consensus runs every puzzle on.
+
+repo: https://github.com/Chia-Network/clvm_rs#main
+
+# PUBLIC: use a security alias, not a personal address.
+primary_contact: oss-scanner-anthropic@chia.net
+
+homepage: https://www.chia.net
+
+# Reports stay private: email only. Chia takes external reports through HackerOne, not GitHub advisories.
+output_format:
+  email:
+    min_severity: low
+  github_security_advisory:
+    min_severity: none
+
+disabled: false
