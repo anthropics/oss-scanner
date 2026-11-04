@@ -2,7 +2,7 @@
 
 ## What it does
 
-OpenReplay is a self-hosted session replay platform. A JavaScript tracker (`tracker/`) runs on our users' websites,
+OpenReplay is a self-hosted session replay, cobrwosing and product analytics platform. A JavaScript tracker (`tracker/`) runs on our users' websites,
 records each visitor's DOM, network calls, console and events, and sends them to the ingest services; the dashboard
 (`frontend/`, replay engine in `player/`) replays them to the site owner's team. With `tracker-assist`, a dashboard
 user ("agent") can also watch a visitor live through the assist server (`assist/`, socket.io), call them, draw on
