@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 # Copyright 2026 Anthropic PBC
 # SPDX-License-Identifier: Apache-2.0
-"""Write the triage comment for an enrolment pull request, as Markdown on standard output.
+"""Write the triage comment for an enrolment pull request, as Markdown on standard output, and the comment that asks
+about its contact address, if there is something to ask.
 
     GITHUB_TOKEN=... .github/scripts/triage.py --repo anthropics/oss-scanner --pr 123
 
@@ -45,8 +46,9 @@ MAX_RATE_LIMIT_WAIT = 65  # seconds
 # A larger answer is refused. A file we only search (a license, a security policy) is read up to the smaller limit.
 MAX_RESPONSE_BYTES = 16 * 1024 * 1024
 MAX_TEXT_BYTES = 256 * 1024
-# The workflow finds the comment to update by this first line.
+# The workflow finds each comment to update by its first line.
 MARKER = "<!-- oss-scanner-triage -->"
+CONTACT_MARKER = "<!-- oss-scanner-contact -->"
 CRITERIA = "https://red.anthropic.com/oss-scanner"
 OUTPUT_FORMAT_DOCS = "https://github.com/anthropics/oss-scanner#projectyaml"
 
@@ -570,7 +572,7 @@ def maintainer_row(gh: GitHub, slug: str, meta: dict, login: str) -> tuple[str, 
     return (WARN if roles or recent else FAIL), evidence
 
 
-@functools.cache  # read by contact_row() and maintainer_notes()
+@functools.cache  # read by contact_row(), maintainer_notes() and contact_differences()
 def security_policy(gh: GitHub, slug: str, owner: str) -> tuple[str, str] | None:
     """Find the security policy that applies to the repository: its own, or else the one its owner keeps for all
     their repositories in <owner>/.github. Return the policy's repository and its text, or None."""
@@ -619,7 +621,6 @@ def maintainer_notes(gh: GitHub, slug: str, meta: dict, config: dict) -> list[st
     """What to tell whoever opened the pull request, as Markdown."""
     output_format = config.get("output_format")
     advisories = output_format.get("github_security_advisory") if isinstance(output_format, dict) else None
-    severity = advisories.get("min_severity") if isinstance(advisories, dict) else None
     try:
         repo, text = security_policy(gh, slug, meta["owner"]["login"]) or (slug, "")
     except ApiError:  # the contact row says it could not be checked
@@ -627,18 +628,7 @@ def maintainer_notes(gh: GitHub, slug: str, meta: dict, config: dict) -> list[st
     where = policy_name(repo, slug)
 
     notes = []
-    contact, given = config.get("primary_contact"), policy_addresses(text)
-    if isinstance(contact, str) and given and contact.lower() not in given:
-        notes.append(
-            f"`primary_contact` ({code(contact)}) does not match the email in {where} ({shown_addresses(given)}). "
-            "Any discrepancy in that email will delay review."
-        )
-    if severity in validate.SEVERITIES and severity != "none":
-        notes.append(
-            f"`project.yaml` turns on GitHub security advisories: please add `oss-scanner` as a trusted reporter on "
-            f"{code(slug)}, under Settings → Advanced Security → Private vulnerability reporting."
-        )
-    elif advisories is None and GITHUB_REPORTING.search(text):
+    if advisories is None and GITHUB_REPORTING.search(text):
         notes.append(
             f"{where} mentions GitHub security advisories, but `project.yaml` does not configure them. "
             f"As a reminder, this can be added with [`output_format`]({OUTPUT_FORMAT_DOCS})."
@@ -674,6 +664,7 @@ def oss_fuzz_candidates(slug: str, names: list[str]) -> list[str]:
     return [name for _, _, name in ranked[:OSS_FUZZ_CANDIDATES]]
 
 
+@functools.cache  # read by oss_fuzz_row() and contact_differences()
 def oss_fuzz_projects(gh: GitHub, slug: str) -> tuple[dict[str, dict], dict[str, object]]:
     """Find the OSS-Fuzz projects that fuzz this repository: each one's name and project.yaml. Also return the
     main_repo of any project named exactly after the repository or its owner that is for some other repository."""
@@ -696,6 +687,19 @@ def oss_fuzz_projects(gh: GitHub, slug: str) -> tuple[dict[str, dict], dict[str,
     return found, namesakes
 
 
+def oss_fuzz_contacts(projects: dict[str, dict]) -> tuple[set[str], set[str]]:
+    """The primary contacts of OSS-Fuzz projects, and the addresses they CC."""
+    primary, ccs = set(), set()
+    for project in projects.values():
+        if isinstance(project.get("primary_contact"), str):
+            primary.add(project["primary_contact"].lower())
+        for key in ("auto_ccs", "vendor_ccs"):
+            listed = project.get(key)
+            listed = [listed] if isinstance(listed, str) else listed if isinstance(listed, list) else []
+            ccs.update(address.lower() for address in listed if isinstance(address, str))
+    return primary, ccs
+
+
 def oss_fuzz_row(gh: GitHub, slug: str, config: dict) -> tuple[str, str]:
     """Is the repository in OSS-Fuzz, whose criteria ours follow, and does OSS-Fuzz report to the same address?"""
     projects, namesakes = oss_fuzz_projects(gh, slug)
@@ -709,20 +713,80 @@ def oss_fuzz_row(gh: GitHub, slug: str, config: dict) -> tuple[str, str]:
     contact = config.get("primary_contact")
     if not isinstance(contact, str):
         return OK, result
-    primary, ccs = set(), set()
-    for project in projects.values():
-        if isinstance(project.get("primary_contact"), str):
-            primary.add(project["primary_contact"].lower())
-        for key in ("auto_ccs", "vendor_ccs"):
-            listed = project.get(key)
-            listed = [listed] if isinstance(listed, str) else listed if isinstance(listed, list) else []
-            ccs.update(address.lower() for address in listed if isinstance(address, str))
+    primary, ccs = oss_fuzz_contacts(projects)
     if contact.lower() in primary:
         return OK, f"{result}, with the same primary contact"
     theirs = ", ".join(code(address) for address in sorted(primary)) or "not given"
     if contact.lower() in ccs:
         return OK, f"{result}, which CCs {code(contact)} (its primary contact is {theirs})"
     return WARN, f"{result}, whose contacts do not include {code(contact)} (its primary contact is {theirs})"
+
+
+def policy_difference(gh: GitHub, slug: str, owner: str, contact: str) -> str | None:
+    repo, text = security_policy(gh, slug, owner) or (slug, "")
+    given = policy_addresses(text)
+    if not given or contact.lower() in given:
+        return None
+    return f"{policy_name(repo, slug)} gives {shown_addresses(given)}"
+
+
+def oss_fuzz_difference(gh: GitHub, slug: str, contact: str) -> str | None:
+    projects, _ = oss_fuzz_projects(gh, slug)
+    primary, ccs = oss_fuzz_contacts(projects)
+    # An address that OSS-Fuzz only CCs is one the project has published, so it needs no explanation.
+    if not primary or contact.lower() in primary | ccs:
+        return None
+    names = ", ".join(code(name) for name in projects)
+    return f"OSS-Fuzz ({names}) has the primary contact {shown_addresses(sorted(primary))}"
+
+
+def contact_differences(gh: GitHub, slug: str, owner: str, contact: str) -> tuple[list[str], bool]:
+    """Where the project publishes other addresses than its contact, and whether every place could be read."""
+    differences, complete = [], True
+    for difference, *arguments in ((policy_difference, slug, owner, contact), (oss_fuzz_difference, slug, contact)):
+        try:
+            differences.append(difference(gh, *arguments))
+        except Exception as error:  # the row about it says it could not be checked
+            print(f"{difference.__name__}: {error!r}", file=sys.stderr)
+            complete = False
+    return [difference for difference in differences if difference], complete
+
+
+def same_contact(config: dict, before: dict) -> bool:
+    """Is the contact, for the same repository, the one already on the base branch?"""
+
+    def key(project: dict) -> tuple[str | None, ...]:
+        values = (project.get("repo"), project.get("primary_contact"))
+        return tuple(value.lower() if isinstance(value, str) else None for value in values)
+
+    return key(config) == key(before)
+
+
+def contact_comment(gh: GitHub, slug: str, meta: dict, config: dict, before: dict, login: str) -> dict | None:
+    """The comment that asks about a contact address the project does not publish: its text, and whether it is a
+    question. One that is not only updates a question already asked. None: leave things as they are."""
+    contact = config.get("primary_contact")
+    if not isinstance(contact, str):
+        return None
+    if same_contact(config, before):
+        body = f"{CONTACT_MARKER}\n✅ This pull request does not change `primary_contact`: nothing to clarify.\n"
+        return {"question": False, "body": body}
+    differences, complete = contact_differences(gh, slug, meta["owner"]["login"], contact)
+    if differences:
+        listed = "".join(f"- {difference}\n" for difference in differences)
+        mention = f"@{login}, " if LOGIN.fullmatch(login) else ""
+        body = (
+            f"{CONTACT_MARKER}\n### Contact address: please clarify\n\n"
+            f"{mention}`primary_contact` in `project.yaml` is {code(contact)}, but for {code(slug)}:\n\n{listed}\n"
+            "Could you reply to clarify why they differ, and which address should get security reports? If "
+            "`primary_contact` should be another address, please change it in this pull request. Any discrepancy in "
+            "that email will delay review.\n"
+        )
+        return {"question": True, "body": body}
+    if not complete:
+        return None
+    resolved = f"✅ `primary_contact` ({code(contact)}) no longer differs from `SECURITY.md` or OSS-Fuzz."
+    return {"question": False, "body": f"{CONTACT_MARKER}\n{resolved} Nothing left to clarify.\n"}
 
 
 def scanner_files_row(gh: GitHub, slug: str, ref: str | None, config: dict, beside: set[str]) -> tuple[str, str]:
@@ -913,24 +977,26 @@ def row(check: str, function, *arguments) -> tuple[str, str, str]:
     return mark, check, result
 
 
-def repository_rows(gh: GitHub, config: dict, beside: set[str], login: str) -> tuple[str, list[tuple], list[str]]:
-    """Return a Markdown description of the repository being enrolled, the rows about it, and the notes for whoever
-    opened the pull request."""
+def repository_rows(
+    gh: GitHub, config: dict, before: dict, beside: set[str], login: str
+) -> tuple[str, list[tuple], list[str], dict | None]:
+    """Return a Markdown description of the repository being enrolled, the rows about it, the notes for whoever
+    opened the pull request, and the comment about its contact address."""
     repo = config.get("repo")
     if not repo:
-        return "unknown", [(WARN, "Repository", "no project.yaml that names one")], []
+        return "unknown", [(WARN, "Repository", "no project.yaml that names one")], [], None
     match = GITHUB_REPO.fullmatch(repo) if isinstance(repo, str) else None
     if not match:
         note = "not a github.com repository: check stars, maintainer, license and criticality by hand"
-        return code(repo), [(WARN, "Repository", note)], []
+        return code(repo), [(WARN, "Repository", note)], [], None
 
     owner, name, ref = match.groups()
     try:
         meta = gh.find(f"repos/{quote(owner, safe='')}/{quote(name, safe='')}")
     except ApiError as error:
-        return code(repo), [(WARN, "Repository", f"could not be checked: {code(str(error))}")], []
+        return code(repo), [(WARN, "Repository", f"could not be checked: {code(str(error))}")], [], None
     if meta is None:
-        return code(repo), [(FAIL, "Repository", "not found on GitHub, or not public")], []
+        return code(repo), [(FAIL, "Repository", "not found on GitHub, or not public")], [], None
 
     slug = meta["full_name"]  # from GitHub: the canonical name, also after a rename
     described = f"[{slug}]({meta['html_url']})" + (f" at {code(ref)}" if ref else "")
@@ -946,7 +1012,8 @@ def repository_rows(gh: GitHub, config: dict, beside: set[str], login: str) -> t
         row("OSS-Fuzz", oss_fuzz_row, gh, slug, config),
         row("`.oss-scanner/` in the repository", scanner_files_row, gh, slug, ref, config, beside),
     ]
-    return described, rows, maintainer_notes(gh, slug, meta, config)
+    asked = contact_comment(gh, slug, meta, config, before, login)
+    return described, rows, maintainer_notes(gh, slug, meta, config), asked
 
 
 def notes_section(login: str, notes: list[str]) -> str:
@@ -957,12 +1024,12 @@ def notes_section(login: str, notes: list[str]) -> str:
     return greeting + "\n\n" + "".join(f"- {WARN} {note}\n" for note in notes) + "\n"
 
 
-def triage(gh: GitHub, repo: str, number: int) -> str:
-    """Return the comment for a pull request, or "" if it does not touch projects/."""
+def triage(gh: GitHub, repo: str, number: int) -> tuple[str, dict | None]:
+    """Return the comment for a pull request, or "" if it does not touch projects/, and contact_comment()'s."""
     pull = gh.get(f"repos/{repo}/pulls/{number}")
     names, outside = split_paths(changed_paths(gh, repo, number))
     if not names:
-        return ""
+        return "", None
     name, login = names[0], pull["user"]["login"]
     heading = f"{MARKER}\n### Enrolment triage: {code('projects/' + name)}\n\n"
 
@@ -970,32 +1037,45 @@ def triage(gh: GitHub, repo: str, number: int) -> str:
         directory = pathlib.Path(scratch) / name
         # A name validate.py would refuse is not fetched; check_project() reports it without reading the directory.
         if validate.NAME.fullmatch(name) and not fetch_project(gh, repo, pull["head"]["sha"], name, directory):
-            return f"{heading}This pull request removes the project's directory: a withdrawal, nothing to triage.\n"
+            return f"{heading}This pull request removes the project's directory: a withdrawal, nothing to triage.\n", None
         problems, _ = validate.check_project(directory)
         config = read_config(directory)
         beside = {path.name for path in directory.glob("*")}
 
-    described, rows, notes = repository_rows(gh, config, beside, login)
+    before = read_config(validate.PROJECTS / name) if validate.NAME.fullmatch(name) else {}
+    described, rows, notes, asked = repository_rows(gh, config, before, beside, login)
     rows += [
         row("Pull request scope", scope_row, names, outside, pull["changed_files"]),
         row("`tools/validate.py`", validate_row, problems),
         row("Checklist", checklist_row, pull.get("body") or ""),
     ]
     table = "\n".join(f"| {mark} | {check} | {result} |" for mark, check, result in rows)
-    return (
+    comment = (
         f"{heading}{notes_section(login, notes)}Repository: {described} · opened by {code(login)}\n\n"
         f"| | Check | Result |\n|:-:|---|---|\n{table}\n\n"
         f"<sub>Automated, from public data, to help reviewers. Enrolment is decided case by case against "
         f"the [criteria]({CRITERIA}). If you think we got something wrong, please tell us in a reply.</sub>\n"
     )
+    return comment, asked
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--repo", required=True, help="the repository the pull request is in, as owner/name")
     parser.add_argument("--pr", required=True, type=int, help="the pull request's number")
+    parser.add_argument(
+        "--contact-comment",
+        type=pathlib.Path,
+        metavar="FILE",
+        help="write contact_comment()'s answer here as one line of JSON, instead of printing the question",
+    )
     options = parser.parse_args()
-    sys.stdout.write(triage(GitHub(os.environ.get("GITHUB_TOKEN")), options.repo, options.pr))
+    comment, asked = triage(GitHub(os.environ.get("GITHUB_TOKEN")), options.repo, options.pr)
+    sys.stdout.write(comment)
+    if options.contact_comment:
+        options.contact_comment.write_text(json.dumps(asked) if asked else "", encoding="utf-8")
+    elif asked and asked["question"]:
+        sys.stdout.write(f"\n{asked['body']}")
     return 0
 
 

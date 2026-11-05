@@ -50,6 +50,8 @@ output_format:
     min_severity: none
 ```
 
+To turn on GitHub reports, first enable private vulnerability reporting on your repository and [add `oss-scanner` as a trusted reporter](https://docs.github.com/en/code-security/security-advisories/working-with-repository-security-advisories/configuring-private-vulnerability-reporting-for-a-repository). Anthropic operates the [`oss-scanner`](https://github.com/oss-scanner) account, which our reports come from; without this, GitHub limits how many it can send you. We ask you to confirm it on your pull request before we merge.
+
 You must provide a Dockerfile, in exactly one of two places:
 
 * **in your own repository**: set `dockerfile:` to its path (we suggest at some location like `.oss-scanner/Dockerfile`). This is the preferred option because it allows you to update the build without a pull request here; or,  

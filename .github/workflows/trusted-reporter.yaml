@@ -1,0 +1,112 @@
+name: "Trusted reporter"
+# A pull request that turns on GitHub security advisories in project.yaml gets a comment that asks whoever opened it
+# to add oss-scanner as a trusted reporter and to confirm it in a reply. Until they do, the commit status
+# "trusted-reporter" on the pull request fails. Every other pull request gets neither the comment nor the status.
+#
+# The reply, on a line of its own, from whoever opened the pull request:
+#   I have added oss-scanner as a trusted reporter on owner/repo
+# or from someone in CODEOWNERS, for a confirmation that came by email:
+#   Confirmed: oss-scanner is a trusted reporter on owner/repo
+#
+# A reply, not a reaction: GitHub starts no workflow for a reaction.
+# A commit status, not this workflow's own result: a run for a comment is not attached to the pull request.
+#
+# This runs with the base repository's token on input from anyone, so it is split in two:
+#   check    reads the pull request as data, with a read-only token. Its checkout is the default branch.
+#   report   holds the write permissions, and only posts what check produced.
+# Values reach the scripts through environment variables, never by ${{ }} substitution into them.
+#
+# To run it for a pull request by number:
+#   gh workflow run trusted-reporter.yaml -f pr=123
+
+run-name: ${{ github.event.pull_request.title || github.event.issue.title || format('Pull request {0}', inputs.pr) }}
+
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize]
+  issue_comment:
+    types: [created, edited, deleted]
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: "Number of the pull request to check"
+        required: true
+        type: number
+
+permissions: {}
+
+# Not cancelled: one run could be between posting the comment and the status. A pending run that is replaced loses
+# nothing, as every run looks at everything.
+concurrency:
+  group: trusted-reporter-${{ github.event.pull_request.number || github.event.issue.number || inputs.pr }}
+
+jobs:
+  check:
+    if: github.event_name != 'issue_comment' || github.event.issue.pull_request
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: read
+    outputs:
+      verdict: ${{ steps.check.outputs.verdict }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1 (sha-pinned)
+        with:
+          ref: ${{ github.event.repository.default_branch }}
+          persist-credentials: false
+      - name: Look for the confirmation
+        id: check
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number || github.event.issue.number || inputs.pr }}
+        run: |
+          python3 -c 'import yaml' 2>/dev/null || { sudo apt-get update -qq && sudo apt-get install -y -qq python3-yaml; }
+          # One line of ASCII: JSON escapes line breaks, so no text in it can end the output early.
+          verdict=$(python3 .github/scripts/trusted_reporter.py --repo "$REPO" --pr "$PR")
+          echo "verdict=$verdict" >> "$GITHUB_OUTPUT"
+
+  report:
+    needs: check
+    if: needs.check.outputs.verdict != ''
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions:
+      pull-requests: write
+      statuses: write
+    steps:
+      - name: Post the comment and the status, or delete the comment
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number || github.event.issue.number || inputs.pr }}
+          VERDICT: ${{ needs.check.outputs.verdict }}
+        run: |
+          set -euo pipefail
+          sha=$(jq -r .sha <<< "$VERDICT")
+          [[ $sha =~ ^[0-9a-f]{40}$ ]] || { echo "::error::No head commit."; exit 1; }
+          comment=$(jq -r '.comment // empty' <<< "$VERDICT")
+          [[ $comment =~ ^[0-9]*$ ]] || { echo "::error::No such comment."; exit 1; }
+
+          # Asked before, but no longer turns on GitHub security advisories.
+          if jq -e '.state == null' <<< "$VERDICT" > /dev/null; then
+            [ -z "$comment" ] || gh api --method DELETE "repos/$REPO/issues/comments/$comment"
+            exit 0
+          fi
+
+          url=
+          if jq -e .body <<< "$VERDICT" > /dev/null; then
+            if [ -n "$comment" ]; then
+              set -- --method PATCH "repos/$REPO/issues/comments/$comment"
+            else
+              set -- --method POST "repos/$REPO/issues/$PR/comments"
+            fi
+            url=$(jq '{body}' <<< "$VERDICT" | gh api "$@" --input - --jq .html_url)
+          elif [ -n "$comment" ]; then
+            url="https://github.com/$REPO/pull/$PR#issuecomment-$comment"
+          fi
+
+          jq --arg url "$url" \
+            '{state, description, context: "trusted-reporter"} + (if $url == "" then {} else {target_url: $url} end)' \
+            <<< "$VERDICT" | gh api --method POST "repos/$REPO/statuses/$sha" --input - > /dev/null
