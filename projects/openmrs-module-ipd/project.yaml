@@ -1,0 +1,16 @@
+# OSS Scanner enrolment for Bahmni IPD (Inpatient Department) backend: an OpenMRS module (OMOD).
+
+# REQUIRED. The ONE git repository to scan.
+repo: https://github.com/Bahmni/openmrs-module-ipd#main
+
+# REQUIRED. Reports and build problems go here. This is the address already published in the repo's SECURITY.md.
+# NOTE: addresses in this file are public.
+primary_contact: security@bahmni.org
+
+# Optional. The project's home page.
+homepage: https://www.bahmni.org
+
+# Optional. true pauses reports without removing the enrolment.
+disabled: false
+
+# The Dockerfile and threat_model.md are next to this file, so dockerfile: and threat_model: are omitted.
