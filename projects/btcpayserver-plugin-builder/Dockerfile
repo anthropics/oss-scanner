@@ -8,14 +8,16 @@ ENV DOTNET_CLI_TELEMETRY_OPTOUT=1 \
     NUGET_XMLDOC_MODE=skip
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    bash ca-certificates coreutils curl git jq openssl python3 \
+    bash ca-certificates coreutils curl findutils git jq openssl python3 sed \
     && rm -rf /var/lib/apt/lists/*
 
 COPY . /src
 WORKDIR /src
 
-# Include the public application, broker, shared contracts, tests, and test fixtures.
-RUN dotnet restore btcpayserver-plugin-builder.sln -p:NuGetAudit=false --verbosity minimal \
+# C# raw strings contain executable shell fixtures; preserve Linux line endings
+# even when tools/check supplies a Windows checkout.
+RUN find . -type f -name '*.cs' -exec sed -i 's/\r$//' {} + \
+    && dotnet restore btcpayserver-plugin-builder.sln -p:NuGetAudit=false --verbosity minimal \
     && dotnet build btcpayserver-plugin-builder.sln --no-restore --configuration Debug \
         --disable-build-servers --verbosity minimal -m:2 \
     && dotnet build-server shutdown
