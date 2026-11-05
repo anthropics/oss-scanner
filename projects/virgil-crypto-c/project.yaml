@@ -1,7 +1,7 @@
 # develop is the development branch; releases are cut from it
 repo: https://github.com/VirgilSecurity/virgil-crypto-c#develop
 
-primary_contact: support@VirgilSecurity.com
+primary_contact: ddain@virgilsecurity.com
 
 homepage: https://github.com/VirgilSecurity/virgil-crypto-c
 
