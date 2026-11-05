@@ -1,0 +1,7 @@
+# OSS Scanner enrolment for the Bahmni/OpenMRS Appointments module (appointment scheduling backend).
+repo: https://github.com/Bahmni/openmrs-module-appointments#master
+# Address published in the repo's SECURITY.md. Addresses in this file are public.
+primary_contact: security@bahmni.org
+homepage: https://www.bahmni.org
+disabled: false
+# The Dockerfile and threat_model.md are next to this file, so dockerfile: and threat_model: are omitted.
