@@ -6,9 +6,11 @@ name: "Triage"
 # whether projects/<name>/ follows the rules. The comment informs the review and decides nothing. A pull request
 # that touches nothing under projects/ gets no comment.
 #
-# It also @-mentions whoever opened the pull request when SECURITY.md gives other addresses than primary_contact,
-# when project.yaml turns on GitHub advisories (add oss-scanner as a trusted reporter), or when SECURITY.md mentions
-# them and project.yaml does not configure them.
+# It also @-mentions whoever opened the pull request when SECURITY.md mentions GitHub advisories that project.yaml
+# does not configure. For those it does: trusted-reporter.yaml.
+#
+# A second comment @-mentions them to ask about primary_contact, when it is not among the addresses in SECURITY.md or
+# in the OSS-Fuzz project. Only if the pull request adds the project, or changes its repo or primary_contact.
 #
 # pull_request_target, not pull_request: a pull request from a fork gets a read-only token, which cannot comment.
 # That makes this workflow run with the base repository's token on input from anyone, so it is split in two:
@@ -53,11 +55,12 @@ jobs:
       pull-requests: read
     outputs:
       comment: ${{ steps.triage.outputs.comment }}
+      contact: ${{ steps.triage.outputs.contact }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1 (sha-pinned)
         with:
           persist-credentials: false
-      - name: Write the comment
+      - name: Write the comments
         id: triage
         env:
           GITHUB_TOKEN: ${{ github.token }}
@@ -69,8 +72,10 @@ jobs:
           delimiter="triage-$(openssl rand -hex 16)"
           {
             echo "comment<<$delimiter"
-            python3 .github/scripts/triage.py --repo "$REPO" --pr "$PR"
+            python3 .github/scripts/triage.py --repo "$REPO" --pr "$PR" --contact-comment "$RUNNER_TEMP/contact"
             echo "$delimiter"
+            # One line of ASCII: JSON escapes line breaks, so no text in it can end the output early.
+            echo "contact=$(cat "$RUNNER_TEMP/contact")"
           } >> "$GITHUB_OUTPUT"
 
   comment:
@@ -81,19 +86,30 @@ jobs:
     permissions:
       pull-requests: write
     steps:
-      - name: Post the comment, or update the one already there
+      - name: Post each comment, or update the one already there
         env:
           GH_TOKEN: ${{ github.token }}
           REPO: ${{ github.repository }}
           PR: ${{ github.event.pull_request.number || inputs.pr }}
           COMMENT: ${{ needs.gather.outputs.comment }}
+          CONTACT: ${{ needs.gather.outputs.contact }}
         run: |
-          # The CLA workflow also comments as github-actions[bot]; ours is the one that starts with the marker.
-          existing=$(gh api "repos/$REPO/issues/$PR/comments" --paginate \
-            --jq '.[] | select(.user.login == "github-actions[bot]" and (.body | startswith("<!-- oss-scanner-triage -->"))) | .id')
-          existing=${existing%%$'\n'*}
-          if [ -n "$existing" ]; then
-            jq -n --arg body "$COMMENT" '{body: $body}' | gh api --method PATCH "repos/$REPO/issues/comments/$existing" --input - > /dev/null
-          else
-            jq -n --arg body "$COMMENT" '{body: $body}' | gh api --method POST "repos/$REPO/issues/$PR/comments" --input - > /dev/null
+          # post <marker> <body> <true to post it if it is not there yet>
+          post() {
+            # Other workflows also comment as github-actions[bot]; ours is the one that starts with the marker.
+            existing=$(gh api "repos/$REPO/issues/$PR/comments" --paginate \
+              --jq ".[] | select(.user.login == \"github-actions[bot]\" and (.body | startswith(\"$1\"))) | .id")
+            existing=${existing%%$'\n'*}
+            if [ -n "$existing" ]; then
+              jq -n --arg body "$2" '{body: $body}' | gh api --method PATCH "repos/$REPO/issues/comments/$existing" --input - > /dev/null
+            elif [ "$3" = true ]; then
+              jq -n --arg body "$2" '{body: $body}' | gh api --method POST "repos/$REPO/issues/$PR/comments" --input - > /dev/null
+            fi
+          }
+
+          post '<!-- oss-scanner-triage -->' "$COMMENT" true
+          if [ -n "$CONTACT" ]; then
+            body=$(jq -r .body <<< "$CONTACT")
+            question=$(jq -r .question <<< "$CONTACT")
+            post '<!-- oss-scanner-contact -->' "$body" "$question"
           fi
