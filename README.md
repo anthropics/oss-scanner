@@ -12,7 +12,7 @@ Enroll an open-source project by opening a pull request that adds one directory:
 projects/<name>
 ```
 
-Our security scanner builds your project in an isolated VM, then analyses it with no Internet access and emails what it finds to `primary_contact` (and any CCs), each with a reproducer and a proposed patch where available. Reports are model-generated and are not reviewed by a human. Because of this we do not place a 90-day disclosure period on these findings and will not make them public. Project owners should provide `project.yaml` (to configure the scanner), a `Dockerfile` (stating how to build the project), and optionally a `threat_model.md` (providing project-specific threat modeling).
+Our security scanner builds your project in an isolated VM, then analyses it with no Internet access and emails what it finds to `primary_contact` (and any CCs), each with a reproducer and a proposed patch where available. Reports are model-generated and are not reviewed by a human. Because of this we do not place a 90-day disclosure period on these findings and will not make them public. Project owners should provide `project.yaml` (to configure the scanner), a `Dockerfile` (stating how to build the project), and optionally a `threat_model.md` (providing project-specific threat modeling), a `report_guidelines.md` and a `patch_guidelines.md` (saying how you would like reports and patches to look).
 
 ### project.yaml
 
@@ -27,6 +27,8 @@ homepage: https://example.org               # optional
 disabled: false                             # optional: true pauses reports without removing the enrolment
 dockerfile: .oss-scanner/Dockerfile         # required unless a Dockerfile sits in this repo next to your project.yaml
 threat_model: .oss-scanner/threat_model.md  # optional; also supports placing the file in this repository
+# report_guidelines: .oss-scanner/report_guidelines.md  # optional; the same
+# patch_guidelines: .oss-scanner/patch_guidelines.md    # optional; the same
 ```
 
 `repo` and `primary_contact` are always required. `dockerfile` is required unless you keep your Dockerfile next to `project.yaml` (see below). Others are optional.
@@ -55,11 +57,20 @@ You must provide a Dockerfile, in exactly one of two places:
 * **in your own repository**: set `dockerfile:` to its path (we suggest at some location like `.oss-scanner/Dockerfile`). This is the preferred option because it allows you to update the build without a pull request here; or,  
 * **here**, next to `project.yaml`, as `projects/<name>/Dockerfile`, with no `Dockerfile:` key set in the `project.yaml`. If you would rather not add files to your repository, put it here and the scanner builds it exactly as it would an in-repo copy.
 
-(The threat model works the same way. Set the `threat_model` field for its location in your repository, or place it here at `projects/<name>/threat_model.md`.)
+(The threat model works the same way. Set the `threat_model` field for its location in your repository, or place it here at `projects/<name>/threat_model.md`. So do the report guidelines and the patch guidelines, with the `report_guidelines` and `patch_guidelines` fields.)
 
 The purpose of the `Dockerfile` is to set up your environment, install every dependency, and build the project. Initial project setup runs with network access enabled, but the security audit after it runs without Internet access. Anything the build or the tests need must be fetched during the initial Dockerfile setup. We recommend checking that your tests pass inside the built image.
 
-The `threat_model.md` (optional but strongly recommended) file allows you to provide the scanner with documentation on your intended security goals. We have found it is most useful to provide guidance for how you rate the severity of reports (e.g., do you consider post-auth SQLi high or critical? are buffer overflows without demonstrated exploits capped at high? when is stored XSS medium, high, and critical?) This file can also state what the project does, where untrusted input enters, which components matter and which are out of scope, how you would like reports and patches to look, or anything else you think important or useful.
+The `threat_model.md` (optional but strongly recommended) file allows you to provide the scanner with documentation on your intended security goals. We have found it is most useful to provide guidance for how you rate the severity of reports (e.g., do you consider post-auth SQLi high or critical? are buffer overflows without demonstrated exploits capped at high? when is stored XSS medium, high, and critical?) This file can also state what the project does, where untrusted input enters, which components matter and which are out of scope, or anything else you think important or useful.
+
+Two more files (optional but strongly recommended) let you say how you would like our reports and patches to look:
+
+* `report_guidelines.md` is for the format of each report: its layout and sections, length, tone, and which facts to state.
+* `patch_guidelines.md` is for the style of each patch: for example, how many comments to write, whether a fix should be very narrow or more general, which tests to add, and which formatter to use.
+
+Start from `templates/report_guidelines.md` and `templates/patch_guidelines.md`. Both are plain text of at most 16 KiB.
+
+These files only change how reports and patches are written; what is in scope and how you rate severity belong in `threat_model.md`. Each file is checked automatically before it is used. One that tries to change more than that, for example to leave findings out or to run unrelated commands, is ignored as a whole.
 
 We suggest you run two commands before opening a pull request:
 
