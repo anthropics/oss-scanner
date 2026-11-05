@@ -6,3 +6,8 @@ auto_ccs:
   - gaby@gofiber.io
   - security@gofiber.io
 homepage: https://gofiber.io
+output_format:
+  email:
+    min_severity: low
+  github_security_advisory:
+    min_severity: low

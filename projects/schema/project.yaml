@@ -1,0 +1,13 @@
+# Schema: the form-value decoder and encoder Fiber's binder uses (github.com/gofiber/schema).
+# The Dockerfile and threat_model.md sit next to this file, so neither key is set here.
+repo: https://github.com/gofiber/schema#main
+primary_contact: rene@gofiber.io
+auto_ccs:
+  - gaby@gofiber.io
+  - security@gofiber.io
+homepage: https://gofiber.io
+output_format:
+  email:
+    min_severity: low
+  github_security_advisory:
+    min_severity: low
