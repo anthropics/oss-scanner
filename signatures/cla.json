@@ -6391,6 +6391,14 @@
       "created_at": "2026-11-05T04:15:54Z",
       "repoId": 1410719150,
       "pullRequestNo": 1340
+    },
+    {
+      "name": "SergeySeroshtan",
+      "id": 2228157,
+      "comment_id": 6650870069,
+      "created_at": "2026-11-05T05:53:08Z",
+      "repoId": 1410719150,
+      "pullRequestNo": 1344
     }
   ]
 }
