@@ -1,0 +1,10 @@
+# EZiL-OS enrollment. Dockerfile and threat_model.md sit next to this file, so no dockerfile:/threat_model: keys.
+repo: https://github.com/EZiLHQ/ezil-os#main
+primary_contact: contact@ezil.work
+homepage: https://github.com/EZiLHQ/ezil-os
+output_format:
+  email:
+    min_severity: low
+  github_security_advisory:
+    min_severity: none
+disabled: false
