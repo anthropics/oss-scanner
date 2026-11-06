@@ -1,0 +1,4 @@
+repo: https://github.com/cloudfoundry/routing-release#develop
+primary_contact: security@cloudfoundry.org
+homepage: https://github.com/cloudfoundry/routing-release
+# Dockerfile and threat_model.md sit next to this file, so no dockerfile:/threat_model: keys are set.
