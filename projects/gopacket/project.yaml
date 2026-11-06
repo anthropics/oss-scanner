@@ -5,5 +5,5 @@ output_format:
   email:
     min_severity: none
   github_security_advisory:
-    min_severity: low
+    min_severity: high
 disabled: false
