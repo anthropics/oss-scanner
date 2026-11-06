@@ -1,0 +1,6 @@
+repo: https://github.com/getnao/nao#main
+primary_contact: christophe@getnao.io
+auto_ccs:
+  - sarah@getnao.io
+homepage: https://getnao.io
+disabled: false
