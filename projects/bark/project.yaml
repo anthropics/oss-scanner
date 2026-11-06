@@ -1,0 +1,9 @@
+# bark: an implementation of the Ark protocol on bitcoin. The repository holds
+# the Ark server (captaind, watchmand) and the Ark wallet (bark, barkd).
+#
+# The Dockerfile and the threat model sit beside this file rather than in the
+# bark repository.
+repo: https://gitlab.com/ark-bitcoin/bark#master
+primary_contact: security@second.tech
+homepage: https://second.tech
+disabled: false
