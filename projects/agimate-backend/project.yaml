@@ -1,0 +1,8 @@
+# AgiMate backend: a self-hosted platform where AI agents call tools through connectors.
+# Enrolled by the project's lead maintainer.
+repo: https://github.com/AgiMateIo/backend
+primary_contact: agimate@mail.ru
+homepage: https://agimate.io
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
+disabled: false
