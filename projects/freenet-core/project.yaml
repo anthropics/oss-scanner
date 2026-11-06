@@ -1,0 +1,6 @@
+# Freenet: a peer-to-peer platform for decentralized applications. Nodes exchange WebAssembly contracts and their
+# state over an encrypted UDP transport, run that contract code in a sandbox, and serve web apps and a client API to
+# local users. The Dockerfile and threat_model.md sit next to this file, so neither key is set here.
+repo: https://github.com/freenet/freenet-core#main
+primary_contact: ian@freenet.org
+homepage: https://freenet.org
