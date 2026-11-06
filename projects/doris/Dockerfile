@@ -6,7 +6,7 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-        autoconf automake autopoint bash binutils-dev bison byacc bzip2 ca-certificates \
+        autoconf automake bash binutils-dev bison byacc bzip2 ca-certificates \
         curl file flex g++ gettext git gperf help2man krb5-user libaio1 \
         libcurl4-openssl-dev libffi-dev libiberty-dev libkrb5-dev libncurses5 \
         libncurses-dev libssl-dev libtool libtool-bin libxml2-dev make \
@@ -49,6 +49,12 @@ ENV PATH="/opt/cargo/bin:/opt/maven/bin:/usr/lib/jvm/java-17-openjdk-amd64/bin:/
 RUN curl -fsSL --retry 3 https://sh.rustup.rs -o /tmp/rustup-init.sh \
     && sh /tmp/rustup-init.sh -y --no-modify-path --profile minimal --default-toolchain 1.94.0 \
     && rm /tmp/rustup-init.sh
+
+# XZ's autogen.sh requires Debian's separate autopoint package. Keep this
+# addition after the toolchain setup so existing compiler layers remain reusable.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends autopoint \
+    && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /src
 
