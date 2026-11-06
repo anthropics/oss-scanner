@@ -1,0 +1,5 @@
+# rust-payjoin: the Payjoin Dev Kit library and its reference services, implementing BIP 77 and BIP 78. The Dockerfile
+# and threat_model.md sit next to this file, so neither key is set here.
+repo: https://github.com/payjoin/rust-payjoin#master
+primary_contact: security@payjoin.org
+homepage: https://payjoin.org
