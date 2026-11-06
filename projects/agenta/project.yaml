@@ -1,0 +1,9 @@
+repo: https://github.com/Agenta-AI/agenta#main
+primary_contact: security@agenta.ai
+homepage: https://agenta.ai
+disabled: false
+output_format:
+  email:
+    min_severity: high
+  github_security_advisory:
+    min_severity: high
