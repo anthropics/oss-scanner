@@ -1,0 +1,4 @@
+repo: https://github.com/strapi/strapi#main
+primary_contact: security@strapi.io
+homepage: https://strapi.io
+disabled: false
