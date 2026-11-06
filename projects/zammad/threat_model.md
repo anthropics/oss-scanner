@@ -61,8 +61,8 @@ Out of scope:
 
 ## How to exercise it
 
-Every dependency is installed and the test database is migrated and seeded (`RAILS_ENV=test`). PostgreSQL and
-Redis are installed but stopped, so start them first:
+Every dependency is installed and the test database is migrated and seeded (`RAILS_ENV=test`). PostgreSQL,
+Redis and Elasticsearch are installed but stopped, so start them first:
 
 ```sh
 zammad-services
@@ -70,10 +70,29 @@ zammad-services
 
 - `bundle exec rspec spec/requests/...` for REST endpoints, `spec/graphql/...` for GraphQL, `spec/models/...`
   and `spec/lib/...` for the rest. Factories are in `spec/factories/`, and the existing request and GraphQL
-  specs make good starting points for a reproducer.
+  specs make good starting points for a reproducer. Specs tagged `searchindex: true` use the local
+  Elasticsearch (`ES_URL` and `ES_INDEX` are set). They recreate all indices for each example and are slow;
+  run single examples (`path/to/spec.rb:LINE`) rather than whole files.
 - `bundle exec rails runner '...'` to try code against the test database.
-- Elasticsearch, browsers and external mail servers are not available. Skip the search index specs with
-  `--tag ~searchindex`; `spec/system/` does not run here.
+- For a reproducer against a running server, create users with known passwords and start Rails. RSpec resets
+  the test database, so run this again after a spec run:
+
+  ```ruby
+  # /tmp/users.rb, run with: bundle exec rails runner /tmp/users.rb
+  UserInfo.current_user_id = 1
+  group = Group.first
+  { 'admin@example.com' => %w[Admin Agent], 'agent@example.com' => %w[Agent], 'customer@example.com' => %w[Customer] }.each do |email, roles|
+    user = User.create!(login: email, email: email, firstname: roles.first, lastname: 'Test', password: 'Scanner-Test-123!', roles: Role.where(name: roles))
+    user.update!(group_names_access_map: { group.name => 'full' }) if roles.include?('Agent')
+  end
+  ```
+
+  Then `bundle exec rails server -p 3000 -b 127.0.0.1` serves the REST API under `/api/v1/` and GraphQL under
+  `/graphql`, with HTTP basic authentication for these users. `zammad-services` starts Elasticsearch empty;
+  for search against the server, set `Setting.set('es_url', ENV['ES_URL'])` and
+  `Setting.set('es_index', ENV['ES_INDEX'])`, then run `bundle exec rake zammad:searchindex:rebuild`.
+- Browsers and external mail servers are not available: `spec/system/` and the browser-based frontend specs do
+  not run here. Frontend unit tests do (`pnpm test --run <path>`).
 
 ## How reports should look
 
@@ -134,5 +153,5 @@ Also leave these alone:
   report shows a concrete impact.
 - Attackers with direct access to the database, the file storage or the host.
 - A vulnerable dependency, unless the report shows a working exploit through Zammad's own code.
-- External services (mail servers, LDAP, SSO providers, messengers, Elasticsearch) cannot be exercised
+- External services (mail servers, LDAP, SSO providers, messengers) cannot be exercised
   offline; reason about them from the source and say so.
