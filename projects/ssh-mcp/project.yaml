@@ -1,0 +1,5 @@
+repo: https://github.com/tufantunc/ssh-mcp
+primary_contact: tufan.tunc.91@gmail.com
+homepage: https://www.npmjs.com/package/ssh-mcp
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
