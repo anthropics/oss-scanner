@@ -1,0 +1,13 @@
+# taOS: a self-hosted AI agent operating system and home server (FastAPI controller, web desktop, agent containers).
+# dev is where active work lands first; master is promoted from it.
+repo: https://github.com/jaylfc/taOS#dev
+
+# Maintainer contact for reports and build problems.
+primary_contact: info@taos.my
+
+homepage: https://taos.my
+
+disabled: false
+
+# The Dockerfile sits beside this file. The threat model lives in the repository.
+threat_model: .oss-scanner/threat_model.md
