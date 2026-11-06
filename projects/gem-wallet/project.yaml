@@ -1,0 +1,6 @@
+# Gem Wallet: self-custodial multi-chain crypto wallet for iOS and Android, with its Rust core (Gemstone) and backend.
+repo: https://github.com/gemwalletcom/wallet#main
+primary_contact: security@gemwallet.com
+homepage: https://gemwallet.com
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
