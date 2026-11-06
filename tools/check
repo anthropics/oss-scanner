@@ -24,8 +24,9 @@ someone you don't trust on a machine with nothing to lose.
 Exit codes: 0 if the project builds, 1 if it does not, 2 if projects/<name>/ breaks the enrolment rules.
 
 Requires git, Docker and PyYAML (pip install pyyaml). With --qemu, requires Linux on x86-64 with
-qemu-system-x86_64 and qemu-img instead of Docker (see tools/check_qemu.py). Everything is kept in
-~/.cache/oss-scanner-check, or in --dir if given.
+qemu-system-x86_64 and qemu-img instead of Docker (see tools/check_qemu.py). Project work is kept in
+~/.cache/oss-scanner-check/<name>, or in --dir if given. With --qemu, the shared base disk and downloaded
+image remain in ~/.cache/oss-scanner-check (relocatable via XDG_CACHE_HOME).
 """
 
 import argparse
@@ -106,7 +107,7 @@ def main():
     parser.add_argument("project", help="a name under projects/, or the path of a directory with a project.yaml")
     parser.add_argument("--qemu", action=argparse.BooleanOptionalAction, default=False, help="in virtual machines")
     parser.add_argument("--no-shell", action="store_true", help="stop after the build")
-    parser.add_argument("--dir", type=pathlib.Path, help=f"where to work (default: {CACHE}/<name>)")
+    parser.add_argument("--dir", type=pathlib.Path, help=f"where to work (default: {CACHE}/<name>; with --qemu, shared base disk remains in {CACHE})")
     options = parser.parse_args()
 
     directory, job = load(options.project)
