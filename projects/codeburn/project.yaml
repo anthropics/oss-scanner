@@ -1,0 +1,6 @@
+repo: https://github.com/getagentseal/codeburn#main
+primary_contact: security@codeburn.app
+homepage: https://codeburn.app
+disabled: false
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
