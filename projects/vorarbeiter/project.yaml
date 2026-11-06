@@ -1,0 +1,9 @@
+repo: https://github.com/flathub-infra/vorarbeiter
+primary_contact: security@flathub.org
+homepage: https://github.com/flathub-infra/vorarbeiter
+
+output_format:
+  email:
+    min_severity: low
+  github_security_advisory:
+    min_severity: none
