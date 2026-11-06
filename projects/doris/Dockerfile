@@ -64,7 +64,8 @@ RUN CARGO_BUILD_JOBS="${BUILD_JOBS}" bash ./thirdparty/build-thirdparty.sh -j "$
 # Scanner contract: retain the full checkout, generated bindings, UI dependencies
 # and ASan build trees at /src for offline analysis and incremental reproducers.
 COPY . /src
-RUN bash ./build.sh --fe --be --cloud -j "${BUILD_JOBS}"
+# The 4.2 UI uses webpack 4, which needs its legacy hashes on Node's OpenSSL 3.
+RUN NODE_OPTIONS=--openssl-legacy-provider bash ./build.sh --fe --be --cloud -j "${BUILD_JOBS}"
 
 # branch-4.2 defaults this flag to false. Use the authenticated FE HTTP posture
 # required by the supplied threat model, without changing the source default.

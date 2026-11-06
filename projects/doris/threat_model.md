@@ -82,9 +82,9 @@ extensions), BE and Cloud with the repository's `build.sh`. Native builds use AS
 and retain debug information; build trees and generated protocol bindings remain
 available for incremental reproducers. The official toolchain is under
 `/var/local/ldb-toolchain`; native dependencies are built from the 4.2 checkout's
-definitions and installed under `/src/thirdparty/installed`. The master build
-image's prebuilt libraries are not reused. Dependency build sources are removed
-after installation to reduce image size.
+definitions and installed under `/src/thirdparty/installed`. The image installs the LDB 0.25 compiler
+selected by the 4.2 build environment directly. Dependency build sources are
+removed after installation to reduce image size.
 Maven dependencies are retained under `/root/.m2`, with offline mode enabled after
 setup; UI dependencies remain in `/src/ui/node_modules`.
 
