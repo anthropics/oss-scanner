@@ -1,5 +1,6 @@
 # Copy this file to projects/quiqqer-core/project.yaml in anthropics/oss-scanner.
 # The referenced build and threat-model files stay in the QUIQQER Core repo.
+# The build uses public package sources without a license-server IP allowlist.
 repo: https://dev.quiqqer.com/quiqqer/core.git#next-2.x
 primary_contact: security@quiqqer.com
 homepage: https://www.quiqqer.com
