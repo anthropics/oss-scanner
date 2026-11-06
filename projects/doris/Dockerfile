@@ -81,7 +81,7 @@ RUN --mount=type=cache,id=oss-scanner-doris-4.2-src,target=/src/thirdparty/src,s
 
 # Checkpoint the dependency batches so a later failure does not discard every
 # compiled library. Follow the branch's upstream order; the last call builds
-# the remainder of its default package list, starting at gRPC.
+# the remainder of its default package list, starting at js_and_css.
 RUN --mount=type=cache,id=oss-scanner-doris-4.2-src,target=/src/thirdparty/src,sharing=locked \
     build_jobs="${BUILD_JOBS:-$(nproc)}" \
     && CARGO_BUILD_JOBS="${build_jobs}" bash ./thirdparty/build-thirdparty.sh -j "${build_jobs}" \
@@ -92,9 +92,30 @@ RUN --mount=type=cache,id=oss-scanner-doris-4.2-src,target=/src/thirdparty/src,s
     && CARGO_BUILD_JOBS="${build_jobs}" bash ./thirdparty/build-thirdparty.sh -j "${build_jobs}" \
         snappy gperftools curl re2 hyperscan thrift leveldb brpc lzma libunwind \
         jemalloc_doris rocksdb krb5 cyrus_sasl librdkafka flatbuffers orc cares
+
+# Hadoop's CMake FindJNI also requires AWT, which the headless JDK omits.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends openjdk-17-jdk \
+    && rm -rf /var/lib/apt/lists/*
+
+# Allow later batches to use more workers without invalidating earlier batches.
+ARG NATIVE_BUILD_JOBS
 RUN --mount=type=cache,id=oss-scanner-doris-4.2-src,target=/src/thirdparty/src,sharing=locked \
-    build_jobs="${BUILD_JOBS:-$(nproc)}" \
-    && CARGO_BUILD_JOBS="${build_jobs}" bash ./thirdparty/build-thirdparty.sh -j "${build_jobs}" --continue grpc
+    build_jobs="${NATIVE_BUILD_JOBS:-${BUILD_JOBS:-$(nproc)}}" \
+    && CARGO_BUILD_JOBS="${build_jobs}" bash ./thirdparty/build-thirdparty.sh -j "${build_jobs}" \
+        grpc arrow lance_c s2 bitshuffle croaringbitmap fmt parallel_hashmap \
+        pdqsort timsort libdivide cctz tsan_header mysql aws_sdk
+
+# Maven 3.9's MAVEN_ARGS lets the upstream Hadoop build use four reactor workers.
+# Keep its downloaded artifacts across retries; FE setup below warms the normal
+# in-image Maven repository used by the scanner's disconnected tests.
+ARG HADOOP_MAVEN_THREADS=4
+RUN --mount=type=cache,id=oss-scanner-doris-4.2-src,target=/src/thirdparty/src,sharing=locked \
+    --mount=type=cache,id=oss-scanner-doris-4.2-hadoop-maven,target=/root/.m2/repository,sharing=locked \
+    build_jobs="${NATIVE_BUILD_JOBS:-${BUILD_JOBS:-$(nproc)}}" \
+    && MAVEN_ARGS="-T ${HADOOP_MAVEN_THREADS} -Dmaven.artifact.threads=16" \
+       CARGO_BUILD_JOBS="${build_jobs}" \
+       bash ./thirdparty/build-thirdparty.sh -j "${build_jobs}" --continue js_and_css
 
 # Scanner contract: retain the full checkout, generated bindings, UI dependencies
 # and ASan build trees at /src for offline analysis and incremental reproducers.
