@@ -1,0 +1,4 @@
+# Dockerfile and threat_model.md are kept beside this file in oss-scanner.
+repo: https://github.com/ruffle-rs/ruffle
+primary_contact: security@ruffle.rs
+homepage: https://ruffle.rs
