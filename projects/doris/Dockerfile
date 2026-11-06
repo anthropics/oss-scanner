@@ -57,7 +57,7 @@ WORKDIR /src
 # this also avoids the unreliable Apache archive download seen for ORC 1.9.0.
 COPY env.sh /src/env.sh
 COPY thirdparty /src/thirdparty
-ARG BUILD_JOBS=8
+ARG BUILD_JOBS
 # Preserve downloads across retries. When the dependency definitions change,
 # unpack and patch fresh sources instead of reusing a previous patched tree.
 # GitHub's contents API serves the exact TimSort header when the raw host fails;
@@ -69,13 +69,17 @@ RUN --mount=type=cache,id=oss-scanner-doris-4.2-src,target=/src/thirdparty/src,s
         -o /src/thirdparty/src/timsort.hpp \
     && bash ./thirdparty/download-thirdparty.sh
 RUN --mount=type=cache,id=oss-scanner-doris-4.2-src,target=/src/thirdparty/src,sharing=locked \
-    CARGO_BUILD_JOBS="${BUILD_JOBS}" bash ./thirdparty/build-thirdparty.sh -j "${BUILD_JOBS}"
+    build_jobs="${BUILD_JOBS:-$(nproc)}" \
+    && CARGO_BUILD_JOBS="${build_jobs}" bash ./thirdparty/build-thirdparty.sh -j "${build_jobs}"
 
 # Scanner contract: retain the full checkout, generated bindings, UI dependencies
 # and ASan build trees at /src for offline analysis and incremental reproducers.
 COPY . /src
+ARG DORIS_BUILD_JOBS=8
 # The 4.2 UI uses webpack 4, which needs its legacy hashes on Node's OpenSSL 3.
-RUN NODE_OPTIONS=--openssl-legacy-provider bash ./build.sh --fe --be --cloud -j "${BUILD_JOBS}"
+RUN core_jobs="$(nproc)" \
+    && if (( core_jobs > DORIS_BUILD_JOBS )); then core_jobs="${DORIS_BUILD_JOBS}"; fi \
+    && NODE_OPTIONS=--openssl-legacy-provider bash ./build.sh --fe --be --cloud -j "${core_jobs}"
 
 # branch-4.2 defaults this flag to false. Use the authenticated FE HTTP posture
 # required by the supplied threat model, without changing the source default.
