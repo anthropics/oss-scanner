@@ -1,0 +1,11 @@
+repo: https://github.com/flathub-infra/flatpak-builder-lint
+
+primary_contact: security@flathub.org
+
+homepage: https://github.com/flathub-infra/flatpak-builder-lint
+
+output_format:
+  email:
+    min_severity: low
+  github_security_advisory:
+    min_severity: none
