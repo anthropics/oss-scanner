@@ -9,6 +9,8 @@ virtual machine as:
 
     python3 check_build.py <job directory>
 """
+from __future__ import annotations
+
 import codecs
 import dataclasses
 import json
@@ -31,6 +33,16 @@ AGENT_MACHINE = {"cpus": 2, "mem_gb": 8}
 
 # Where in the checkout a Dockerfile from next to project.yaml is copied to.
 SHIPPED_DOCKERFILE = ".oss-scanner/Dockerfile"
+
+# The optional files, by their field in Job, and what to call each.
+OPTIONAL_FILES = {
+    "threat_model": "threat model",
+    "report_guidelines": "report guidelines",
+    "patch_guidelines": "patch guidelines",
+}
+
+# Where the scanner looks for an optional file that no key names. The guidelines files have no default.
+DEFAULT_PATHS = {"threat_model": ".oss-scanner/threat_model.md"}
 
 # The scanner's layer on top of your image: Claude Code, plus common analysis tools.
 # The packages in `need` must install or the build fails. The packages in `tools` are best effort.
@@ -82,6 +94,8 @@ class Job:
     ref: str  # branch or tag; "" means the repository's default branch
     dockerfile: str  # path in the repository; "" if it is kept next to project.yaml
     threat_model: str  # path in the repository; "" if it is kept next to project.yaml
+    report_guidelines: str | None  # the same; None if no key names one
+    patch_guidelines: str | None  # the same
 
     def save(self, directory):
         """Write this job to <directory>/job.json."""
@@ -235,18 +249,21 @@ def place_dockerfile(job, directory, checkout):
     return SHIPPED_DOCKERFILE
 
 
-def report_threat_model(job, checkout):
-    """Report where the threat model is. It is optional, so a missing one never fails the build."""
-    if not job.threat_model:
-        return say("threat model: the one beside project.yaml")
+def report_optional_file(field, path, checkout):
+    """Report where an optional file is. A missing one never fails the build."""
+    label = OPTIONAL_FILES[field]
+    if path is None:
+        return say(f"{label}: none ({field} is not set in project.yaml). Optional, and worth writing")
+    if not path:
+        return say(f"{label}: the one beside project.yaml")
     try:
-        found = in_checkout(checkout, job.threat_model).is_file()
+        found = in_checkout(checkout, path).is_file()
     except Failed as failure:
-        return say(f"threat model: NONE. {failure}")
+        return say(f"{label}: NONE. {failure}")
     if found:
-        say(f"threat model: the repository's own, {job.threat_model}")
+        say(f"{label}: the repository's own, {path}")
     else:
-        say(f"threat model: none (nothing at {job.threat_model} in the repository). It is optional, and worth writing")
+        say(f"{label}: none (nothing at {path} in the repository). Optional, and worth writing")
 
 
 def build_project(job, checkout, dockerfile, seconds, in_vm):
@@ -331,7 +348,8 @@ def build(job, directory, checkout, in_vm=False):
     deadline = time.time() + BUILD_MINUTES * 60
     fetch(job, checkout)
     dockerfile = place_dockerfile(job, directory, checkout)
-    report_threat_model(job, checkout)
+    for field in OPTIONAL_FILES:
+        report_optional_file(field, getattr(job, field), checkout)
     # Keep a tenth of the time limit for the steps after your Dockerfile, but always give it at least a minute.
     build_project(job, checkout, dockerfile, max(60, deadline - time.time() - BUILD_MINUTES * 6), in_vm)
     ensure_src(job, checkout)

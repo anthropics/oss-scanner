@@ -14,6 +14,8 @@ Fields allowed in project.yaml:
     primary_contact: a@b.c              required
     dockerfile: <path in your repo>     required   unless a Dockerfile is next to project.yaml (no default)
     threat_model: <path in your repo>   optional   defaults to .oss-scanner/threat_model.md
+    report_guidelines: <path, as above> optional   no default
+    patch_guidelines: <path, as above>  optional   no default
     auto_ccs: [a@b.c, ...]              optional   cannot be combined with pgp
     homepage: https://...               optional
     pgp: <armored public key>           optional   if set, email reports are encrypted to this key
@@ -24,8 +26,10 @@ Fields allowed in project.yaml:
       github_security_advisory:
         min_severity: low|medium|high|critical|none                   default none
 
-The only other files allowed next to project.yaml are a Dockerfile and a threat_model.md. Each one must
-live in exactly one place: either next to project.yaml, or in your repository at the path set by its key.
+A Dockerfile, a threat_model.md, a report_guidelines.md and a patch_guidelines.md may be next to
+project.yaml; no other file is allowed. Each one must live in exactly one place: either next to
+project.yaml, or in your repository at the path set by its key. The two guidelines files are plain text
+of at most 16 KiB.
 
 The scanner enforces these same rules, with the same error messages, when it imports a project. It does
 not share code with this repository, so any rule change must be made in both places.
@@ -35,6 +39,7 @@ import pathlib
 import re
 import stat
 import sys
+import unicodedata
 from urllib.parse import urlparse
 
 try:
@@ -45,22 +50,36 @@ except ImportError:
 PROJECTS = pathlib.Path(__file__).resolve().parent.parent / "projects"
 
 REQUIRED_KEYS = ("repo", "primary_contact")
-OPTIONAL_KEYS = ("auto_ccs", "homepage", "pgp", "disabled", "dockerfile", "threat_model", "output_format")
+OPTIONAL_KEYS = (
+    "auto_ccs", "homepage", "pgp", "disabled", "dockerfile", "threat_model", "report_guidelines", "patch_guidelines",
+    "output_format",
+)
 ALLOWED_KEYS = REQUIRED_KEYS + OPTIONAL_KEYS
 # Settings controlled by the scanner's operators. A pull request may not set them.
 OPERATOR_KEYS = ("workflow", "workflows", "budget", "budget_usd", "cadence", "cadence_hours", "schedule", "priority")
 # Maps each file that may sit next to project.yaml to the key that would point to it in the project's repository.
-FILE_KEYS = {"Dockerfile": "dockerfile", "threat_model.md": "threat_model"}
+FILE_KEYS = {
+    "Dockerfile": "dockerfile",
+    "threat_model.md": "threat_model",
+    "report_guidelines.md": "report_guidelines",
+    "patch_guidelines.md": "patch_guidelines",
+}
+GUIDELINES_FILES = ("report_guidelines.md", "patch_guidelines.md")
 OUTPUT_CHANNELS = ("email", "github_security_advisory")
 SEVERITIES = ("low", "medium", "high", "critical", "none")
 MAX_FILE_BYTES = 64 * 1024
+MAX_GUIDELINES_BYTES = 16 * 1024
 MAX_CONFIG_BYTES = 128 * 1024
+# The size limit of each file that may sit next to project.yaml.
+FILE_LIMITS = {name: MAX_GUIDELINES_BYTES if name in GUIDELINES_FILES else MAX_FILE_BYTES for name in FILE_KEYS}
 
 NAME = re.compile(r"[a-z0-9][a-z0-9._-]{0,62}")
 EMAIL = re.compile(r"[^@\s]+@[^@\s]+\.[^@\s]+")
 URL = re.compile(r"https://[^\s#]+(#[A-Za-z0-9._/-]{1,100})?")
 # A relative path with no `..` that uses only safe characters (no spaces, backslashes or control characters).
 REPO_PATH = re.compile(r"(?!/)(?!.*\.\.)[A-Za-z0-9._/-]+")
+# The scanner reserves this word at the start of a line.
+RESERVED_LINE = re.compile(r"^\s*VERDICT\b", re.I | re.M)
 PGP_BEGIN = "-----BEGIN PGP PUBLIC KEY BLOCK-----"
 PGP_END = "-----END PGP PUBLIC KEY BLOCK-----"
 
@@ -165,8 +184,29 @@ def check_output_format(config):
             yield f"output_format.{channel}.min_severity must be one of: {', '.join(SEVERITIES)}"
 
 
+def guidelines_problem(text):
+    """Return why the text of a guidelines file is refused, or None.
+
+    Invisible characters are refused because a reviewer cannot see them. A byte-order mark at the very start is fine.
+    """
+    # A bare carriage return ends a line for a reader, but not for a regular expression.
+    text = text.removeprefix("\ufeff").replace("\r\n", "\n").replace("\r", "\n")
+    invisible = sorted(
+        character
+        for character in set(text) - set("\n\t")
+        if unicodedata.category(character)[0] == "C" or character in "\u2028\u2029"
+    )
+    if invisible:
+        shown = ", ".join(f"U+{ord(character):04X}" for character in invisible[:5])
+        shown += "…" if len(invisible) > 5 else ""
+        return f"holds characters that do not show ({shown}): plain text only"
+    if RESERVED_LINE.search(text):
+        return "has a line that begins with VERDICT: say it another way"
+    return None
+
+
 def check_files(config, files):
-    """Yield problems with the Dockerfile and threat model, whether they are next to project.yaml or in the repo.
+    """Yield problems with the files next to project.yaml, and with the keys that name one in the repo instead.
 
     `files` maps the name of each file next to project.yaml to its text, or to None if it could not be read.
     """
@@ -187,7 +227,9 @@ def check_files(config, files):
             yield f"{name}: only project.yaml, {', '.join(FILE_KEYS)} may sit in a project's directory"
             continue
         if text is None:
-            yield f"{name} is larger than {MAX_FILE_BYTES // 1024} KiB (or not text)"
+            yield f"{name} is larger than {FILE_LIMITS[name] // 1024} KiB (or not text)"
+        elif name in GUIDELINES_FILES and (problem := guidelines_problem(text)):
+            yield f"{name} {problem}"
         elif name == "Dockerfile" and not text.strip():
             yield "Dockerfile is empty: it is the whole build"
         if config.get(FILE_KEYS[name]) is not None:
@@ -209,10 +251,10 @@ def check_config(config, files):
     ]
 
 
-def read_text(path):
-    """Return the file's text, or None if it is too large, unreadable, or not UTF-8."""
+def read_text(path, limit):
+    """Return the file's text, or None if it is larger than `limit` bytes, unreadable, or not UTF-8."""
     try:
-        if path.stat().st_size > MAX_FILE_BYTES:
+        if path.stat().st_size > limit:
             return None
         return path.read_text(encoding="utf-8")
     except (OSError, UnicodeDecodeError):
@@ -247,7 +289,7 @@ def check_project(directory):
     except (yaml.YAMLError, UnicodeDecodeError, RecursionError) as error:
         return [f"project.yaml does not parse: {type(error).__name__}: {str(error)[:300]}"], None
 
-    files = {path.name: read_text(path) if path.name in FILE_KEYS else None for path in beside}
+    files = {path.name: read_text(path, FILE_LIMITS.get(path.name, 0)) for path in beside}
     problems = check_config(config, files)
     if problems:
         return problems, None
