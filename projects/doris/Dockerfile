@@ -58,8 +58,18 @@ WORKDIR /src
 COPY env.sh /src/env.sh
 COPY thirdparty /src/thirdparty
 ARG BUILD_JOBS=8
-RUN CARGO_BUILD_JOBS="${BUILD_JOBS}" bash ./thirdparty/build-thirdparty.sh -j "${BUILD_JOBS}" \
-    && rm -rf /src/thirdparty/src
+# Preserve downloads across retries. When the dependency definitions change,
+# unpack and patch fresh sources instead of reusing a previous patched tree.
+# GitHub's contents API serves the exact TimSort header when the raw host fails;
+# download-thirdparty.sh still verifies its checksum from the enrolled branch.
+RUN --mount=type=cache,id=oss-scanner-doris-4.2-src,target=/src/thirdparty/src,sharing=locked \
+    find /src/thirdparty/src -mindepth 1 -maxdepth 1 -type d -exec rm -rf {} + \
+    && curl -fL --retry 3 -H 'Accept: application/vnd.github.raw+json' \
+        'https://api.github.com/repos/timsort/cpp-TimSort/contents/include/gfx/timsort.hpp?ref=3.x.y' \
+        -o /src/thirdparty/src/timsort.hpp \
+    && bash ./thirdparty/download-thirdparty.sh
+RUN --mount=type=cache,id=oss-scanner-doris-4.2-src,target=/src/thirdparty/src,sharing=locked \
+    CARGO_BUILD_JOBS="${BUILD_JOBS}" bash ./thirdparty/build-thirdparty.sh -j "${BUILD_JOBS}"
 
 # Scanner contract: retain the full checkout, generated bindings, UI dependencies
 # and ASan build trees at /src for offline analysis and incremental reproducers.
