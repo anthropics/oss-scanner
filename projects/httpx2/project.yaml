@@ -1,0 +1,12 @@
+# HTTPX2: a fully featured HTTP client for Python, with sync and async APIs, and its transport, HTTPCore2.
+
+repo: https://github.com/pydantic/httpx2#main
+
+# The project's SECURITY.md routes reports to GitHub private vulnerability reporting; this is the maintainer's address.
+primary_contact: marcelotryle@gmail.com
+
+homepage: https://httpx2.dev
+
+disabled: false
+
+# The Dockerfile and threat_model.md are next to this file, so dockerfile: and threat_model: are omitted.
