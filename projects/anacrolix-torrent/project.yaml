@@ -1,0 +1,16 @@
+# OSS Scanner enrolment for anacrolix/torrent. Schema: templates/project.yaml.
+repo: https://github.com/anacrolix/torrent#master
+
+# Maintainer address; already public in the repository's commit history and SECURITY.md points
+# reporters at contacting a maintainer directly.
+primary_contact: anacrolix@gmail.com
+
+homepage: https://github.com/anacrolix/torrent
+
+output_format:
+  email:
+    min_severity: low
+  github_security_advisory:
+    min_severity: none
+
+disabled: false
