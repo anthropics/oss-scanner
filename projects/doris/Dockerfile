@@ -19,8 +19,8 @@ RUN apt-get update \
 # compiler directly instead of pulling a 2 GB image of master dependencies.
 RUN curl -fL --retry 3 https://github.com/amosbird/ldb_toolchain_gen/releases/download/v0.25/ldb_toolchain_gen.sh \
         -o /tmp/ldb_toolchain_gen.sh \
-    && echo '09d4a300a5d55302582f8291a7309474627ecdec3648ee9f9c912244b2d4472e  /tmp/ldb_toolchain_gen.sh' | sha256sum -c - \
-    && sh /tmp/ldb_toolchain_gen.sh /var/local/ldb-toolchain \
+    && echo '09d4a300a5d55302582f8291a7309474627ecdec3648ee9f9c912244b2d4472e  /tmp/ldb_toolchain_gen.sh' | sha256sum -c -
+RUN bash /tmp/ldb_toolchain_gen.sh /var/local/ldb-toolchain \
     && rm /tmp/ldb_toolchain_gen.sh
 
 RUN curl -fL --retry 3 https://repo.maven.apache.org/maven2/org/apache/maven/apache-maven/3.9.9/apache-maven-3.9.9-bin.tar.gz \
