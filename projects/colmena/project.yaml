@@ -1,0 +1,4 @@
+disabled: false
+repo: https://github.com/nix-community/colmena#main
+homepage: https://colmena.cli.rs
+primary_contact: ysun@duck.com
