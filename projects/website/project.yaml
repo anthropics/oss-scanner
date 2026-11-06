@@ -1,0 +1,9 @@
+repo: https://github.com/flathub-infra/website
+primary_contact: security@flathub.org
+homepage: https://flathub.org
+
+output_format:
+  email:
+    min_severity: low
+  github_security_advisory:
+    min_severity: none
