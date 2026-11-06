@@ -1,0 +1,7 @@
+repo: https://github.com/umputun/remark42#master
+primary_contact: umputun@gmail.com
+auto_ccs:
+  - paskal.07@gmail.com
+homepage: https://remark42.com
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
