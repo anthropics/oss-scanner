@@ -1,0 +1,9 @@
+repo: https://github.com/monero-project/monero.git
+homepage: "https://getmonero.org/"
+primary_contact: "binaryfate01@gmail.com"
+auto_ccs:
+  - luigi1111w@gmail.com
+  - jeffro256@volunteer.magicgrants.org
+  - justinberman95@gmail.com
+  - selstaxmr@fastmail.com
+disabled: false
