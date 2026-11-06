@@ -1,0 +1,6 @@
+# Chainloop: an open-source supply chain attestation and policy platform. The repository is one Go
+# module (github.com/chainloop-dev/chainloop) with three binaries: the control plane, the artifact
+# CAS, and the CLI. The Dockerfile and threat_model.md sit next to this file, so neither key is set here.
+repo: https://github.com/chainloop-dev/chainloop#main
+primary_contact: security@chainloop.dev
+homepage: https://docs.chainloop.dev
