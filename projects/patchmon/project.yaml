@@ -1,0 +1,13 @@
+# PatchMon manages patching for other people's hosts. A bug in the server
+# or the agent can reach every machine an operator monitors.
+# primary_contact is the address published in SECURITY.md.
+repo: https://github.com/PatchMon/PatchMon
+primary_contact: security@patchmon.net
+homepage: https://patchmon.net
+output_format:
+  email:
+    min_severity: high
+  github_security_advisory:
+    min_severity: none
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
