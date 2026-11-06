@@ -1,0 +1,5 @@
+# sv2-apps: the Stratum V2 pool and miner applications of the Stratum V2 Reference Implementation (SRI).
+# The Dockerfile and threat_model.md sit next to this file, so neither key is set here.
+repo: https://github.com/stratum-mining/sv2-apps#main
+primary_contact: stratumv2@gmail.com
+homepage: https://stratumprotocol.org
