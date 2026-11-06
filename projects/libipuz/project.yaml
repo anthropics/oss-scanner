@@ -1,0 +1,10 @@
+# libipuz: a C library (with a Rust core) for loading, editing and saving
+# crossword and word puzzles in the ipuz format. Used by GNOME Crosswords
+# and its thumbnailer, and available through GObject introspection.
+#
+# Development happens on GNOME GitLab.
+repo: https://gitlab.gnome.org/jrb/libipuz.git#main
+primary_contact: jblandford@gmail.com
+homepage: https://libipuz.org
+disabled: false
+# Dockerfile and threat_model.md sit next to this file.
