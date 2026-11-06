@@ -1,0 +1,9 @@
+# SGLang-Omni: serving framework for audio models (TTS, ASR) and unified multimodal models, with an
+# OpenAI-compatible HTTP and WebSocket server and Python and Rust request routers.
+repo: https://github.com/sgl-project/sglang-omni#main
+
+primary_contact: wangrichard08@gmail.com
+
+homepage: https://sgl-project.github.io/sglang-omni/
+
+disabled: false
