@@ -1,0 +1,10 @@
+# Every change lands on main and nightly releases are cut from it.
+repo: https://github.com/databendlabs/databend#main
+# Security contact published in https://github.com/databendlabs/databend/blob/main/SECURITY.md
+primary_contact: security@databend.com
+# A core maintainer, copied on every report.
+auto_ccs:
+  - overred.shuttler@gmail.com
+homepage: https://www.databend.com
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
