@@ -6,7 +6,7 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
-        autoconf automake bash binutils-dev bison byacc bzip2 ca-certificates \
+        autoconf automake autopoint bash binutils-dev bison byacc bzip2 ca-certificates \
         curl file flex g++ gettext git gperf help2man krb5-user libaio1 \
         libcurl4-openssl-dev libffi-dev libiberty-dev libkrb5-dev libncurses5 \
         libncurses-dev libssl-dev libtool libtool-bin libxml2-dev make \
