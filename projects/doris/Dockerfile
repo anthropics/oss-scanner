@@ -13,7 +13,7 @@ RUN apt-get update \
         curl file flex g++ gettext git gperf help2man krb5-user libaio1 \
         libcurl4-openssl-dev libffi-dev libiberty-dev libkrb5-dev libncurses5 \
         libncurses-dev libssl-dev libtool libtool-bin libxml2-dev make \
-        mariadb-client nasm patch pkg-config procps python3 python3-pip \
+        mariadb-client nasm patch pkg-config procps python-is-python3 python3 python3-pip \
         python3-venv texinfo unzip util-linux wget xz-utils zip zlib1g-dev \
     && rm -rf /var/lib/apt/lists/*
 
