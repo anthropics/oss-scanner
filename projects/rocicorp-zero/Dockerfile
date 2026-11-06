@@ -27,6 +27,5 @@ RUN pnpm install --frozen-lockfile
 # (zero-cache, zero-server, zero-client, zql, zqlite, replicache, shared, ...).
 RUN pnpm exec turbo run build --filter=@rocicorp/zero...
 
-# Most test files are not published to rocicorp/mono, so there is no suite to run here.
-# Type-check as a smoke test that the checkout and install are complete.
-RUN pnpm exec turbo run check-types --filter=@rocicorp/zero... || echo "WARNING: check-types reported errors"
+# Most test files are not published to rocicorp/mono, so there is no suite to run here;
+# threat_model.md describes how to exercise zero-cache instead.
