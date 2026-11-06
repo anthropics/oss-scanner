@@ -1,0 +1,23 @@
+# OSS Scanner 项目配置
+# 放到 anthropics/oss-scanner 仓库的 projects/dev-sidecar/project.yaml
+# Dockerfile 与 threat_model.md 放在同一目录时，无需在下面重复声明路径
+
+repo: https://github.com/docmirror/dev-sidecar
+primary_contact: cuteomega@foxmail.com
+homepage: https://github.com/docmirror/dev-sidecar
+
+pgp: |
+  -----BEGIN PGP PUBLIC KEY BLOCK-----
+
+  mDMEatv48xYJKwYBBAHaRw8BAQdAc1VD4WyhnlKwgvzVsghPZfvs/NVOZfJtLiSy
+  So9CN1a0ImN1dGUtb21lZ2EgPGN1dGVvbWVnYUBmb3htYWlsLmNvbT6IrwQTFgoA
+  VxYhBGwEPYK2o1zInHl3c0fj82BJHff5BQJq2/jzGxSAAAAAAAQADm1hbnUyLDIu
+  NSsxLjEyLDIsMQIbAwULCQgHAgIiAgYVCgkICwIEFgIDAQIeBwIXgAAKCRBH4/Ng
+  SR33+e4DAQCU4sdbhcbbHpkIqze9PhvJvaIxiUB+T/3+SuyRcYEFsQEApH3YKJim
+  1QFoTv34JrLEMHSMKnFZz0epnxUy3TGxMAS4OARq2/jzEgorBgEEAZdVAQUBAQdA
+  J46Jku2z1LSeI73O7PG/7gPe5TLHKDTovjL7+AJXyEkDAQgHiJQEGBYKADwWIQRs
+  BD2CtqNcyJx5d3NH4/NgSR33+QUCatv48xsUgAAAAAAEAA5tYW51MiwyLjUrMS4x
+  MiwyLDECGwwACgkQR+PzYEkd9/lktwEAj/i1e0MAMiQ/3Xjq1cy2RhBdZ7Dzugr7
+  GTzMPxwmh3sBAKjgCrQC3tel8wP1hmiheioGoX/Lv55hD2+khk1ET/YP
+  =utib
+  -----END PGP PUBLIC KEY BLOCK-----
