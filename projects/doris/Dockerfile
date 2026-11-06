@@ -66,13 +66,17 @@ COPY thirdparty /src/thirdparty
 ARG BUILD_JOBS
 # Preserve downloads across retries. When the dependency definitions change,
 # unpack and patch fresh sources instead of reusing a previous patched tree.
-# GitHub's contents API serves the exact TimSort header when the raw host fails;
-# download-thirdparty.sh still verifies its checksum from the enrolled branch.
+# Try TimSort's raw URL first; unauthenticated API requests can be rate limited
+# on shared runners. Keep the contents API as a fallback for the raw host.
+# download-thirdparty.sh verifies the enrolled branch's checksum either way.
 RUN --mount=type=cache,id=oss-scanner-doris-4.2-src,target=/src/thirdparty/src,sharing=locked \
     find /src/thirdparty/src -mindepth 1 -maxdepth 1 -type d -exec rm -rf {} + \
-    && curl -fL --retry 3 -H 'Accept: application/vnd.github.raw+json' \
-        'https://api.github.com/repos/timsort/cpp-TimSort/contents/include/gfx/timsort.hpp?ref=3.x.y' \
+    && (curl -fL --retry 3 --connect-timeout 15 --max-time 60 \
+        'https://raw.githubusercontent.com/timsort/cpp-TimSort/3.x.y/include/gfx/timsort.hpp' \
         -o /src/thirdparty/src/timsort.hpp \
+    || curl -fL --retry 3 --connect-timeout 15 --max-time 60 -H 'Accept: application/vnd.github.raw+json' \
+        'https://api.github.com/repos/timsort/cpp-TimSort/contents/include/gfx/timsort.hpp?ref=3.x.y' \
+        -o /src/thirdparty/src/timsort.hpp) \
     && bash ./thirdparty/download-thirdparty.sh
 RUN --mount=type=cache,id=oss-scanner-doris-4.2-src,target=/src/thirdparty/src,sharing=locked \
     build_jobs="${BUILD_JOBS:-$(nproc)}" \
