@@ -78,9 +78,23 @@ RUN --mount=type=cache,id=oss-scanner-doris-4.2-src,target=/src/thirdparty/src,s
         'https://api.github.com/repos/timsort/cpp-TimSort/contents/include/gfx/timsort.hpp?ref=3.x.y' \
         -o /src/thirdparty/src/timsort.hpp) \
     && bash ./thirdparty/download-thirdparty.sh
+
+# Checkpoint the dependency batches so a later failure does not discard every
+# compiled library. Follow the branch's upstream order; the last call builds
+# the remainder of its default package list, starting at gRPC.
 RUN --mount=type=cache,id=oss-scanner-doris-4.2-src,target=/src/thirdparty/src,sharing=locked \
     build_jobs="${BUILD_JOBS:-$(nproc)}" \
-    && CARGO_BUILD_JOBS="${build_jobs}" bash ./thirdparty/build-thirdparty.sh -j "${build_jobs}"
+    && CARGO_BUILD_JOBS="${build_jobs}" bash ./thirdparty/build-thirdparty.sh -j "${build_jobs}" \
+        jindofs juicefs odbc openssl libevent zlib crc32c lz4 bzip lzo2 zstd \
+        boost abseil gflags gtest glog protobuf rapidjson
+RUN --mount=type=cache,id=oss-scanner-doris-4.2-src,target=/src/thirdparty/src,sharing=locked \
+    build_jobs="${BUILD_JOBS:-$(nproc)}" \
+    && CARGO_BUILD_JOBS="${build_jobs}" bash ./thirdparty/build-thirdparty.sh -j "${build_jobs}" \
+        snappy gperftools curl re2 hyperscan thrift leveldb brpc lzma libunwind \
+        jemalloc_doris rocksdb krb5 cyrus_sasl librdkafka flatbuffers orc cares
+RUN --mount=type=cache,id=oss-scanner-doris-4.2-src,target=/src/thirdparty/src,sharing=locked \
+    build_jobs="${BUILD_JOBS:-$(nproc)}" \
+    && CARGO_BUILD_JOBS="${build_jobs}" bash ./thirdparty/build-thirdparty.sh -j "${build_jobs}" --continue grpc
 
 # Scanner contract: retain the full checkout, generated bindings, UI dependencies
 # and ASan build trees at /src for offline analysis and incremental reproducers.
