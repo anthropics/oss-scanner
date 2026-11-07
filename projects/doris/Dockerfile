@@ -179,7 +179,8 @@ RUN --mount=type=cache,id=oss-scanner-doris-4.2-hadoop-maven,target=/root/.m2/re
 
 # The cache mount is absent at runtime. Keep Maven's normal repository path
 # backed by the snapshot so the scanner can run tests without network access.
-RUN rm -rf /root/.m2/repository \
+RUN mkdir -p /root/.m2 \
+    && rm -rf /root/.m2/repository \
     && ln -s /opt/doris-maven-repository /root/.m2/repository
 
 # branch-4.2 defaults this flag to false. Use the authenticated FE HTTP posture
