@@ -1,0 +1,11 @@
+# OSS Scanner enrolment: Secret Space Encryptor (S.S.E.) for Android.
+
+repo: https://gitlab.com/paranoia-works/secret-space-encryptor-for-android#master
+
+primary_contact: paranoia.onyx448@passinbox.com
+
+homepage: https://paranoiaworks.mobi
+
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
+
