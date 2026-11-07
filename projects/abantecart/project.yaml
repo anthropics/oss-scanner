@@ -1,0 +1,14 @@
+# AbanteCart — open source PHP ecommerce platform
+# https://github.com/anthropics/oss-scanner enrollment
+
+# Pinned to the active development branch (1.4.5). If we later keep a permanently
+# named dev branch (e.g. #develop), this pin will be updated once and then track it.
+repo: https://github.com/abantecart/abantecart-src#1.4.5
+
+primary_contact: help@abantecart.com
+
+homepage: https://www.abantecart.com
+
+# Dockerfile and threat model live in the AbanteCart repository (branch above)
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
