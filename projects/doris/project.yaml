@@ -1,0 +1,11 @@
+# Follow the Apache Doris 4.2 maintenance branch.
+repo: https://github.com/apache/doris#branch-4.2
+
+primary_contact: kirs@apache.org
+auto_ccs:
+  - private@doris.apache.org
+
+homepage: https://doris.apache.org
+disabled: false
+
+# Dockerfile and threat_model.md are provided alongside this file.
