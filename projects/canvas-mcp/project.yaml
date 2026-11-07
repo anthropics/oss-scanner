@@ -1,0 +1,16 @@
+# Canvas MCP: a Model Context Protocol server that gives AI clients tools to read and change Canvas LMS courses.
+
+# REQUIRED. The ONE git repository to scan, as an https:// URL.
+repo: https://github.com/vishalsachdev/canvas-mcp
+
+# REQUIRED. Reports and build problems go here.
+# This is the address published in https://github.com/vishalsachdev/canvas-mcp/blob/main/SECURITY.md
+primary_contact: vishal@illinois.edu
+
+# Optional. The project's home page.
+homepage: https://canvas-mcp.illinihunt.org
+
+# Optional. true pauses reports without removing the enrolment; false (or omitting it) enables your project.
+disabled: false
+
+# The Dockerfile and threat_model.md are next to this file, so dockerfile: and threat_model: are omitted.
