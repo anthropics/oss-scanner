@@ -1,0 +1,10 @@
+# VigilSOC — open-source AI security operations platform (not the other "vigil" projects)
+repo: https://github.com/Vigil-SOC/vigil#main
+
+# Security alias from Vigil's SECURITY.md
+primary_contact: security@deeptempo.ai
+
+homepage: https://vigilsoc.org
+disabled: false
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
