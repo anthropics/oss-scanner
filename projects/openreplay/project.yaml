@@ -1,0 +1,5 @@
+repo: https://github.com/openreplay/openreplay#dev
+primary_contact: security@openreplay.com
+homepage: https://openreplay.com
+disabled: false
+dockerfile: .oss-scanner/Dockerfile
