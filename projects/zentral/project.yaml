@@ -1,0 +1,13 @@
+# Zentral: a control plane for fleets of Apple devices (MDM server, Santa, osquery and Munki server).
+repo: https://github.com/zentralopensource/zentral#main
+
+# The security contact in https://github.com/zentralopensource/zentral/blob/main/SECURITY.md
+primary_contact: security@zentral.com
+
+homepage: https://www.zentral.com
+
+disabled: false
+
+# Both live in the repository, so that they change with the code.
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
