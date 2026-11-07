@@ -1,0 +1,9 @@
+# Garmin Connect integration for Home Assistant (custom component, installable via HACS).
+repo: https://github.com/cyberjunky/home-assistant-garmin_connect#main
+
+# Public address; reports and build failures go here.
+primary_contact: ron@cyberjunky.nl
+
+homepage: https://github.com/cyberjunky/home-assistant-garmin_connect
+
+disabled: false
