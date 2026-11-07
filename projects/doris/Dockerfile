@@ -155,6 +155,13 @@ RUN apt-get update \
 COPY . /src
 ARG DORIS_BUILD_JOBS
 ARG FE_BUILD_JOBS
+# Four BE submodules share doris-thirdparty's large multi-project history.
+# Fetch only each recorded gitlink and initialize independent modules in parallel.
+RUN core_jobs="${DORIS_BUILD_JOBS:-$(nproc)}" \
+    && git submodule update --init --recursive --depth 1 --jobs "${core_jobs}" -- \
+        contrib/datasketches-cpp contrib/apache-orc contrib/clucene \
+        contrib/openblas contrib/faiss
+
 # The 4.2 UI uses webpack 4, which needs its legacy hashes on Node's OpenSSL 3.
 RUN --mount=type=cache,id=oss-scanner-doris-4.2-hadoop-maven,target=/root/.m2/repository,sharing=locked \
     --mount=type=cache,id=oss-scanner-doris-4.2-ldb-0.25-ccache,target=/var/cache/doris-ccache,sharing=locked \
