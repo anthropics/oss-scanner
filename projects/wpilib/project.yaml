@@ -5,4 +5,6 @@ primary_contact: gr-wpilib_developers@wpi.edu
 
 homepage: https://wpilib.org/
 
-# Dockerfile and threat_model.md live beside this file in the enrollment repo.
+# Maintained in allwpilib so build changes don't need a PR here.
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
