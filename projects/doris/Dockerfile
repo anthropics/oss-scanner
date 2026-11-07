@@ -106,25 +106,54 @@ RUN --mount=type=cache,id=oss-scanner-doris-4.2-src,target=/src/thirdparty/src,s
         grpc arrow lance_c s2 bitshuffle croaringbitmap fmt parallel_hashmap \
         pdqsort timsort libdivide cctz tsan_header mysql aws_sdk
 
-# Hadoop's legacy Maven plugins hit resolver lock conflicts in parallel reactors.
-# Keep this reactor serial while retaining parallel native compilation. Cache its
-# downloads across retries; FE setup below warms the in-image Maven repository.
-ARG HADOOP_MAVEN_THREADS=1
+# Run Hadoop's Maven reactor in parallel. Older plugins can exhaust the resolver
+# lock timeout during downloads; retry only that failed Maven command serially.
+RUN mkdir -p /opt/hadoop-maven-bin \
+    && printf '%s\n' \
+        '#!/bin/bash' \
+        'set -o pipefail' \
+        'unset MAVEN_ARGS' \
+        'jobs="${HADOOP_MAVEN_THREADS:-$(nproc)}"' \
+        'log_file="$(mktemp)"' \
+        'status=0' \
+        '/opt/maven/bin/mvn -B -ntp -T "${jobs}" -Daether.syncContext.named.time=120 "$@" 2>&1 | tee "${log_file}" || status=$?' \
+        'if (( status == 0 )); then' \
+        '    rm -f "${log_file}"' \
+        '    exit 0' \
+        'fi' \
+        'if (( jobs <= 1 )) || ! grep -Fq "Could not acquire lock(s)" "${log_file}"; then' \
+        '    rm -f "${log_file}"' \
+        '    exit "${status}"' \
+        'fi' \
+        'rm -f "${log_file}"' \
+        'printf "%s\n" "Maven resolver lock conflict; retrying this command with one reactor worker."' \
+        'exec /opt/maven/bin/mvn -B -ntp -T 1 "$@"' \
+        > /opt/hadoop-maven-bin/mvn \
+    && chmod +x /opt/hadoop-maven-bin/mvn
+
+# Cache Hadoop downloads across retries. FE setup below warms the separate
+# in-image Maven repository used by the scanner's disconnected tests.
+ARG HADOOP_MAVEN_THREADS
 RUN --mount=type=cache,id=oss-scanner-doris-4.2-src,target=/src/thirdparty/src,sharing=locked \
     --mount=type=cache,id=oss-scanner-doris-4.2-hadoop-maven,target=/root/.m2/repository,sharing=locked \
     build_jobs="${NATIVE_BUILD_JOBS:-${BUILD_JOBS:-$(nproc)}}" \
-    && MAVEN_ARGS="-B -ntp -T ${HADOOP_MAVEN_THREADS} -Dmaven.artifact.threads=16" \
+    && hadoop_jobs="${HADOOP_MAVEN_THREADS:-$(nproc)}" \
+    && HADOOP_MAVEN_THREADS="${hadoop_jobs}" MAVEN_OPTS="-Xmx${hadoop_jobs}g" \
+       PATH="/opt/hadoop-maven-bin:${PATH}" \
        CARGO_BUILD_JOBS="${build_jobs}" \
        bash ./thirdparty/build-thirdparty.sh -j "${build_jobs}" --continue js_and_css
 
 # Scanner contract: retain the full checkout, generated bindings, UI dependencies
 # and ASan build trees at /src for offline analysis and incremental reproducers.
 COPY . /src
-ARG DORIS_BUILD_JOBS=8
+ARG DORIS_BUILD_JOBS
+ARG FE_BUILD_JOBS
 # The 4.2 UI uses webpack 4, which needs its legacy hashes on Node's OpenSSL 3.
-RUN core_jobs="$(nproc)" \
-    && if (( core_jobs > DORIS_BUILD_JOBS )); then core_jobs="${DORIS_BUILD_JOBS}"; fi \
-    && NODE_OPTIONS=--openssl-legacy-provider bash ./build.sh --fe --be --cloud -j "${core_jobs}"
+RUN core_jobs="${DORIS_BUILD_JOBS:-$(nproc)}" \
+    && fe_jobs="${FE_BUILD_JOBS:-$(nproc)}" \
+    && FE_MAVEN_THREADS="${fe_jobs}" MAVEN_OPTS="-Xmx${fe_jobs}g" \
+       NODE_OPTIONS=--openssl-legacy-provider \
+       bash ./build.sh --fe --be --cloud -j "${core_jobs}"
 
 # branch-4.2 defaults this flag to false. Use the authenticated FE HTTP posture
 # required by the supplied threat model, without changing the source default.
