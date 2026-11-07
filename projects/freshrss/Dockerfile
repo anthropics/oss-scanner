@@ -1,7 +1,7 @@
 # Note: This image does not start the Apache server automatically.
 # It must be started manually in the shell using `apachectl start`.
 
-FROM debian:bookworm
+FROM debian:trixie
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
