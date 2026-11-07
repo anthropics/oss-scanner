@@ -131,11 +131,12 @@ RUN mkdir -p /opt/hadoop-maven-bin \
         > /opt/hadoop-maven-bin/mvn \
     && chmod +x /opt/hadoop-maven-bin/mvn
 
-# Cache Hadoop downloads across retries. FE setup below warms the separate
-# in-image Maven repository used by the scanner's disconnected tests.
+# Reuse verified Maven downloads across native and FE build retries. The core
+# build below snapshots this repository into the final image for offline tests.
 ARG HADOOP_MAVEN_THREADS
 RUN --mount=type=cache,id=oss-scanner-doris-4.2-src,target=/src/thirdparty/src,sharing=locked \
     --mount=type=cache,id=oss-scanner-doris-4.2-hadoop-maven,target=/root/.m2/repository,sharing=locked \
+    --mount=type=cache,id=oss-scanner-doris-4.2-vcpkg,target=/root/.cache/vcpkg/archives,sharing=locked \
     build_jobs="${NATIVE_BUILD_JOBS:-${BUILD_JOBS:-$(nproc)}}" \
     && hadoop_jobs="${HADOOP_MAVEN_THREADS:-$(nproc)}" \
     && HADOOP_MAVEN_THREADS="${hadoop_jobs}" MAVEN_OPTS="-Xmx${hadoop_jobs}g" \
@@ -143,17 +144,36 @@ RUN --mount=type=cache,id=oss-scanner-doris-4.2-src,target=/src/thirdparty/src,s
        CARGO_BUILD_JOBS="${build_jobs}" \
        bash ./thirdparty/build-thirdparty.sh -j "${build_jobs}" --continue js_and_css
 
+# Retain compiler objects across source checkout and setup retries. The cache
+# is separate from the image; the normal native build trees are still retained.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends ccache \
+    && rm -rf /var/lib/apt/lists/*
+
 # Scanner contract: retain the full checkout, generated bindings, UI dependencies
 # and ASan build trees at /src for offline analysis and incremental reproducers.
 COPY . /src
 ARG DORIS_BUILD_JOBS
 ARG FE_BUILD_JOBS
 # The 4.2 UI uses webpack 4, which needs its legacy hashes on Node's OpenSSL 3.
-RUN core_jobs="${DORIS_BUILD_JOBS:-$(nproc)}" \
+RUN --mount=type=cache,id=oss-scanner-doris-4.2-hadoop-maven,target=/root/.m2/repository,sharing=locked \
+    --mount=type=cache,id=oss-scanner-doris-4.2-ldb-0.25-ccache,target=/var/cache/doris-ccache,sharing=locked \
+    --mount=type=cache,id=oss-scanner-doris-4.2-build-logs,target=/var/cache/doris-build-logs,sharing=locked \
+    core_jobs="${DORIS_BUILD_JOBS:-$(nproc)}" \
     && fe_jobs="${FE_BUILD_JOBS:-$(nproc)}" \
-    && FE_MAVEN_THREADS="${fe_jobs}" MAVEN_OPTS="-Xmx${fe_jobs}g" \
-       NODE_OPTIONS=--openssl-legacy-provider \
-       bash ./build.sh --fe --be --cloud -j "${core_jobs}"
+    && (env -u CCACHE_DISABLE CCACHE_DIR=/var/cache/doris-ccache CCACHE_MAXSIZE=20G \
+        FE_MAVEN_THREADS="${fe_jobs}" MAVEN_OPTS="-Xmx${fe_jobs}g" \
+        NODE_OPTIONS=--openssl-legacy-provider \
+        bash ./build.sh --fe --be --cloud -j "${core_jobs}" 2>&1 \
+        | tee /var/cache/doris-build-logs/core.log) \
+    || { build_status=$?; tail -n 200 /var/cache/doris-build-logs/core.log >&2; exit "${build_status}"; }; \
+    mkdir -p /opt/doris-maven-repository \
+    && cp -a /root/.m2/repository/. /opt/doris-maven-repository/
+
+# The cache mount is absent at runtime. Keep Maven's normal repository path
+# backed by the snapshot so the scanner can run tests without network access.
+RUN rm -rf /root/.m2/repository \
+    && ln -s /opt/doris-maven-repository /root/.m2/repository
 
 # branch-4.2 defaults this flag to false. Use the authenticated FE HTTP posture
 # required by the supplied threat model, without changing the source default.
