@@ -1,0 +1,5 @@
+repo: https://github.com/ls1intum/Artemis#develop
+primary_contact: artemis@xcit.tum.de
+homepage: https://docs.artemis.tum.de
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
