@@ -90,8 +90,7 @@ MAIN_REPO = re.compile(r"(?:\w+://|git@)?(?:www\.)?github\.com[/:]([^/\s]+/[^/\s
 # Where GitHub looks for a repository's security policy.
 SECURITY_POLICY_PATHS = ("SECURITY.md", ".github/SECURITY.md", "docs/SECURITY.md")
 # The files we read from a project's directory, and the size above which validate.py refuses each.
-PROJECT_FILES = dict.fromkeys(validate.FILE_KEYS, validate.MAX_FILE_BYTES)
-PROJECT_FILES["project.yaml"] = validate.MAX_CONFIG_BYTES
+PROJECT_FILES = validate.FILE_LIMITS | {"project.yaml": validate.MAX_CONFIG_BYTES}
 
 # GitHub's author_association values that mark a maintainer rather than a contributor, and how the comment words them.
 ASSOCIATIONS = {
@@ -804,6 +803,10 @@ def scanner_files_row(gh: GitHub, slug: str, ref: str | None, config: dict, besi
     threat_model = config.get("threat_model") or ".oss-scanner/threat_model.md"
     if "threat_model.md" not in beside and not in_repo(threat_model):
         result += "; no threat model (optional)"
+    # Unlike the threat model, only a path that leads nowhere is mentioned: most projects have no guidelines.
+    for key in ("report_guidelines", "patch_guidelines"):
+        if config.get(key) and not in_repo(config[key]):
+            result += f"; no {key.replace('_', ' ')} at {code(config[key])} (optional)"
 
     if "Dockerfile" in beside:
         return (OK if names else INFO), f"{result}; the Dockerfile is in this pull request"
