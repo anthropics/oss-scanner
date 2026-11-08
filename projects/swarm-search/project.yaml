@@ -1,0 +1,20 @@
+# swarm-search: parallel cheap LLM workers research a question or scan files, then one synthesizer
+# writes the summary. Ships as an MCP server and a Claude Code plugin.
+
+repo: https://github.com/bubli-mubli/swarm-search#main
+
+# Maintainer; also reachable through GitHub private vulnerability reporting on the repository.
+primary_contact: rrotatew@gmail.com
+
+homepage: https://github.com/bubli-mubli/swarm-search
+
+output_format:
+  email:
+    min_severity: low
+  github_security_advisory:
+    min_severity: high
+
+disabled: false
+
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
