@@ -19,6 +19,7 @@ RUN npm run build
 # up, so code that loads it can run offline. A failed fetch is logged, not fatal.
 RUN npm run fetch:wasm --workspace=@xrplf/mpt-crypto || echo "WARNING: mpt-crypto WASM fetch failed"
 
-# Smoke-test the image; failures are logged, not fatal. Full suite: `npm test`.
-RUN npm test --workspace=ripple-keypairs --workspace=ripple-address-codec --workspace=ripple-binary-codec \
+# Run every package's unit tests (not the browser or integration tests, which need Chrome or a ledger). Failures are
+# logged, not fatal.
+RUN npm test --workspaces --if-present \
     || echo "WARNING: unit tests reported failures"
