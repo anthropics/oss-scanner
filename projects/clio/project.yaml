@@ -1,0 +1,7 @@
+# Clio: an XRP Ledger API server optimized for HTTP and WebSocket API calls (https://github.com/XRPLF/clio).
+# The Dockerfile and threat_model.md for this project live next to this file in the oss-scanner repository,
+# so neither the dockerfile: nor the threat_model: key is set below.
+repo: https://github.com/XRPLF/clio#develop
+primary_contact: bugs@ripple.com
+homepage: https://xrpl.org
+disabled: false
