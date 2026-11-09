@@ -1,0 +1,9 @@
+repo: https://github.com/ali-ulu/huqan#main
+primary_contact: aliulu@huqan.com
+homepage: https://huqan.com
+output_format:
+  email:
+    min_severity: low
+  github_security_advisory:
+    min_severity: none
+disabled: false
