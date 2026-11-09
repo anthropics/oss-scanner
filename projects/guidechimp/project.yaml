@@ -1,6 +1,6 @@
 # Enrolment of GuideChimp (https://github.com/Labs64/GuideChimp).
 repo: https://github.com/Labs64/GuideChimp
 primary_contact: info@labs64.com
-homepage: https://guidechimp.com
+homepage: https://www.labs64.com/guidechimp/
 disabled: false
 # The Dockerfile and threat_model.md are next to this file, so dockerfile: and threat_model: are omitted.
