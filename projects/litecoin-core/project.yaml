@@ -1,0 +1,8 @@
+repo: https://github.com/litecoin-project/litecoin#master
+primary_contact: contact@litecoin.org
+auto_ccs:
+  - loshan1212@gmail.com
+  - davidburkett38@gmail.com
+  - coblee@litecoin.org
+homepage: https://litecoin.org
+disabled: false
