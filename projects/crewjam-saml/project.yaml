@@ -1,0 +1,9 @@
+repo: https://github.com/crewjam/saml#main
+primary_contact: ross@kndr.org
+homepage: https://pkg.go.dev/github.com/crewjam/saml
+output_format:
+  email:
+    min_severity: low
+  github_security_advisory:
+    min_severity: none
+disabled: false
