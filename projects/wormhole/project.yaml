@@ -3,7 +3,6 @@ primary_contact: security@wormhole.foundation
 auto_ccs:
   - adam@wormhole.foundation
   - joshg@wormhole.foundation
-  - dirk@asymmetric.re
 homepage: https://wormhole.com/
 output_format:
   email:
