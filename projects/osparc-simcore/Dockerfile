@@ -11,6 +11,17 @@ RUN pip install uv==0.13.6
 COPY . /src
 WORKDIR /src
 
+# pytest-simcore fails without a network route; fall back to 127.0.0.1
+RUN python - <<'EOF'
+import pathlib
+p = pathlib.Path("packages/pytest-simcore/src/pytest_simcore/helpers/host.py")
+old = "    finally:\n        s.close()"
+new = "    except OSError:\n        pass\n    finally:\n        s.close()"
+text = p.read_text()
+if old in text:
+    p.write_text(text.replace(old, new))
+EOF
+
 # One venv per service since each pins its own dependency versions.
 # Repo packages are editable installs, so edits under /src take effect.
 # Usage: /opt/venvs/<name>/bin/python -m pytest services/<dir>/tests/unit
