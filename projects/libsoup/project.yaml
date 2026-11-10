@@ -1,0 +1,4 @@
+repo: https://gitlab.gnome.org/GNOME/libsoup.git
+primary_contact: pgriffis@igalia.com
+homepage: https://libsoup.gnome.org
+disabled: false
