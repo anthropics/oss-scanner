@@ -1,0 +1,5 @@
+# OpenFGA: a relationship-based access control (ReBAC) authorization server inspired by Google Zanzibar.
+# The Dockerfile and threat_model.md sit next to this file, so neither key is set here.
+repo: https://github.com/openfga/openfga#main
+primary_contact: security@openfga.dev
+homepage: https://openfga.dev

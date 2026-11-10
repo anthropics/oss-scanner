@@ -1,0 +1,11 @@
+repo: https://github.com/open-telemetry/opentelemetry-collector#main
+primary_contact: security@opentelemetry.io
+homepage: https://opentelemetry.io/docs/collector/
+disabled: false
+dockerfile: .github/oss-scanner/Dockerfile
+threat_model: THREAT_MODEL.md
+output_format:
+  email:
+    min_severity: none
+  github_security_advisory:
+    min_severity: low
