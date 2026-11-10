@@ -80,11 +80,3 @@ They are in `/src/build/bin`. Other `cmd/` tools are not built and are out of sc
   `make fuzz PKG=./db/seg FUZZ=FuzzCompress FUZZTIME=60s`.
 - Large spec fixtures (EEST, consensus-specs) are not in the image.
 - The network is off and `GOPROXY=off`.
-
-## Reports and patches we want
-- State the affected chain or fork, the flags required (default or non-default), and the attacker
-  position: remote peer, RPC client, block proposer, torrent peer, or beacon endpoint.
-- Give the reproducer as a Go test in the affected package, and the patch as a minimal diff that
-  includes that test.
-- When the code is shared with go-ethereum, say so, because coordinated disclosure with other
-  clients may be needed.
