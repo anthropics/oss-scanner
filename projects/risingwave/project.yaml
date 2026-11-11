@@ -1,0 +1,12 @@
+# Local enrollment draft: contacts and enabled configuration approved by the maintainer.
+repo: https://github.com/risingwavelabs/risingwave#main
+primary_contact: dev@risingwave-labs.com
+auto_ccs:
+  - patrick@risingwave-labs.com
+  - junfeng@risingwave-labs.com
+homepage: https://risingwave.com
+# Enable reports once this enrollment is submitted and accepted.
+disabled: false
+# Dockerfile and threat_model.md are alongside this file in the enrollment repository.
+# For encrypted reports, add the security team's existing armored public key as pgp: |.
+# Do not add auto_ccs when using pgp. Never include a private key.
