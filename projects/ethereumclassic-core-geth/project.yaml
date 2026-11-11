@@ -1,0 +1,8 @@
+repo: https://github.com/ethereumclassic/core-geth#main
+primary_contact: security@ethereumclassic.net
+homepage: https://coregeth.com
+output_format:
+  email:
+    min_severity: none
+  github_security_advisory:
+    min_severity: low
