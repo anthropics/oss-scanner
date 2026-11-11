@@ -1,0 +1,8 @@
+repo: https://github.com/pterodactyl/wings#develop
+primary_contact: security@pterodactyl.io
+homepage: https://pterodactyl.io
+output_format:
+  email:
+    min_severity: low
+  github_security_advisory:
+    min_severity: none
