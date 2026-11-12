@@ -3,8 +3,8 @@
 #
 # Only the Rust workspace is built, the way CI's Rust job builds it. The Java, Node and Swift wrappers are not: their
 # Rust bridge crates are in the workspace, and the code above them adds little that parses untrusted input. The
-# toolchain follows rust-toolchain, and rustup and protoc follow java/Dockerfile.
-FROM ubuntu:24.04
+# toolchain follows rust-toolchain, and protoc follows java/Dockerfile.
+FROM ubuntu:26.04
 ENV DEBIAN_FRONTEND=noninteractive \
     LANG=C.UTF-8 \
     LC_ALL=C.UTF-8
@@ -13,8 +13,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       ca-certificates curl git unzip build-essential clang libclang-dev cmake pkg-config python3 \
     && rm -rf /var/lib/apt/lists/*
 
-ARG RUSTUP_VERSION=1.28.2
-ARG RUSTUP_HASH=20a06e644b0d9bd2fbdbfd52d42540bdde820ea7df86e92e533c073da0cdd43c
+# 1.29.2, newer than java/Dockerfile's 1.28.2, as rustup recommends after the eMudhra certificate incident.
+ARG RUSTUP_VERSION=1.29.2
+ARG RUSTUP_HASH=5be191e8c70a5007074254cb74d78dbfdd25cd5a61c27de7b8e5410122ec24f4
 ENV RUSTUP_HOME=/opt/rustup \
     CARGO_HOME=/opt/cargo \
     PATH="/opt/cargo/bin:${PATH}"
@@ -33,11 +34,13 @@ RUN curl --proto '=https' --tlsv1.2 -fsSL -o /tmp/protoc.zip \
     && unzip -q -o /tmp/protoc.zip -d /usr/local bin/protoc 'include/*' \
     && rm /tmp/protoc.zip
 
-# scanner contract: the checkout lives inside the image, at /src
+# Scanner contract: tools/check builds this Dockerfile with the libsignal checkout as the build context, and the
+# checkout must live inside the image, at /src.
 COPY . /src
 WORKDIR /src
 
-# Installs the toolchain that rust-toolchain names, then fetches every crate in Cargo.lock, git dependencies included.
+# Installs the toolchain that rust-toolchain names (a stable release, which is what libsignal ships with; CI's nightly
+# jobs are not needed to build), then fetches every crate in Cargo.lock, git dependencies included.
 RUN rustup toolchain install "$(cat rust-toolchain)" --profile minimal \
     && cargo fetch --locked
 
@@ -49,7 +52,3 @@ RUN cargo build --locked --workspace --all-features \
 # The scan has no network. Make every later cargo command offline, so that a forgotten --offline cannot stall on the
 # registry.
 ENV CARGO_NET_OFFLINE=true
-
-# Show that tests run with what the image holds. A failing test does not abort the build.
-RUN cargo test --locked --all-features -p libsignal-protocol \
-    || echo "WARNING: the libsignal-protocol tests reported failures"
