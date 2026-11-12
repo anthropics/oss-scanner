@@ -1,0 +1,5 @@
+# laravolt/indonesia: Laravel package with Indonesian provinces, cities, districts and villages (models, seeders, admin routes).
+repo: https://github.com/laravolt/indonesia#master
+primary_contact: q@laravolt.dev
+homepage: https://github.com/laravolt/indonesia
+disabled: false
