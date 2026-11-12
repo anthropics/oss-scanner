@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 # Match the GCC 16 / Ubuntu 24.04 toolchain used by Knuth CI.
 FROM kthnode/gcc16-ubuntu24.04
 
@@ -30,5 +31,9 @@ RUN cmake --preset conan-release \
     && cmake --build --preset conan-release --parallel 2 --target \
          node-exe c-api kth_infrastructure_test kth_domain_test \
          kth_network_test kth_blockchain_test kth_node_test kth_capi_test
+
+# Prove the core suites can run with no external network during image creation.
+RUN --network=none ctest --test-dir build/build/Release --output-on-failure -j1 \
+      -R '^kth_(infrastructure|domain|network|blockchain|node|capi)_test[.]shard-'
 
 CMD ["bash"]
