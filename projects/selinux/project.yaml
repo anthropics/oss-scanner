@@ -1,0 +1,15 @@
+repo: https://github.com/selinuxproject/selinux
+primary_contact: stephen.smalley.work@gmail.com
+auto_ccs:
+  - omosnacek@gmail.com
+  - jwcart2@gmail.com
+  - cgzones@googlemail.com
+  - paul@paul-moore.com
+  - jason@perfinion.com
+  - plautrba@redhat.com
+
+output_format:
+  email:
+    min_severity: low
+  github_security_advisory:
+    min_severity: medium
