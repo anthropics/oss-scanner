@@ -69,8 +69,8 @@ separately what an attacker would need on a production network.
 The Dockerfile follows the project's GCC 16 Ubuntu CI environment and Conan
 configuration. Network-dependent setup is completed during the image build.
 Sources, dependency cache, build tree, compilation database and unstripped Knuth
-binaries remain available in /src. Knuth is built with optimization, debug symbols
-and frame pointers. Unit tests use local fixtures; no blockchain download,
+binaries remain available in /src. Knuth is built without optimization, with line-level debug symbols
+and frame pointers; dependencies retain their Release configuration. Unit tests use local fixtures; no blockchain download,
 production wallet or external peer is needed.
 
 Inside the finished image, from /src:

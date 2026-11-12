@@ -22,13 +22,14 @@ RUN conan profile detect --force \
          -o rpc=jsonrpc -o with_websocket=True
 
 # Production native validator, JSON-RPC, WebSocket transport and C API.
-# Retain debug symbols and frame pointers without changing dependency build types.
+# Keep line-level debug symbols and frame pointers. Disable optimization for
+# Knuth itself to fit the enrollment CI build budget; dependencies stay Release.
 RUN cmake --preset conan-release \
       -DGLOBAL_BUILD=ON -DENABLE_TEST=ON -DKTH_CI_TEST_SHARDS=2 \
       -DCMAKE_VERBOSE_MAKEFILE=OFF -DCMAKE_EXPORT_COMPILE_COMMANDS=ON \
-      -DCMAKE_C_FLAGS_RELEASE="-O2 -g -DNDEBUG -fno-omit-frame-pointer" \
-      -DCMAKE_CXX_FLAGS_RELEASE="-O2 -g -DNDEBUG -fno-omit-frame-pointer" \
-    && cmake --build --preset conan-release --parallel 2 --target \
+      -DCMAKE_C_FLAGS_RELEASE="-O0 -g1 -DNDEBUG -fno-omit-frame-pointer" \
+      -DCMAKE_CXX_FLAGS_RELEASE="-O0 -g1 -DNDEBUG -fno-omit-frame-pointer" \
+    && cmake --build --preset conan-release --parallel 4 --target \
          node-exe c-api kth_infrastructure_test kth_domain_test \
          kth_network_test kth_blockchain_test kth_node_test kth_capi_test
 
