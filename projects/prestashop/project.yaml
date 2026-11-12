@@ -1,0 +1,5 @@
+# PrestaShop core, on the maintenance branch of the supported release line (bump the branch when a new line ships).
+repo: https://github.com/PrestaShop/PrestaShop#9.2.x
+primary_contact: security-core@prestashop.com
+homepage: https://www.prestashop-project.org
+disabled: false
