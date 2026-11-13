@@ -1,0 +1,5 @@
+repo: https://github.com/shawnlinator/gilded-wren#master
+primary_contact: me@shawngubler.com
+homepage: https://github.com/shawnlinator/gilded-wren
+dockerfile: Dockerfile
+threat_model: .oss-scanner/threat_model.md
