@@ -1,0 +1,5 @@
+repo: https://github.com/shawnlinator/cobalt-finch#master
+primary_contact: me@shawngubler.com
+homepage: https://github.com/shawnlinator/cobalt-finch
+dockerfile: sync-server.Dockerfile
+threat_model: .oss-scanner/threat_model.md
