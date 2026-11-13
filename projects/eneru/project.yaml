@@ -1,0 +1,8 @@
+repo: https://github.com/m4r1k/Eneru
+primary_contact: federico.iezzi@gmail.com
+homepage: https://eneru.readthedocs.io
+output_format:
+  email:
+    min_severity: low
+  github_security_advisory:
+    min_severity: low
