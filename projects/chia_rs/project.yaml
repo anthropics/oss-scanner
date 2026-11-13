@@ -1,0 +1,18 @@
+# chia_rs: Rust consensus, mempool validation, CLVM condition parsing, streamable types and BLS for the Chia network,
+# used by chia-blockchain through Python bindings.
+
+repo: https://github.com/Chia-Network/chia_rs#main
+
+# PUBLIC: use a security alias, not a personal address.
+primary_contact: oss-scanner-anthropic@chia.net
+
+homepage: https://www.chia.net
+
+# Reports stay private: email only. Chia takes external reports through HackerOne, not GitHub advisories.
+output_format:
+  email:
+    min_severity: low
+  github_security_advisory:
+    min_severity: none
+
+disabled: false
