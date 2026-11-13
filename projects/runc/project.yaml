@@ -1,0 +1,5 @@
+repo: https://github.com/opencontainers/runc#main
+primary_contact: security@opencontainers.org
+homepage: https://github.com/opencontainers/runc
+dockerfile: .oss-scanner/Dockerfile
+threat_model: THREAT_MODEL.md
