@@ -1,0 +1,6 @@
+repo: https://github.com/growilabs/growi#master
+primary_contact: yuki@weseek.co.jp
+auto_ccs:
+  - ml-jvm-growi@weseek.co.jp
+homepage: https://growi.org
+disabled: false
