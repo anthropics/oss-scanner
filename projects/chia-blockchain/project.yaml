@@ -1,0 +1,17 @@
+# Chia full node, farmer, harvester, timelord and wallet (Python), the reference implementation of the Chia network.
+
+repo: https://github.com/Chia-Network/chia-blockchain#main
+
+# PUBLIC: use a security alias, not a personal address.
+primary_contact: oss-scanner-anthropic@chia.net
+
+homepage: https://www.chia.net
+
+# Reports stay private: email only. Chia takes external reports through HackerOne, not GitHub advisories.
+output_format:
+  email:
+    min_severity: low
+  github_security_advisory:
+    min_severity: none
+
+disabled: false
