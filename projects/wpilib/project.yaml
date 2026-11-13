@@ -1,0 +1,10 @@
+# Scan the development branch of WPILib's core libraries and desktop tools.
+repo: https://github.com/wpilibsuite/allwpilib#main
+
+primary_contact: gr-wpilib_developers@wpi.edu
+
+homepage: https://wpilib.org/
+
+# Maintained in allwpilib so build changes don't need a PR here.
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
