@@ -1,0 +1,8 @@
+# s3fs-fuse: a FUSE file system that mounts an Amazon S3 bucket, or any S3-compatible
+# object store, as a local directory.
+repo: https://github.com/s3fs-fuse/s3fs-fuse#master
+primary_contact: gaul@gaul.org
+auto_ccs:
+  - ggtakec@gmail.com
+homepage: https://github.com/s3fs-fuse/s3fs-fuse
+disabled: false
