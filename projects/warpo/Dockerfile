@@ -1,5 +1,7 @@
 FROM node:22-bookworm
 
+ENV CXXFLAGS="-include cstddef"
+
 RUN apt-get update && apt-get install -y --no-install-recommends \
   build-essential cmake git python3 \
     && rm -rf /var/lib/apt/lists/*
