@@ -1,0 +1,13 @@
+# Utils: the low-allocation byte, string, parsing and HTTP helpers under Fiber, its middleware and Schema (github.com/gofiber/utils/v2).
+# The Dockerfile and threat_model.md sit next to this file, so neither key is set here.
+repo: https://github.com/gofiber/utils#master
+primary_contact: rene@gofiber.io
+auto_ccs:
+  - gaby@gofiber.io
+  - security@gofiber.io
+homepage: https://gofiber.io
+output_format:
+  email:
+    min_severity: low
+  github_security_advisory:
+    min_severity: low
