@@ -1,0 +1,4 @@
+repo: https://github.com/eduMFA/eduMFA
+primary_contact: edumfa-support@listserv.dfn.de
+disabled: false
+dockerfile: Dockerfile
