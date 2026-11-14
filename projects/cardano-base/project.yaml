@@ -1,0 +1,7 @@
+repo: https://github.com/IntersectMBO/cardano-base
+primary_contact: security@intersectmbo.org
+output_format:
+  email:
+    min_severity: low
+  github_security_advisory:
+    min_severity: high
