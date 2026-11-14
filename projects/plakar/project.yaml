@@ -1,0 +1,8 @@
+# plakar: the backup tool (command line, web ui, store server) built on the kloset engine,
+# https://github.com/PlakarKorp/kloset, which is enrolled on its own as projects/kloset.
+# The Dockerfile and the threat model live in the repository under .oss-scanner/.
+repo: https://github.com/PlakarKorp/plakar#main
+primary_contact: security@plakar.io
+homepage: https://www.plakar.io
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
