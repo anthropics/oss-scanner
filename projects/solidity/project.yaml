@@ -1,0 +1,11 @@
+repo: https://github.com/argotorg/solidity#develop
+primary_contact: oss-scanner@solidity.org
+homepage: https://soliditylang.org
+disabled: false
+dockerfile: scripts/Dockerfile_oss_scanner
+
+output_format:
+  email:
+    min_severity: high
+  github_security_advisory:
+    min_severity: none
