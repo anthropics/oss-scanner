@@ -1,0 +1,13 @@
+# Fiber template: the view engines for Fiber's Views interface (github.com/gofiber/template/v2 and one module per engine),
+# 10 Go modules in one repository. The Dockerfile and threat_model.md sit next to this file, so neither key is set here.
+repo: https://github.com/gofiber/template#master
+primary_contact: rene@gofiber.io
+auto_ccs:
+  - gaby@gofiber.io
+  - security@gofiber.io
+homepage: https://gofiber.io
+output_format:
+  email:
+    min_severity: low
+  github_security_advisory:
+    min_severity: low
