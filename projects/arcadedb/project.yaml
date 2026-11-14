@@ -1,3 +1,8 @@
 repo: https://github.com/ArcadeData/arcadedb#main
 primary_contact: support@arcadedb.com
 homepage: https://arcadedb.com
+output_format:
+  email:
+    min_severity: none
+  github_security_advisory:
+    min_severity: low
