@@ -1,0 +1,11 @@
+repo: https://github.com/ali-ulu/huqan#main
+# Public security contact listed in HUQAN's SECURITY.md:
+# https://github.com/ali-ulu/huqan/blob/main/SECURITY.md#reporting-a-vulnerability
+primary_contact: aliulu@huqan.com
+homepage: https://huqan.com
+output_format:
+  email:
+    min_severity: low
+  github_security_advisory:
+    min_severity: none
+disabled: false
