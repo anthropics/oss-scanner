@@ -1,0 +1,28 @@
+# NaviServer enrollment sample, based on templates/project.yaml.
+# Scan the development branch; replace #main with a release branch/tag if desired.
+repo: https://github.com/naviserver-project/naviserver#main
+
+# REQUIRED: replace with the address that should receive reports and questions.
+# This address will be public in the enrollment repository.
+primary_contact: neumann@wu-wien.ac.at
+
+# Optional additional recipients. Do not combine auto_ccs with pgp.
+# auto_ccs:
+#   - maintainer@example.org
+
+homepage: https://naviserver.sourceforge.io/
+
+# Optional: encrypt reports to this key; delivery then goes only to primary_contact.
+# pgp: |
+#   -----BEGIN PGP PUBLIC KEY BLOCK-----
+#   REPLACE_WITH_YOUR_ARMORED_PUBLIC_KEY
+#   -----END PGP PUBLIC KEY BLOCK-----
+
+disabled: false
+
+# REQUIRED: add projects/naviserver/Dockerfile alongside this file.
+# Alternatively, keep it in the NaviServer repository and uncomment its path:
+# dockerfile: .oss-scanner/Dockerfile
+
+# Recommended: add projects/naviserver/threat_model.md alongside this file.
+# Alternatively, keep it in the NaviServer repository
