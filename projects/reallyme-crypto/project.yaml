@@ -1,0 +1,9 @@
+# SPDX-FileCopyrightText: 2026 ReallyMe Technologies Limited
+# SPDX-License-Identifier: Apache-2.0
+
+repo: 'https://github.com/reallyme/crypto#main'
+primary_contact: security@really.me
+homepage: https://github.com/reallyme/crypto
+output_format:
+  github_security_advisory:
+    min_severity: low
