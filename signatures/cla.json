@@ -6807,6 +6807,14 @@
       "created_at": "2026-11-13T15:50:54Z",
       "repoId": 1410719150,
       "pullRequestNo": 1495
+    },
+    {
+      "name": "marten-seemann",
+      "id": 1478487,
+      "comment_id": 6886941636,
+      "created_at": "2026-11-15T00:56:01Z",
+      "repoId": 1410719150,
+      "pullRequestNo": 1506
     }
   ]
 }
