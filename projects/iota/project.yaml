@@ -1,0 +1,8 @@
+repo: https://github.com/iotaledger/iota
+primary_contact: security@iota.org
+auto_ccs:
+  - luca.moser@iota.org
+  - alexander.sporn@iota.org
+  - levente.pap@iota.org
+homepage: https://iota.org
+disabled: false
