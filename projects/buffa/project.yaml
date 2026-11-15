@@ -1,0 +1,5 @@
+# buffa: a pure-Rust Protocol Buffers implementation (runtime, code generator and protoc plugins).
+# The Dockerfile and threat_model.md sit next to this file, so neither key is set here.
+repo: https://github.com/anthropics/buffa
+primary_contact: iain@anthropic.com
+homepage: https://crates.io/crates/buffa

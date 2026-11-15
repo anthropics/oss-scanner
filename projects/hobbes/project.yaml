@@ -1,0 +1,16 @@
+# Hobbes: an embedded compiler and JIT, and the hog/hi tools built on it.
+repo: https://github.com/morganstanley/hobbes#main
+
+# Hobbes's Morgan Stanley project list, published in doc/en/about.rst.
+primary_contact: hobbes-dev@morganstanley.com
+
+auto_ccs:
+  - brianegge@gmail.com
+
+homepage: https://github.com/morganstanley/hobbes
+
+disabled: false
+
+dockerfile: .oss-scanner/Dockerfile
+
+threat_model: .oss-scanner/threat_model.md

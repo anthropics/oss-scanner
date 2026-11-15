@@ -30,27 +30,27 @@ RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs \
     && rustc --version
 RUN rustup toolchain install nightly
 
+COPY . /src
 WORKDIR /src
 
-RUN cargo install honggfuzz
-
-RUN git clone https://github.com/orion-rs/orion.git && cd orion/ && mkdir -p ./.cargo/
-RUN cd /src/orion \
+# Vendor all dependencies for offline builds
+RUN mkdir -p ./.cargo/ \
     && cargo generate-lockfile \
     && cargo fetch \
     && cargo vendor vendor > .cargo/config.toml
 
-RUN git clone https://github.com/orion-rs/orion-dudect && cd orion-dudect && mkdir -p ./.cargo/
-RUN cd /src/orion-dudect \
+RUN mkdir -p /opt/ && cargo install honggfuzz
+
+RUN cd /opt/ && git clone https://github.com/orion-rs/orion-dudect && mkdir -p /opt/orion-dudect/.cargo/
+RUN cd /opt/orion-dudect \
     && cargo generate-lockfile \
     && cargo fetch \
     && cargo vendor vendor > .cargo/config.toml
 
-RUN git clone https://github.com/orion-rs/orion-fuzz && cd orion-fuzz && mkdir -p ./.cargo/
-RUN cd /src/orion-fuzz \
+RUN cd /opt/ && git clone https://github.com/orion-rs/orion-fuzz && mkdir -p /opt/orion-fuzz/.cargo/
+RUN cd /opt/orion-fuzz \
     && cargo generate-lockfile \
     && cargo fetch \
     && cargo vendor vendor > .cargo/config.toml
 
-RUN cd /src/orion \
-    && cargo test --all-features
+RUN cargo test --all-features

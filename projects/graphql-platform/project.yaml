@@ -1,0 +1,6 @@
+repo: https://github.com/ChilliCream/graphql-platform
+primary_contact: security@chillicream.com
+homepage: https://chillicream.com
+output_format:
+  github_security_advisory:
+    min_severity: low

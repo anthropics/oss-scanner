@@ -1,0 +1,6 @@
+repo: https://github.com/WordPress/wordpress-develop#trunk
+primary_contact: security@wordpress.org
+auto_ccs:
+  - security@automattic.com
+homepage: https://wordpress.org
+disabled: false

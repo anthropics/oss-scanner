@@ -1,0 +1,4 @@
+repo: https://github.com/apache/apisix
+primary_contact: security@apache.org
+homepage: https://apisix.apache.org
+threat_model: docs/en/latest/security-threat-model.md

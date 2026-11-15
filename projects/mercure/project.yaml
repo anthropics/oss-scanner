@@ -1,0 +1,7 @@
+# Mercure.rocks Hub: a real-time publish/subscribe hub over HTTP and Server-Sent Events, in Go (github.com/dunglas/mercure).
+# The Dockerfile and threat model live in the repository under .oss-scanner/, so build changes do not need a pull request here.
+repo: https://github.com/dunglas/mercure#main
+primary_contact: contact+security@mercure.rocks
+homepage: https://mercure.rocks
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md

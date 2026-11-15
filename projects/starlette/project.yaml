@@ -1,0 +1,12 @@
+# Starlette: a lightweight ASGI framework and toolkit for building async web services in Python.
+
+repo: https://github.com/Kludex/starlette#main
+
+# The project's SECURITY.md routes reports to GitHub private vulnerability reporting; this is the maintainer's address.
+primary_contact: marcelotryle@gmail.com
+
+homepage: https://starlette.dev
+
+disabled: false
+
+# The Dockerfile and threat_model.md are next to this file, so dockerfile: and threat_model: are omitted.

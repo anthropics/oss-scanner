@@ -1,0 +1,9 @@
+# master is wolfSSL's development branch; stable releases are tagged from it (vX.Y.Z-stable).
+repo: https://github.com/wolfSSL/wolfssl#master
+
+# wolfSSL's security contact, as named in SECURITY-POLICY.md in the repository.
+primary_contact: support@wolfssl.com
+
+homepage: https://www.wolfssl.com
+
+disabled: false

@@ -1,0 +1,70 @@
+# OSS Scanner enrolment for java-tron, the reference full-node implementation of the TRON protocol.
+
+# The upcoming release branch. Switch to #master (or the next release branch) once 4.8.3 ships.
+repo: https://github.com/tronprotocol/java-tron#release_v4.8.3
+
+# The security contact listed in java-tron's SECURITY.md.
+primary_contact: bounty@tron.network
+
+homepage: https://tron.network
+
+# Reports are encrypted to this key and go to primary_contact only (auto_ccs cannot be used with pgp).
+# Key fingerprint: 9D3E 1B6C ADA7 3B95 CC94  CA5E 9D9F C9E3 C7D2 330D (expires 2028-10-25).
+pgp: |
+  -----BEGIN PGP PUBLIC KEY BLOCK-----
+
+  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
+  LE/wrg7qji3ej7/or5rCgo9ae0RjMg==
+  =nXbT
+  -----END PGP PUBLIC KEY BLOCK-----
+
+disabled: false
+
+# Dockerfile and threat_model.md are kept beside this file, so neither `dockerfile:` nor `threat_model:` is set.

@@ -1,0 +1,4 @@
+repo: https://github.com/nestjs/config#master
+primary_contact: support@nestjs.com
+homepage: https://docs.nestjs.com/techniques/configuration
+disabled: false

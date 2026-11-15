@@ -1,0 +1,12 @@
+repo: https://github.com/quic-go/quic-go
+primary_contact: martenseemann@gmail.com
+homepage: https://quic-go.net
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
+report_guidelines: .oss-scanner/report_guidelines.md
+patch_guidelines: .oss-scanner/patch_guidelines.md
+output_format:
+  email:
+    min_severity: none
+  github_security_advisory:
+    min_severity: low

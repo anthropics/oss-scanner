@@ -1,0 +1,5 @@
+repo: https://git.postgresql.org/git/postgresql.git#master
+primary_contact: security@postgresql.org
+homepage: https://postgresql.org
+dockerfile: src/tools/oss-scanner/Dockerfile
+threat_model: src/tools/oss-scanner/threat_model.md

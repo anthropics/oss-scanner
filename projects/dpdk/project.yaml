@@ -1,0 +1,23 @@
+# DPDK: Data Plane Development Kit, user space packet processing.
+# Upstream git is dpdk.org; GitHub is a read-only mirror.
+repo: https://github.com/DPDK/dpdk#main
+primary_contact: security@dpdk.org
+homepage: https://www.dpdk.org
+disabled: false
+# Reports are encrypted to this key (fingerprint 912D 9514 04F5 D8CE 36C7  A338 7305 BE09 7E37 712D).
+pgp: |
+  -----BEGIN PGP PUBLIC KEY BLOCK-----
+  Comment: User-ID: DPDK Security Team <security@dpdk.org>
+  Comment: Fingerprint: 912D951404F5D8CE36C7A3387305BE097E37712D
+  
+  mDMEas+gLhYJKwYBBAHaRw8BAQdAZ/kMOaTR+euy9FKnNbe0aZ1+GcYeOJHPFUR8
+  g9dr3ti0JkRQREsgU2VjdXJpdHkgVGVhbSA8c2VjdXJpdHlAZHBkay5vcmc+iJAE
+  ExYIADgWIQSRLZUUBPXYzjbHozhzBb4JfjdxLQUCas+gLgIbAQULCQgHAwUVCgkI
+  CwUWAgMBAAIeAQIXgAAKCRBzBb4JfjdxLUI1AP9kENnmro/z1ojETRUr1t7aoQEy
+  tfXPr/cBNPUmqER7NQD+OjkFriXZYwhSw1UWj4U6sl73zkQZhW8ufSFkFHYztge4
+  OARqz6CXEgorBgEEAZdVAQUBAQdA27euyy2PeF0RbKcSa1uQBseNtLojqYPCxVYE
+  cgqc6yADAQgHiH4EGBYIACYWIQSRLZUUBPXYzjbHozhzBb4JfjdxLQUCas+glwIb
+  DAUJAeEzgAAKCRBzBb4JfjdxLYo/AP4qmNCBSwXBfccNm0/eOIyc4LPutXIsEemv
+  tkLra+heYAD6A25R/RzZVpDX5CcnvfpIygd3Ar2BCA2BfqP3Wc+5ggk=
+  =34Kl
+  -----END PGP PUBLIC KEY BLOCK-----

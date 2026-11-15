@@ -1,0 +1,16 @@
+# Omnigent: an open-source meta-harness that orchestrates coding agents (Claude Code, Codex, Cursor and
+# others) across a shared server, local or remote hosts and a web, desktop and mobile UI.
+# Every change lands on `main`, which is also what releases and nightly builds are cut from.
+repo: https://github.com/omnigent-ai/omnigent#main
+
+# A core maintainer (listed in .github/MAINTAINER). The repository's SECURITY.md takes reports through
+# GitHub private security advisories, which have no email address.
+primary_contact: tomu.hirata@databricks.com
+
+homepage: https://omnigent.ai
+
+disabled: false
+
+# Both live in the repository, so a pull request that changes how Omnigent builds can update them too.
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md

@@ -1,0 +1,6 @@
+repo: https://github.com/webpack/webpack#main
+primary_contact: webpack-tsc@lists.openjsf.org
+auto_ccs:
+  - webpack-security@openjsf.org
+homepage: https://webpack.js.org
+disabled: false

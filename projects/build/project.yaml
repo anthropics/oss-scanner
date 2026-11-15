@@ -1,0 +1,4 @@
+repo: https://github.com/pypa/build#main
+primary_contact: gaborjbernat@gmail.com
+homepage: https://build.pypa.io
+disabled: false

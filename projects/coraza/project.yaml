@@ -1,0 +1,8 @@
+# OWASP Coraza: a Web Application Firewall engine in Go, compatible with ModSecurity SecLang
+# and the OWASP Core Rule Set. The Dockerfile and threat model live in the repository under
+# .oss-scanner/, so build changes do not need a pull request here.
+repo: https://github.com/corazawaf/coraza
+primary_contact: security@coraza.io
+homepage: https://coraza.io
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md

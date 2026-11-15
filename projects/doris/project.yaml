@@ -1,0 +1,11 @@
+# Scan the dedicated 4.2 snapshot that matches the published build cache.
+repo: https://github.com/apache/doris#branch-4.2-oss
+
+primary_contact: kirs@apache.org
+auto_ccs:
+  - private@doris.apache.org
+
+homepage: https://doris.apache.org
+disabled: false
+
+# Dockerfile and threat_model.md are provided alongside this file.

@@ -1,3 +1,6 @@
 repo: https://github.com/aaif-goose/goose
 primary_contact: goose-security@spiral.xyz
 homepage: https://goose-docs.ai/
+output_format:
+  github_security_advisory:
+    min_severity: high

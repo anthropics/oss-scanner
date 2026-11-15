@@ -1,0 +1,12 @@
+# master is the development branch, and releases are tagged from it
+repo: https://github.com/hunspell/hyphen#master
+
+primary_contact: caolanm@gmail.com
+
+homepage: https://github.com/hunspell/hyphen
+
+disabled: false
+
+dockerfile: .oss-scanner/Dockerfile
+
+threat_model: .oss-scanner/threat_model.md

@@ -1,0 +1,5 @@
+# GreenTunnel: a local proxy that bypasses DPI censorship by fragmenting the TLS ClientHello and resolving over encrypted DNS.
+repo: https://github.com/SadeghHayeri/GreenTunnel#main
+primary_contact: hayerisadegh@gmail.com
+homepage: https://github.com/SadeghHayeri/GreenTunnel
+disabled: false

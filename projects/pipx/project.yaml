@@ -1,0 +1,4 @@
+repo: https://github.com/pypa/pipx#main
+primary_contact: gaborjbernat@gmail.com
+homepage: https://pipx.pypa.io
+disabled: false

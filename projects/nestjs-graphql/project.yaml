@@ -1,0 +1,4 @@
+repo: https://github.com/nestjs/graphql#master
+primary_contact: support@nestjs.com
+homepage: https://docs.nestjs.com/graphql/quick-start
+disabled: false

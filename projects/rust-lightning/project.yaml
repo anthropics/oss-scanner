@@ -1,0 +1,5 @@
+# LDK (rust-lightning): a Lightning Network implementation as a Rust library. The Dockerfile and threat_model.md sit
+# next to this file, so neither key is set here.
+repo: https://github.com/lightningdevkit/rust-lightning#main
+primary_contact: security@lightningdevkit.org
+homepage: https://lightningdevkit.org

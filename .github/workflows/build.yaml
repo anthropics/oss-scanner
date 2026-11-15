@@ -1,0 +1,147 @@
+name: "Build"
+# Builds the project an enrolment pull request adds or changes, with tools/check. The output is in the run's log.
+# A failure is not a verdict: this runner is much smaller than the scanner's build machine (tools/check_build.py).
+#
+# pull_request_target, not pull_request, so the pull request cannot edit this workflow or tools/check:
+#   - The checkout is the base branch, never the pull request.
+#   - The pull request may only change files directly inside one projects/<name>/, or the check fails.
+#   - Only those files are taken from it, as regular files written from git's object store.
+#   - Its Dockerfile runs only inside `docker build`, never as a step on the runner.
+#
+# This job builds code from anyone. Never add a secret, a cache, an artifact or a write permission to it.
+# Runs do not wait for a maintainer's approval. To build only on request, remove pull_request_target below.
+#
+# To build a pull request by number:
+#   gh workflow run build.yaml -f pr=123
+
+run-name: ${{ github.event.pull_request.title || format('Pull request {0}', inputs.pr) }}
+
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize]
+    paths: ["projects/**"]
+  workflow_dispatch:
+    inputs:
+      pr:
+        description: "Number of the pull request to build"
+        required: true
+        type: number
+
+permissions: {}
+
+concurrency:
+  group: build-${{ github.event.pull_request.number || inputs.pr }}
+  cancel-in-progress: true
+
+jobs:
+  project-builds:
+    runs-on: ubuntu-latest
+    # tools/check allows the build 45 minutes.
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1 (sha-pinned)
+        with:
+          persist-credentials: false
+
+      - name: Take projects/<name>/ from the pull request, and nothing else
+        id: project
+        timeout-minutes: 5
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number || inputs.pr }}
+        run: |
+          set -euo pipefail
+          export LC_ALL=C  # a-z below is ASCII only
+
+          fail() { echo "::error::$1"; exit 1; }
+
+          [[ $PR =~ ^[0-9]+$ ]] || fail "Not a pull request number."
+          pull=$(gh api "repos/$REPO/pulls/$PR")
+          sha=$(jq -r .head.sha <<< "$pull")
+          [[ $sha =~ ^[0-9a-f]{40}$ ]] || fail "Could not read the pull request's head commit."
+          # Only one page of changed files is read below.
+          [ "$(jq -r .changed_files <<< "$pull")" -le 100 ] || fail "This pull request changes more than 100 files."
+
+          # Every changed path, a renamed file under both names, must be directly inside one projects/<name>/.
+          gh api "repos/$REPO/pulls/$PR/files?per_page=100" --jq '.[] | .filename, (.previous_filename // empty)' > "$RUNNER_TEMP/paths"
+          name="" outside=0
+          while IFS= read -r path; do
+            if [[ $path =~ ^projects/([^/]+)/[^/]+$ ]]; then
+              [[ -z $name || $name == "${BASH_REMATCH[1]}" ]] || fail "This pull request changes more than one project. One project per pull request."
+              name=${BASH_REMATCH[1]}
+              continue
+            fi
+            outside=1
+            # Print only plain paths: the runner could read any other as a workflow command.
+            [[ $path =~ ^[A-Za-z0-9._/-]+$ ]] && echo "outside projects/<name>/: $path" || echo "outside projects/<name>/: (a path with unusual characters)"
+          done < "$RUNNER_TEMP/paths"
+
+          if [ -z "$name" ]; then
+            echo "This pull request changes no project: nothing to build."
+            exit 0
+          fi
+          # Same rule as NAME in tools/validate.py.
+          [[ $name =~ ^[a-z0-9][a-z0-9._-]{0,62}$ ]] || fail "The directory name under projects/ must be a-z 0-9 . _ - (starting with a letter or digit, at most 63)."
+          [ "$outside" = 0 ] || fail "This pull request changes files outside projects/$name/ (listed above). An enrolment changes nothing else."
+
+          # Fetch the pull request's commit. Nothing is checked out.
+          git fetch --quiet --no-tags --depth=1 origin "$sha"
+          git ls-tree -r -z "$sha" -- "projects/$name/" > "$RUNNER_TEMP/tree"
+          if [ ! -s "$RUNNER_TEMP/tree" ]; then
+            echo "This pull request removes projects/$name/: nothing to build."
+            exit 0
+          fi
+
+          # Replace projects/<name>/ with the pull request's files.
+          rm -rf "projects/$name"
+          mkdir "projects/$name"
+          while IFS= read -r -d '' entry; do
+            read -r mode _ blob <<< "${entry%%$'\t'*}"
+            file=${entry#*$'\t'}
+            file=${file#"projects/$name/"}
+            # 100644 and 100755 are regular files. A file in a subdirectory has a / in its name.
+            if [[ $mode != 100644 && $mode != 100755 ]] || ! [[ $file =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ ]]; then
+              fail "projects/$name/ may hold only regular files with plain names: no directories, symbolic links or submodules."
+            fi
+            git cat-file blob "$blob" > "projects/$name/$file"
+          done < "$RUNNER_TEMP/tree"
+
+          echo "Building projects/$name/ as it is at $sha:"
+          ls -l "projects/$name"
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+
+      - name: Make room and install PyYAML
+        if: steps.project.outputs.name != ''
+        run: |
+          # Unused toolchains, removed to free disk for the build.
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          df -h /
+          python3 -c 'import yaml' 2>/dev/null || { sudo apt-get update -qq && sudo apt-get install -y -qq python3-yaml; }
+
+      - name: Build the project with tools/check
+        if: steps.project.outputs.name != ''
+        env:
+          NAME: ${{ steps.project.outputs.name }}
+          SHA: ${{ steps.project.outputs.sha }}
+        run: |
+          # Until the token is printed again, the runner reads none of the build's output as a workflow command.
+          resume="$(openssl rand -hex 16)"
+          echo "::stop-commands::$resume"
+          code=0
+          python3 tools/check --no-shell "$NAME" < /dev/null || code=$?
+          echo "::$resume::"
+
+          case $code in
+            0) result="builds" ;;
+            1) result="does not build (the log says which step failed)" ;;
+            2) result="breaks the enrolment rules (the log lists them)" ;;
+            *) result="could not be checked: tools/check exited $code" ;;
+          esac
+          echo "\`projects/$NAME/\` at \`${SHA:0:7}\` $result." >> "$GITHUB_STEP_SUMMARY"
+          [ "$code" = 0 ] || echo "::error::projects/$NAME/ $result."
+          exit "$code"

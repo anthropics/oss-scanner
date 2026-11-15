@@ -1,0 +1,15 @@
+# GNU FriBidi: the Free Implementation of the Unicode Bidirectional Algorithm (UAX #9),
+# used by text stacks such as Pango/GTK and by media players and terminals.
+repo: https://github.com/fribidi/fribidi
+
+primary_contact: dov.grobgeld@gmail.com
+
+auto_ccs:
+  - behdad.esfahbod@gmail.com
+  - behdad@gnu.org
+  - ebrahim@gnu.org
+  - dr.khaled.hosny@gmail.com
+
+homepage: https://github.com/fribidi/fribidi
+
+disabled: false

@@ -1,0 +1,9 @@
+# Eigen: header-only C++ template library for linear algebra. master is the development branch; releases are cut
+# from it. The GitHub repository is a read-only mirror of this one.
+repo: https://gitlab.com/libeigen/eigen#master
+
+primary_contact: rmlarsen@gmail.com
+
+homepage: https://libeigen.gitlab.io
+
+disabled: false

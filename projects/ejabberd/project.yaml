@@ -1,0 +1,15 @@
+# The git repository to scan, pinned to its development branch.
+repo: https://github.com/processone/ejabberd#master
+
+# Reports and build problems go here.
+primary_contact: security@process-one.net
+
+homepage: https://ejabberd.im
+
+output_format:
+  email:
+    min_severity: high
+  github_security_advisory:
+    min_severity: low
+
+disabled: false

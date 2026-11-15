@@ -1,0 +1,6 @@
+
+repo: https://github.com/owasp-modsecurity/ModSecurity#v2/master
+primary_contact: modsecurity@owasp.org
+homepage: https://modsecurity.org
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md

@@ -1,0 +1,5 @@
+repo: https://github.com/bluesky-social/indigo
+primary_contact: security@bsky.app
+auto_ccs:
+  - infra@blueskyweb.xyz
+homepage: https://atproto.com

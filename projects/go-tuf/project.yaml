@@ -3,3 +3,6 @@ primary_contact: rdimitrow@gmail.com
 homepage: https://theupdateframework.io/
 dockerfile: .oss-scanner/Dockerfile
 threat_model: .oss-scanner/threat_model.md
+output_format:
+  github_security_advisory:
+    min_severity: medium

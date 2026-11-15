@@ -1,0 +1,6 @@
+repo: https://github.com/openssh/openssh-portable/
+primary_contact: dtucker@dtucker.net
+# Uncomment once set up.
+#auto_ccs:
+#  - openssh@openssh.org
+homepage: https://openssh.org

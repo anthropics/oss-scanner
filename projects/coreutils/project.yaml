@@ -1,0 +1,7 @@
+repo: https://github.com/coreutils/coreutils#master
+
+primary_contact: coreutils-security@gnu.org
+
+homepage: https://www.gnu.org/software/coreutils/
+
+disabled: false

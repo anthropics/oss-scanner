@@ -1,0 +1,4 @@
+repo: https://github.com/tox-dev/pipdeptree#main
+primary_contact: gaborjbernat@gmail.com
+homepage: https://pipdeptree.readthedocs.io
+disabled: false
