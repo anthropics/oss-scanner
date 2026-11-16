@@ -108,7 +108,12 @@ Last review any remaining components e.g. semodule-utils.
 
 .github/actions/build-userspace/action.yml is the GitHub action for
 building the code, and .github/workflows/run_tests.yml is the workflow
-for running the tests. The TL;DR version is 'make DESTDIR=/src/build test'.
+for running the tests. The TL;DR version is 'DESTDIR=/src/build
+./scripts/env_use_destdir make test'. env_use_destdir is required so
+that the tests run against the freshly built libraries rather than the
+distribution-provided ones; the tests must also run as an unprivileged
+user, since several test expectations (e.g. DAC permission denials) do
+not hold for uid 0.
 
 FUZZING.md contains instructions for fuzzing selected components;
 oss-fuzz is used to regularly run the fuzzers.
