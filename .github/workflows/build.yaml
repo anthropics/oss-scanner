@@ -8,7 +8,9 @@ name: "Build"
 #   - Only those files are taken from it, as regular files written from git's object store.
 #   - Its Dockerfile runs only inside `docker build`, never as a step on the runner.
 #
-# This job builds code from anyone. Never add a secret, a cache, an artifact or a write permission to it.
+# project-builds builds code from anyone. Never add a secret, a cache, an artifact or a write permission to it.
+# comment runs none of it. It @-mentions whoever opened the pull request when the build fails (on a draft, once it is
+# ready for review), and updates that comment when it passes.
 # Runs do not wait for a maintainer's approval. To build only on request, remove pull_request_target below.
 #
 # To build a pull request by number:
@@ -18,7 +20,7 @@ run-name: ${{ github.event.pull_request.title || format('Pull request {0}', inpu
 
 on:
   pull_request_target:
-    types: [opened, reopened, synchronize]
+    types: [opened, reopened, synchronize, ready_for_review]
     paths: ["projects/**"]
   workflow_dispatch:
     inputs:
@@ -41,6 +43,10 @@ jobs:
     permissions:
       contents: read
       pull-requests: read
+    outputs:
+      name: ${{ steps.project.outputs.name }}
+      sha: ${{ steps.project.outputs.sha }}
+      code: ${{ steps.build.outputs.code }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1 (sha-pinned)
         with:
@@ -124,6 +130,7 @@ jobs:
           python3 -c 'import yaml' 2>/dev/null || { sudo apt-get update -qq && sudo apt-get install -y -qq python3-yaml; }
 
       - name: Build the project with tools/check
+        id: build
         if: steps.project.outputs.name != ''
         env:
           NAME: ${{ steps.project.outputs.name }}
@@ -135,6 +142,7 @@ jobs:
           code=0
           python3 tools/check --no-shell "$NAME" < /dev/null || code=$?
           echo "::$resume::"
+          echo "code=$code" >> "$GITHUB_OUTPUT"
 
           case $code in
             0) result="builds" ;;
@@ -145,3 +153,59 @@ jobs:
           echo "\`projects/$NAME/\` at \`${SHA:0:7}\` $result." >> "$GITHUB_STEP_SUMMARY"
           [ "$code" = 0 ] || echo "::error::projects/$NAME/ $result."
           exit "$code"
+
+  comment:
+    needs: project-builds
+    if: ${{ !cancelled() && needs.project-builds.outputs.code != '' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Say that the build failed, or update the comment that did
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number || inputs.pr }}
+          NAME: ${{ needs.project-builds.outputs.name }}
+          SHA: ${{ needs.project-builds.outputs.sha }}
+          CODE: ${{ needs.project-builds.outputs.code }}
+          LOG: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          export LC_ALL=C
+          # These come from the job that ran the build.
+          [[ $PR =~ ^[0-9]+$ && $NAME =~ ^[a-z0-9][a-z0-9._-]{0,62}$ && $SHA =~ ^[0-9a-f]{40}$ ]]
+          [[ $CODE =~ ^[012]$ ]] || { echo "tools/check exited $CODE: no verdict on the project."; exit 0; }
+
+          pull=$(gh api "repos/$REPO/pulls/$PR")
+          [ "$(jq -r .state <<< "$pull")" = open ] || exit 0
+          [ "$(jq -r .head.sha <<< "$pull")" = "$SHA" ] || exit 0  # a newer commit has its own run
+          login=$(jq -r .user.login <<< "$pull")
+          mention=""
+          [[ $login =~ ^[A-Za-z0-9-]+$ ]] && mention="@$login, "
+
+          marker='<!-- oss-scanner-build -->'
+          built="\`projects/$NAME/\` at \`${SHA:0:7}\`"
+          case $CODE in
+            0) body="✅ $built builds." ;;
+            1) body="### Build failed
+
+          $mention$built does not build: [log]($LOG). To reproduce it, run \`tools/check --no-shell $NAME\`.
+
+          Pushing a fix here builds it again. If the fix is in your own repository, close and reopen this pull request. This runner is smaller than the scanner's build machine, so if it ran out of time, memory or disk, please reply and say so." ;;
+            2) body="### Build check failed
+
+          $mention$built breaks the enrollment rules, which the [log]($LOG) lists. Pushing a fix here runs the check again." ;;
+          esac
+          body="$marker"$'\n'"$body"
+
+          comments=$(gh api "repos/$REPO/issues/$PR/comments" --paginate)
+          existing=$(jq -r --arg marker "$marker" \
+            '.[] | select(.user.login == "github-actions[bot]" and (.body | startswith($marker))) | .id' <<< "$comments")
+          existing=${existing%%$'\n'*}
+          if [ -n "$existing" ]; then
+            jq -n --arg body "$body" '{body: $body}' | gh api --method PATCH "repos/$REPO/issues/comments/$existing" --input - > /dev/null
+          elif [ "$CODE" != 0 ] && [ "$(jq -r .draft <<< "$pull")" = false ]; then
+            jq -n --arg body "$body" '{body: $body}' | gh api --method POST "repos/$REPO/issues/$PR/comments" --input - > /dev/null
+          fi

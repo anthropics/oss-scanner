@@ -9,8 +9,11 @@ name: "Triage"
 # It also @-mentions whoever opened the pull request when SECURITY.md mentions GitHub advisories that project.yaml
 # does not configure. For those it does: trusted-reporter.yaml.
 #
-# A second comment @-mentions them to ask about primary_contact, when it is not among the addresses in SECURITY.md or
-# in the OSS-Fuzz project. Only if the pull request adds the project, or changes its repo or primary_contact.
+# Comments of their own @-mention them when:
+#   - all or part of the project is not open source
+#   - primary_contact is not among the addresses in SECURITY.md, or not the primary contact in OSS-Fuzz
+#   - a required box of the checklist is not ticked (on a draft, once it is ready for review)
+# Only if the pull request adds the project or changes its repo; the second also if it changes primary_contact.
 #
 # pull_request_target, not pull_request: a pull request from a fork gets a read-only token, which cannot comment.
 # That makes this workflow run with the base repository's token on input from anyone, so it is split in two:
@@ -23,7 +26,7 @@ name: "Triage"
 # write access can ask for one, or for a fresh one, from the same two jobs with the same permissions:
 #   gh workflow run triage.yaml -f pr=123
 # That run checks out the branch it is started on (main, unless --ref names another): still never a pull request.
-# For many pull requests, leave a few minutes between runs. A run makes up to 30 API requests, every run in this
+# For many pull requests, leave a few minutes between runs. A run makes up to 40 API requests, every run in this
 # repository draws on the same 1,000 an hour, and a check that finds them spent says "could not be checked".
 
 # A run started by hand is listed under the number it was given, as a pull request's is under its title.
@@ -32,7 +35,7 @@ run-name: ${{ github.event.pull_request.title || format('Pull request {0}', inpu
 on:
   pull_request_target:
     # edited: the comment reports on the checklist in the description.
-    types: [opened, edited, reopened, synchronize]
+    types: [opened, edited, reopened, synchronize, ready_for_review]
   workflow_dispatch:
     inputs:
       pr:
@@ -55,7 +58,7 @@ jobs:
       pull-requests: read
     outputs:
       comment: ${{ steps.triage.outputs.comment }}
-      contact: ${{ steps.triage.outputs.contact }}
+      comments: ${{ steps.triage.outputs.comments }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1 (sha-pinned)
         with:
@@ -72,10 +75,10 @@ jobs:
           delimiter="triage-$(openssl rand -hex 16)"
           {
             echo "comment<<$delimiter"
-            python3 .github/scripts/triage.py --repo "$REPO" --pr "$PR" --contact-comment "$RUNNER_TEMP/contact"
+            python3 .github/scripts/triage.py --repo "$REPO" --pr "$PR" --comments "$RUNNER_TEMP/comments"
             echo "$delimiter"
             # One line of ASCII: JSON escapes line breaks, so no text in it can end the output early.
-            echo "contact=$(cat "$RUNNER_TEMP/contact")"
+            echo "comments=$(cat "$RUNNER_TEMP/comments")"
           } >> "$GITHUB_OUTPUT"
 
   comment:
@@ -92,13 +95,16 @@ jobs:
           REPO: ${{ github.repository }}
           PR: ${{ github.event.pull_request.number || inputs.pr }}
           COMMENT: ${{ needs.gather.outputs.comment }}
-          CONTACT: ${{ needs.gather.outputs.contact }}
+          COMMENTS: ${{ needs.gather.outputs.comments }}
         run: |
+          set -euo pipefail
           # post <marker> <body> <true to post it if it is not there yet>
           post() {
             # Other workflows also comment as github-actions[bot]; ours is the one that starts with the marker.
-            existing=$(gh api "repos/$REPO/issues/$PR/comments" --paginate \
-              --jq ".[] | select(.user.login == \"github-actions[bot]\" and (.body | startswith(\"$1\"))) | .id")
+            local all existing
+            all=$(gh api "repos/$REPO/issues/$PR/comments" --paginate)
+            existing=$(jq -r --arg marker "$1" \
+              '.[] | select(.user.login == "github-actions[bot]" and (.body | startswith($marker))) | .id' <<< "$all")
             existing=${existing%%$'\n'*}
             if [ -n "$existing" ]; then
               jq -n --arg body "$2" '{body: $body}' | gh api --method PATCH "repos/$REPO/issues/comments/$existing" --input - > /dev/null
@@ -108,8 +114,10 @@ jobs:
           }
 
           post '<!-- oss-scanner-triage -->' "$COMMENT" true
-          if [ -n "$CONTACT" ]; then
-            body=$(jq -r .body <<< "$CONTACT")
-            question=$(jq -r .question <<< "$CONTACT")
-            post '<!-- oss-scanner-contact -->' "$body" "$question"
-          fi
+          count=$(jq length <<< "${COMMENTS:-[]}")
+          for ((i = 0; i < count; i++)); do
+            marker=$(jq -r ".[$i].marker" <<< "$COMMENTS")
+            body=$(jq -r ".[$i].body" <<< "$COMMENTS")
+            question=$(jq -r ".[$i].question" <<< "$COMMENTS")
+            post "$marker" "$body" "$question"
+          done
