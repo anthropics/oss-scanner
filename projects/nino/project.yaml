@@ -1,0 +1,12 @@
+repo: https://github.com/JasonXuDeveloper/Nino
+primary_contact: jason@xgamedev.net
+homepage: https://nino.xgamedev.net
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
+report_guidelines: .oss-scanner/report_guidelines.md
+patch_guidelines: .oss-scanner/patch_guidelines.md
+output_format:
+  email:
+    min_severity: low
+  github_security_advisory:
+    min_severity: medium
