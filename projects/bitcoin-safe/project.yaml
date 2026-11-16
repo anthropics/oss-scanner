@@ -1,0 +1,19 @@
+# Bitcoin Safe — desktop application for coordinating cold-storage Bitcoin wallets.
+# This file, Dockerfile and all four scanner guidance files live together
+# in anthropics/oss-scanner/projects/bitcoin-safe/.
+# No dockerfile / threat_model / report_guidelines / patch_guidelines path keys
+# are needed because those files are placed directly next to project.yaml.
+
+repo: https://github.com/andreasgriffin/bitcoin-safe
+primary_contact: andreasgriffin@proton.me
+homepage: https://bitcoin-safe.org/
+
+# Deliver reports at every severity by email; do not create GitHub advisories.
+output_format:
+  email:
+    min_severity: low
+  github_security_advisory:
+    min_severity: none
+
+# Activate after enrollment is accepted.
+disabled: false
