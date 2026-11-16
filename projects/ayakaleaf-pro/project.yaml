@@ -1,4 +1,9 @@
 repo: https://github.com/ayaka-notes/ayakaleaf-pro#server-pro
 primary_contact: ayaka@outlook.in
 homepage: https://ayakaleaf-pro.ayaka.space
+output_format:
+  email:
+    min_severity: low
+  github_security_advisory:
+    min_severity: low
 disabled: false
