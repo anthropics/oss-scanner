@@ -24,13 +24,20 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 	python3-pip \
 	python3-setuptools \
 	python3-wheel \
+	selinux-policy-dev \
 	&& rm -rf /var/lib/apt/lists/*
 
 # scanner contract: the checkout lives inside the image, at /src
 COPY . /src
 WORKDIR /src
 
+# Build and install everything.
 RUN make -k DEBUG=1 LSPP_PRIV=y DESTDIR=/src/build install install-pywrap
 
-# Smoke-test
-RUN make -k DESTDIR=/src/build -C libsepol test
+# Run tests as an unprivileged user, matching upstream CI: several test
+# expectations assert DAC mode-bit semantics that do not hold for uid 0.
+RUN useradd -m scanner && chown -R scanner:scanner /src
+USER scanner
+
+# Run the tests once
+RUN DESTDIR=/src/build ./scripts/env_use_destdir make -k test
