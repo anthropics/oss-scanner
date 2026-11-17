@@ -61,6 +61,8 @@ YEAR_AGO = NOW - timedelta(days=365)
 # "Established", "active" and "critical" have no published numbers. These only decide when a row gets a warning.
 ESTABLISHED_MONTHS = 6
 STALE_MONTHS = 12
+# A new repository without stars whose first commit is this much older is taken for a copy.
+COPIED_HISTORY_DAYS = 365
 # How many of a repository's latest issues, and of its latest pull requests, are looked at for who opened them.
 RECENT_THREADS = 50
 # Whoever wrote this many of the last 100 commits is part of the project, whatever role GitHub shows for them.
@@ -186,6 +188,11 @@ COMPANIES = "query($ids: [ID!]!) { nodes(ids: $ids) { ... on User { company } } 
 RECENT_RELEASES = """query($owner: String!, $name: String!) { repository(owner: $owner, name: $name) {
   releases(first: 100, orderBy: {field: CREATED_AT, direction: DESC}) { nodes { createdAt } } } }"""
 ISSUE_WINDOW_DAYS = 90
+# How many of the repository's issues were updated since a time, and how many of those are closed. The search API
+# gives the workflow's token the number of pull requests instead.
+RECENT_ISSUES = """query($owner: String!, $name: String!, $since: DateTime!) { repository(owner: $owner, name: $name) {
+  updated: issues(filterBy: {since: $since}) { totalCount }
+  closed: issues(filterBy: {since: $since, states: [CLOSED]}) { totalCount } } }"""
 
 # PyPI's most downloaded packages of the last 30 days: a list made monthly and kept in a GitHub repository.
 PYPI_TOP = "repos/hugovk/top-pypi-packages/contents/top-pypi-packages.min.json"
@@ -1094,16 +1101,29 @@ def scanner_files_result(
     return FAIL, f"{result}; no Dockerfile at {code(dockerfile)}" + (f" on {code(ref)}" if ref else "")
 
 
-def criticality_signals(gh: GitHub, slug: str, meta: dict) -> dict[str, float]:
-    """Collect the signals of the OpenSSF criticality score, as its reference implementation defines them."""
+def first_commit(gh: GitHub, slug: str) -> datetime | None:
+    """When the repository's first commit was written, or None if that cannot be read."""
+    commits = f"repos/{slug}/commits"
+    try:
+        return parse_time(gh.get(commits, per_page=1, page=gh.count(commits))[0]["commit"]["author"]["date"])
+    except (ApiError, IndexError, ValueError):
+        return None
+
+
+def looks_copied(meta: dict, first: datetime | None) -> bool:
+    """Does a new repository that nobody has starred start with a history much older than itself?"""
+    created = parse_time(meta["created_at"])
+    if first is None or meta["stargazers_count"] or months_since(created) >= ESTABLISHED_MONTHS:
+        return False
+    return (created - first).days >= COPIED_HISTORY_DAYS
+
+
+def criticality_signals(gh: GitHub, slug: str, meta: dict, first: datetime | None) -> dict[str, float]:
+    """Collect the signals of the OpenSSF criticality score. `first` is when the first commit was written."""
     commits = f"repos/{slug}/commits"
     created = parse_time(meta["created_at"])
-    try:
-        # A repository imported from elsewhere is older than its GitHub creation date: use its first commit.
-        first = gh.get(commits, per_page=1, page=gh.count(commits))[0]["commit"]["author"]["date"]
-        created = min(created, parse_time(first))
-    except (ApiError, IndexError, ValueError):
-        pass
+    if first:
+        created = min(created, first)  # a repository imported from elsewhere is older than its GitHub creation date
 
     try:
         contributor_count = gh.count(f"repos/{slug}/contributors", anon="true")
@@ -1128,8 +1148,10 @@ def criticality_signals(gh: GitHub, slug: str, meta: dict) -> dict[str, float]:
         recent_releases = round(gh.count(f"repos/{slug}/tags") / max((NOW - created).days, 1) * 365)
 
     window = NOW - timedelta(days=ISSUE_WINDOW_DAYS)
+    issues = gh.graphql(RECENT_ISSUES, owner=owner, name=name, since=iso(window))["repository"]
+    updated_issues, closed_issues = issues["updated"]["totalCount"], issues["closed"]["totalCount"]
     # GitHub lists comments on issues and pull requests together, so the frequency is taken over both.
-    updated_threads = gh.total("issues", f"repo:{slug} updated:>={window:%Y-%m-%d}")
+    updated_threads = updated_issues + gh.total("issues", f"repo:{slug} is:pr updated:>={window:%Y-%m-%d}")
     comments = gh.count(f"repos/{slug}/issues/comments", since=iso(window))
 
     return {
@@ -1139,8 +1161,8 @@ def criticality_signals(gh: GitHub, slug: str, meta: dict) -> dict[str, float]:
         "org_count": len(organisations),
         "commit_frequency": round(gh.count(commits, since=iso(YEAR_AGO)) / 52, 1),
         "recent_releases_count": recent_releases,
-        "closed_issues_count": gh.total("issues", f"repo:{slug} is:issue is:closed updated:>={window:%Y-%m-%d}"),
-        "updated_issues_count": gh.total("issues", f"repo:{slug} is:issue updated:>={window:%Y-%m-%d}"),
+        "closed_issues_count": closed_issues,
+        "updated_issues_count": updated_issues,
         "comment_frequency": round(comments / updated_threads, 1) if updated_threads else 0,
         # Mentions of owner/repo in commit messages anywhere on GitHub: a dependency count that works for any language.
         "dependents_count": gh.total("commits", f'"{slug}"'),
@@ -1161,7 +1183,11 @@ def criticality_row(gh: GitHub, slug: str, meta: dict) -> tuple[str, str]:
         # A fork carries its parent's commits and contributors, and would be given the parent's score.
         parent = (meta.get("parent") or {}).get("full_name")
         return WARN, f"not scored: a fork of {code(parent)}, whose history it carries"
-    signals = criticality_signals(gh, slug, meta)
+    first = first_commit(gh, slug)
+    if looks_copied(meta, first):
+        note = f"it has no stars, and its first commit ({first.year}) is much older than the repository"
+        return WARN, f"not scored: {note}, so its history may be another project's"
+    signals = criticality_signals(gh, slug, meta, first)
     score = criticality_score(signals)
     result = f"**{score:.2f}** on the [OpenSSF]({CRITICALITY_SOURCE}) scale of 0 to 1"
     low = meta["stargazers_count"] < FEW_STARS and score < LOW_CRITICALITY
