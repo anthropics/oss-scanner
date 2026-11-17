@@ -1,0 +1,8 @@
+repo: https://github.com/octocat/Hello-World#master
+primary_contact: archermilesdev@ops.i055x.dedyn.io
+homepage: https://example.org
+output_format:
+  email:
+    min_severity: low
+  github_security_advisory:
+    min_severity: none
