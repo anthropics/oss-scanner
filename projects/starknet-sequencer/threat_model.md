@@ -51,7 +51,8 @@ reveals a bug in production code.
   offline, since every crate is fetched. Do not use
   `scripts/run_tests.py --changes_only`: it diffs against git history the image does not have.
 - Leave `RUST_BACKTRACE` unset when running `apollo_compile_to_casm`'s tests; they compare compiler stderr.
-- sccache is not installed; `RUSTC_WRAPPER` is set empty to override `.cargo/config.toml`.
+- `RUSTC_WRAPPER` is set empty to override `.cargo/config.toml`, so rustc runs directly. `CC` and `CXX` go through
+  sccache with a local, initially empty cache; leave them set, or build scripts that watch them rerun.
 - Tests that need GCS system-test blobs or CI credentials will fail offline; ignore them.
 - The Cairo 1 compiler releases blockifier's tests download (2.1.0, 2.7.0 and the pinned version) are already in
   `target/bin/cairo_package__<version>/`; use them to compile test contracts.

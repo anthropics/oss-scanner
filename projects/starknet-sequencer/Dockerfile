@@ -27,10 +27,15 @@ ENV PATH=${CARGO_HOME}/bin:$PATH \
     MLIR_SYS_190_PREFIX=/usr/lib/llvm-19/ \
     TABLEGEN_190_PREFIX=/usr/lib/llvm-19/
 
-# cargo-nextest, at the version scripts/install_cargo_tools.sh pins; CI's run_tests.py runs tests with it.
+# cargo-nextest and sccache, at the versions scripts/install_cargo_tools.sh pins; CI's run_tests.py runs tests with
+# nextest.
 ARG NEXTEST_VERSION=0.9.113
+ARG SCCACHE_VERSION=0.14.0
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal --default-toolchain none \
-    && curl -fsSL "https://get.nexte.st/${NEXTEST_VERSION}/linux" | tar -xzf - -C "${CARGO_HOME}/bin"
+    && curl -fsSL "https://get.nexte.st/${NEXTEST_VERSION}/linux" | tar -xzf - -C "${CARGO_HOME}/bin" \
+    && sccache_release="sccache-v${SCCACHE_VERSION}-x86_64-unknown-linux-musl" \
+    && curl -fsSL "https://github.com/mozilla/sccache/releases/download/v${SCCACHE_VERSION}/${sccache_release}.tar.gz" \
+       | tar -xzf - -C "${CARGO_HOME}/bin" --strip-components=1 "${sccache_release}/sccache"
 
 # scanner contract: the checkout lives inside the image, at /src
 COPY . /src
@@ -41,9 +46,14 @@ RUN scripts/install_llvm19.sh \
     && rustup toolchain install \
     && cargo --version && cargo nextest --version
 
-# .cargo/config.toml routes rustc through sccache, which this image leaves out.
+# .cargo/config.toml routes rustc through sccache; this image compiles Rust directly and caches only C and C++. The
+# node build and the test build resolve features differently, so RocksDB's C++ sources (rust-librocksdb-sys) compile
+# once in each, and the second time is served from the cache.
 ENV RUSTC_WRAPPER= \
-    CARGO_BUILD_RUSTC_WRAPPER=
+    CARGO_BUILD_RUSTC_WRAPPER= \
+    CC="sccache cc" \
+    CXX="sccache c++" \
+    SCCACHE_DIR=/var/tmp/sccache
 
 # The starknet-sierra-compile binary apollo_compile_to_casm runs, at the version the repository pins, where it looks
 # for it ($CARGO_TOOLS_ROOT).
@@ -97,7 +107,9 @@ ENV SCAN_PACKAGES="-p starknet_api -p blockifier -p apollo_gateway -p apollo_htt
 -p apollo_consensus_orchestrator -p apollo_network -p apollo_protobuf -p apollo_p2p_sync -p apollo_rpc \
 -p apollo_storage -p starknet_committer -p starknet_patricia"
 RUN cargo build --locked --bin apollo_node \
-    && cargo nextest run --locked --no-run ${SCAN_PACKAGES}
+    && cargo nextest run --locked --no-run ${SCAN_PACKAGES} \
+    && sccache --show-stats \
+    && (sccache --stop-server || true) && rm -rf "${SCCACHE_DIR}"
 
 # Run a few fast, self-contained crates' tests so the log shows the image works, without letting a failure (or a test
 # that needs the Internet or CI credentials) abort the build. Same package set as above, so nothing is rebuilt.
