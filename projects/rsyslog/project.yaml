@@ -1,0 +1,8 @@
+repo: https://github.com/rsyslog/rsyslog#main
+primary_contact: rgerhards@adiscon.com
+homepage: https://www.rsyslog.com
+output_format:
+  email:
+    min_severity: low
+  github_security_advisory:
+    min_severity: none
