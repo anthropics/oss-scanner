@@ -1,0 +1,9 @@
+repo: https://github.com/LFDT-Permissioned-Privacy-Control/permissioned-privacy-control#main
+primary_contact: security@gateway.fm
+homepage: https://lfdt-permissioned-privacy-control.github.io/permissioned-privacy-control/
+output_format:
+  email:
+    min_severity: low
+  github_security_advisory:
+    min_severity: none
+disabled: false
