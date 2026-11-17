@@ -6903,6 +6903,14 @@
       "created_at": "2026-11-17T14:32:05Z",
       "repoId": 1410719150,
       "pullRequestNo": 1528
+    },
+    {
+      "name": "rgerhards",
+      "id": 1482123,
+      "comment_id": 6954632947,
+      "created_at": "2026-11-17T16:47:41Z",
+      "repoId": 1410719150,
+      "pullRequestNo": 1532
     }
   ]
 }
