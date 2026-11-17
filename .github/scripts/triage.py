@@ -61,7 +61,7 @@ YEAR_AGO = NOW - timedelta(days=365)
 # "Established", "active" and "critical" have no published numbers. These only decide when a row gets a warning.
 ESTABLISHED_MONTHS = 6
 STALE_MONTHS = 12
-# A new repository without stars whose first commit is this much older is taken for a copy.
+# A new repository with few stars whose first commit is this much older is taken for a copy.
 COPIED_HISTORY_DAYS = 365
 # How many of a repository's latest issues, and of its latest pull requests, are looked at for who opened them.
 RECENT_THREADS = 50
@@ -1111,9 +1111,9 @@ def first_commit(gh: GitHub, slug: str) -> datetime | None:
 
 
 def looks_copied(meta: dict, first: datetime | None) -> bool:
-    """Does a new repository that nobody has starred start with a history much older than itself?"""
+    """Does a new repository with few stars start with a history much older than itself?"""
     created = parse_time(meta["created_at"])
-    if first is None or meta["stargazers_count"] or months_since(created) >= ESTABLISHED_MONTHS:
+    if first is None or meta["stargazers_count"] >= FEW_STARS or months_since(created) >= ESTABLISHED_MONTHS:
         return False
     return (created - first).days >= COPIED_HISTORY_DAYS
 
@@ -1185,7 +1185,7 @@ def criticality_row(gh: GitHub, slug: str, meta: dict) -> tuple[str, str]:
         return WARN, f"not scored: a fork of {code(parent)}, whose history it carries"
     first = first_commit(gh, slug)
     if looks_copied(meta, first):
-        note = f"it has no stars, and its first commit ({first.year}) is much older than the repository"
+        note = f"it has under {FEW_STARS} stars, and its first commit ({first.year}) is much older than the repository"
         return WARN, f"not scored: {note}, so its history may be another project's"
     signals = criticality_signals(gh, slug, meta, first)
     score = criticality_score(signals)
