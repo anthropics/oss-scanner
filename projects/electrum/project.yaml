@@ -1,0 +1,21 @@
+# OSS Scanner enrolment for Electrum. Schema: templates/project.yaml.
+repo: https://github.com/spesmilo/electrum#master
+
+# Build problems and questions go here.
+primary_contact: somber.night@protonmail.com
+
+homepage: https://electrum.org
+
+# Critical findings only, filed through GitHub private vulnerability reporting on spesmilo/electrum
+# (the reporting channel SECURITY.md prefers). No reports by email.
+output_format:
+  email:
+    min_severity: none
+  github_security_advisory:
+    min_severity: critical
+
+disabled: false
+
+# Kept in the Electrum repository, so they can change without a pull request here.
+dockerfile: contrib/ci/llm_scanning/.oss-scanner/Dockerfile
+threat_model: contrib/ci/llm_scanning/threat_model.md
