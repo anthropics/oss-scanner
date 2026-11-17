@@ -44,7 +44,7 @@ The package lists are starting points, not limits; follow the code wherever it l
 - Behavior on Java versions other than 17, the only supported runtime.
 - Losing **your own** funds through an action the specification says is unsupported. Losing funds through a **supported** peg-in or peg-out format (per the RSKIPs in force) is in scope.
 - Breaks of the underlying cryptographic primitives. Gas-price or fee-market opinions, MEV and ordinary front-running, unless they cause one of the impacts under Severity.
-- Legacy behavior that applies only below the current mainnet height and is kept for historical replay.
+- Legacy behavior kept only to replay historical blocks: code that runs only below the mainnet activation height of an upgrade in `config/main.conf`. Exception: mainnet may not have reached the height of the newest upgrade with a set height yet, so treat that upgrade's pre-activation code as live.
 
 ## How to exercise it
 
@@ -76,7 +76,7 @@ The package lists are starting points, not limits; follow the code wherever it l
 Rate **Impact × Likelihood**: take the impact tier from the outcome, then adjust it for likelihood. Maintainers set the final severity.
 
 **Impact**
-- **Critical:** theft or permanent loss of USD 100,000 or more, counting repeats within a few hours. Smaller amounts rate lower in proportion, down to Info for trivial amounts. Network-wide crash or halt spread by relayed blocks or transactions.
+- **Critical:** theft or permanent loss of USD 100,000 or more, counting repeats within a few hours. With no live price available, count 1 BTC (or RBTC) as USD 85,000. Smaller amounts rate lower in proportion, down to Info for trivial amounts. Network-wide crash or halt spread by relayed blocks or transactions.
 - **High:** permanent freeze of funds; protocol-wide halt of peg-in, peg-out or migration that needs a hard fork to recover; consensus split among honest, up-to-date mainnet nodes.
 - **Medium:** temporary freeze of funds or halt of the peg; remote crash, wedge or eclipse of targeted nodes, including miners and federators; a VM bug that bypasses a contract's protections, such as access control.
 - **Low:** only the attacker's own funds; node-local degradation that heals itself; DoS of an RPC node.

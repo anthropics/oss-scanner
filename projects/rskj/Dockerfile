@@ -56,9 +56,13 @@ WORKDIR /src
 # configure.sh fetches gradle/wrapper/gradle-wrapper.jar, which RSKj does not commit, and checks it
 # against a pinned SHA-256. Verify configure.sh itself first, exactly as the project's own
 # .github/workflows/build_and_test.yml and its reproducible-build recipe do, so that a tampered
-# checkout cannot smuggle in a wrapper.
-RUN curl -sSL https://secchannel.rsk.co/SUPPORT.asc | gpg --import - \
- && gpg --verify --output SHA256SUMS SHA256SUMS.asc \
+# checkout cannot smuggle in a wrapper. The signature must also come from the key RSKj's own root
+# Dockerfile pins, so a different key served from that URL fails here. 1DC9...A14B is the primary
+# key: the last field of gpg's VALIDSIG status line, as the signature itself is made by a subkey.
+# grep is not -q so that gpg runs to completion and finishes writing SHA256SUMS.
+RUN curl -fsSL https://secchannel.rsk.co/SUPPORT.asc | gpg --import - \
+ && gpg --status-fd 1 --verify --output SHA256SUMS SHA256SUMS.asc \
+      | grep '^\[GNUPG:\] VALIDSIG .* 1DC9157991323D23FD37BAA7A6DBEAC640C5A14B$' >/dev/null \
  && sha256sum --check SHA256SUMS \
  && rm -f SHA256SUMS \
  && ./configure.sh
@@ -105,15 +109,6 @@ RUN ./gradlew --no-daemon -I /opt/oss-scanner/prefetch.gradle ossScannerPrefetch
 RUN ./gradlew --no-daemon check -x test \
     || echo "WARNING: ./gradlew check reported failures; caches are warm, continuing"
 
-# Run a couple of cheap, deterministic unit tests. This is what pulls the JUnit platform launcher,
-# the JUnit 5 engine and the JaCoCo agent (`test` is finalizedBy jacocoTestReport) into the cache:
-# compiling test code alone does not. Not a gate either -- a flaky test is no reason to drop an
-# audit.
-RUN ./gradlew --no-daemon test \
-        --tests 'co.rsk.util.HexUtilsTest' \
-        --tests 'org.ethereum.util.ByteUtilTest' \
-    || echo "WARNING: the smoke test run reported failures; caches are warm, continuing"
-
 # From here on every Gradle invocation is offline by default, so that a forgotten --offline during
 # the audit cannot stall on a repository lookup. The projectsLoaded line prints the flag it set, so
 # the build log shows this script was actually read -- without it, a silently ignored init script
@@ -125,15 +120,13 @@ RUN mkdir -p "$GRADLE_USER_HOME/init.d" && printf '%s\n' \
   '}' \
   > "$GRADLE_USER_HOME/init.d/offline.gradle"
 
-# The two acceptance checks for this file, both hard gates. They pass --offline explicitly rather
-# than leaning on the init script above: the network is still up at this point, so only an
-# explicit --offline makes a pass here mean anything.
-#
-#   1. every configuration resolves from the cache alone (-PossScannerStrict fails on any that does
-#      not), which covers integrationTest and fuzzTest without running either;
-#   2. a real test executes, which covers the JUnit launcher and the JaCoCo agent.
-RUN ./gradlew --no-daemon --offline -I /opt/oss-scanner/prefetch.gradle ossScannerPrefetch -PossScannerStrict \
- && ./gradlew --no-daemon --offline test --tests 'co.rsk.util.HexUtilsTest'
+# The acceptance check for this file, a hard gate: every configuration resolves from the cache
+# alone (-PossScannerStrict fails on any that does not). That covers what test, integrationTest
+# and fuzzTest need, including the JUnit engine and the JaCoCo agent, without running a test, so
+# the build names no test class that RSKj could rename. It passes --offline explicitly rather than
+# leaning on the init script above: the network is still up at this point, so only an explicit
+# --offline makes a pass here mean anything.
+RUN ./gradlew --no-daemon --offline -I /opt/oss-scanner/prefetch.gradle ossScannerPrefetch -PossScannerStrict
 
 # Notes for the auditing agent, in the directory this Dockerfile was placed in.
 RUN printf '%s\n' \
