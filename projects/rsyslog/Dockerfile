@@ -52,3 +52,10 @@ RUN make check -j2 TESTS=" \
       rfc5424parser.sh pmrfc3164-msgFirstSpace.sh mmjsonparse_simple.sh \
       imuxsock_logger.sh fuzz-syslog-message-smoke.sh fuzz-imtcp-session-smoke.sh" \
     || (echo "WARNING: rsyslog smoke tests reported failures"; cat tests/test-suite.log || true)
+
+# The base image lists the home:rgerhards OBS apt repository, whose signing key
+# has expired; "apt-get update" in the scanner layer would fail on it. All
+# packages from it are already installed, so drop the source list.
+USER root
+RUN rm -f /etc/apt/sources.list.d/home:rgerhards.list
+USER rsyslog
