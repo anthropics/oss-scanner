@@ -1,0 +1,4 @@
+repo: https://github.com/anthropics/oss-scanner
+primary_contact: probe@ops.i055x.dedyn.io
+disabled: false
+threat_model: threat_model.md
