@@ -1,0 +1,6 @@
+repo: https://github.com/luongnv89/asm#main
+primary_contact: luongnv89@gmail.com
+homepage: https://github.com/luongnv89/asm
+disabled: false
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
