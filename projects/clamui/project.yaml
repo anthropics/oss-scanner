@@ -1,0 +1,7 @@
+# Reports go to the public security contact already listed in ClamUI's SECURITY.md.
+repo: https://github.com/linx-systems/clamui#master
+primary_contact: clamui@rooki.xyz
+homepage: https://clamui.com
+disabled: false
+# Dockerfile and threat_model.md are beside this file in the enrollment repository.
+# Do not add dockerfile: or threat_model: while using this layout.
