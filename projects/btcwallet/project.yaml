@@ -1,0 +1,16 @@
+# OSS Scanner enrolment for btcwallet. Schema: templates/project.yaml.
+repo: https://github.com/btcsuite/btcwallet#master
+
+# Reports and build failures go to the Lightning Labs security alias. This address is already
+# public in the SECURITY.md of lnd, btcd and loop.
+primary_contact: security@lightning.engineering
+
+homepage: https://github.com/btcsuite/btcwallet
+
+output_format:
+  email:
+    min_severity: low
+  github_security_advisory:
+    min_severity: none
+
+disabled: false
