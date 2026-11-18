@@ -1,0 +1,10 @@
+# iPlusMES: an open-source Manufacturing Execution System (MES, .NET 10/C#)
+# built on the iplus-framework. The MES application code audited by the
+# scanner lives in this repository; the framework it builds against is its
+# dependency at github.com/iplus-framework/iPlus.
+
+repo: https://github.com/iplus-framework/iPlusMES#main
+primary_contact: damir.lisak@live.de
+homepage: https://iplus-framework.com
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
