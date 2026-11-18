@@ -1,0 +1,5 @@
+# laravolt/avatar: initials-based avatar generator for PHP and Laravel (PNG data URI, SVG, image files, Gravatar URL).
+repo: https://github.com/laravolt/avatar#master
+primary_contact: q@laravolt.dev
+homepage: https://github.com/laravolt/avatar
+disabled: false
