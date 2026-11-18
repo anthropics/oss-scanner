@@ -1,0 +1,14 @@
+repo: https://github.com/arc53/DocsGPT
+primary_contact: security@arc53.com
+homepage: https://www.docsgpt.cloud/
+
+output_format:
+  email:
+    min_severity: low
+  github_security_advisory:
+    min_severity: none
+
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .github/THREAT_MODEL.md
+report_guidelines: .oss-scanner/report_guidelines.md
+patch_guidelines: .oss-scanner/patch_guidelines.md
