@@ -1,0 +1,20 @@
+repo: https://github.com/ghuntley/overalls
+primary_contact: ghuntley@mail.grokbot.com
+homepage: https://overalls.dev
+pgp: |
+  -----BEGIN PGP PUBLIC KEY BLOCK-----
+
+  mDMEatJCrxYJKwYBBAHaRw8BAQdAGB+tuFpzF0NDi3TZxtxl1PC8sDVWGqqSfXZD
+  7Za9evi0JUdsYXNzd2luZyA8Z2h1bnRsZXlAbWFpbC5ncm9rYm90LmNvbT6IkAQT
+  FgoAOBYhBCxU0v89RIQIVKskZ0eLZ3sYWsU+BQJq0kKvAhsDBQsJCAcCBhUKCQgL
+  AgQWAgMBAh4BAheAAAoJEEeLZ3sYWsU+R/0A/RCsZgiuGgkizl5UBYaOB1Cdwyhf
+  O/SkxtXlNXilNxGRAP9GUy6gQqpFY87xGOxNiJgeSRevsALJRf1CcUVq1o4jAbg4
+  BGrSQq8SCisGAQQBl1UBBQEBB0D2aR+ieiRxWR8D+rpz6LMvxj+HwAkUsa7dpsiS
+  BXOAagMBCAeIeAQYFgoAIBYhBCxU0v89RIQIVKskZ0eLZ3sYWsU+BQJq0kKvAhsM
+  AAoJEEeLZ3sYWsU+NZgA/AqiKVdgAIiSgjXAFOOzRbdlosgZIrupmSzZ5vWqF2w3
+  AQCxVQ1uvY3Wgs241obINzuNUOIJaLjmyT3opfCjSdN5Dg==
+  =d1Do
+  -----END PGP PUBLIC KEY BLOCK-----
+disabled: false
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
