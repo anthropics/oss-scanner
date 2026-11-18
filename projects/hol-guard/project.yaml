@@ -1,0 +1,5 @@
+# HOL Guard: local-first runtime security for AI agents.
+repo: https://github.com/hashgraph-online/hol-guard#main
+primary_contact: security@hol.org
+homepage: https://hol.org/guard
+disabled: false
