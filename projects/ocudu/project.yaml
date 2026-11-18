@@ -1,0 +1,15 @@
+# OCUDU: open-source 5G RAN CU/DU (gNB) stack, governed under the Linux Foundation.
+repo: https://gitlab.com/ocudu/ocudu#dev
+primary_contact: security@ocudu.org
+auto_ccs:
+  - andre.puschmann@srs.io
+  - ismael.gomez@srs.io
+  - pedro.alvarez@srs.io
+  - robert.falkenberg@srs.io
+  - fabian.eckermann@srs.io
+  - francisco.paisana@srs.io
+  - alfredo.saez@srs.io
+homepage: https://ocudu.org
+disabled: false
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
