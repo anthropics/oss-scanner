@@ -1,0 +1,9 @@
+repo: https://github.com/IvanJosipovic/KubeUI
+
+primary_contact: security@kubeui.com
+
+homepage: https://KubeUI.com
+
+dockerfile: .oss-scanner/Dockerfile
+
+threat_model: .oss-scanner/threat_model.md
