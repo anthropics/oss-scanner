@@ -1,0 +1,12 @@
+# Arthur Engine: guardrails, tracing and evaluation for LLM and ML applications.
+repo: https://github.com/arthur-ai/arthur-engine#dev
+
+primary_contact: oss-security@arthur.ai
+
+homepage: https://arthur.ai
+
+disabled: false
+
+dockerfile: .oss-scanner/Dockerfile
+
+threat_model: .oss-scanner/threat_model.md
