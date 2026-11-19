@@ -1,0 +1,4 @@
+# alloy: Rust libraries for interacting with Ethereum and EVM chains (consensus types, RLP/EIP encodings, RPC types, providers, transports and signers).
+repo: https://github.com/alloy-rs/alloy#main
+primary_contact: security@tempo.xyz
+homepage: https://alloy.rs
