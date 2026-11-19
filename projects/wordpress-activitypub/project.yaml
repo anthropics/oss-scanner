@@ -1,0 +1,6 @@
+repo: https://github.com/Automattic/wordpress-activitypub#trunk
+primary_contact: security@automattic.com
+auto_ccs:
+  - matthias.pfefferle@automattic.com
+homepage: https://wordpress.org/plugins/activitypub/
+disabled: false
