@@ -1,0 +1,13 @@
+# gPTY: a Rust + Godot multi-PTY emulator with a tiling grid GUI and a public
+# JSON-RPC control surface (CLI + MCP). The Dockerfile, threat model, report
+# guidelines and patch guidelines sit next to this file, so none of the
+# corresponding keys is set here.
+repo: https://github.com/godot-pty/gpty#main
+primary_contact: gpty.dev@outlook.com
+homepage: https://gpty.dev
+output_format:
+  email:
+    min_severity: low
+  github_security_advisory:
+    min_severity: high
+disabled: false
