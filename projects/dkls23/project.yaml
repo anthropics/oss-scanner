@@ -1,0 +1,9 @@
+repo: https://github.com/silence-laboratories/dkls23#main
+primary_contact: security@silencelaboratories.com
+homepage: https://silencelaboratories.com/silent-shard
+output_format:
+  email:
+    min_severity: low
+  github_security_advisory:
+    min_severity: none
+disabled: false
