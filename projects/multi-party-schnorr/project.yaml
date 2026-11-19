@@ -1,5 +1,7 @@
 repo: https://github.com/silence-laboratories/multi-party-schnorr#main
 primary_contact: security@silencelaboratories.com
+auto_ccs:
+  - iraklis@silencelaboratories.com
 homepage: https://silencelaboratories.com
 output_format:
   email:
