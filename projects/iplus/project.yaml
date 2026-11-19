@@ -1,0 +1,8 @@
+# iplus-framework: an open-source process control and MES platform
+# (.NET 10 / C#). The scanner audits the framework code in this repository.
+
+repo: https://github.com/iplus-framework/iPlus#main
+primary_contact: damir.lisak@live.de
+homepage: https://iplus-framework.com
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
