@@ -1,5 +1,8 @@
 repo: https://github.com/silence-laboratories/dkls23#main
 primary_contact: security@silencelaboratories.com
+auto_ccs:
+  - iraklis@silencelaboratories.com
+  - leontiad@gmail.com
 homepage: https://silencelaboratories.com/silent-shard
 output_format:
   email:
