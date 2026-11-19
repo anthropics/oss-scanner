@@ -5,5 +5,8 @@ repo: https://github.com/unslothai/unsloth#main
 primary_contact: daniel@unsloth.ai
 
 homepage: https://unsloth.ai
+output_format:
+  github_security_advisory:
+    min_severity: low
 
 disabled: false

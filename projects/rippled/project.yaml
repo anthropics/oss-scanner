@@ -1,0 +1,7 @@
+# rippled / xrpld: the reference C++ server for the XRP Ledger (https://github.com/XRPLF/rippled).
+# The Dockerfile and threat_model.md for this project live next to this file in the oss-scanner repository,
+# so neither the dockerfile: nor the threat_model: key is set below.
+repo: https://github.com/XRPLF/rippled#develop
+primary_contact: bugs@ripple.com
+homepage: https://xrpl.org
+disabled: false

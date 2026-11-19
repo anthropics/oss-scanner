@@ -1,0 +1,4 @@
+repo: https://opendev.org/openstack/keystoneauth
+primary_contact: xek@redhat.com
+homepage: https://docs.openstack.org/keystoneauth/latest/
+disabled: false

@@ -1,2 +1,5 @@
 repo: https://github.com/openclaw/openclaw#main
 primary_contact: josh@openclaw.org
+output_format:
+  github_security_advisory:
+    min_severity: low

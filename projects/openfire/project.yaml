@@ -1,0 +1,5 @@
+repo: https://github.com/igniterealtime/openfire#main
+primary_contact: security@igniterealtime.org
+homepage: https://igniterealtime.org
+dockerfile: Dockerfile
+

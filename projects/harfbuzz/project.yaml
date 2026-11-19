@@ -14,3 +14,6 @@ auto_ccs:
   - kojii@chromium.org
   - fwang@igalia.com
 homepage: https://harfbuzz-world.cc
+output_format:
+  github_security_advisory:
+    min_severity: high

@@ -1,0 +1,4 @@
+repo: https://github.com/signalapp/libsignal#main
+primary_contact: oss-scanner+libsignal@signal.org
+homepage: https://signal.org
+disabled: false

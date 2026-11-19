@@ -1,0 +1,7 @@
+# VLC is a widely deployed media player and libVLC is embedded by other applications.
+# The 3.0.x maintenance branch processes many untrusted file, subtitle, playlist, and
+# network formats in native code.
+repo: https://code.videolan.org/videolan/vlc.git#3.0.x
+primary_contact: security@videolan.org
+homepage: https://www.videolan.org/vlc/
+disabled: false

@@ -1,0 +1,5 @@
+# safetensors: the tensor serialization format and its Rust and Python (PyO3) libraries.
+# The Dockerfile and threat_model.md sit next to this file, so neither key is set here.
+repo: https://github.com/safetensors/safetensors#main
+primary_contact: security@huggingface.co
+homepage: https://huggingface.co/docs/safetensors

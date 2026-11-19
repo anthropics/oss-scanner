@@ -1,0 +1,18 @@
+repo: https://github.com/bitcoin/bitcoin#master
+primary_contact: llmsecurity@bitcoincore.org
+homepage: https://bitcoincore.org
+pgp: |
+  -----BEGIN PGP PUBLIC KEY BLOCK-----
+
+  mDMEatjSkRYJKwYBBAHaRw8BAQdA/Vq38vaBW8MC4L+Eo9at7btjDXiUevQOUwYM
+  74HOIFW0P0JpdGNvaW4gQ29yZSBMTE0gc2VjdXJpdHkgcmVwb3J0cyA8bGxtc2Vj
+  dXJpdHlAYml0Y29pbmNvcmUub3JnPoiUBBMWCgA8FiEEFzJKxasKfor1XnOfpwg9
+  f24gepcFAmrY0pECGwEFCQPCZwAECwkIBwQVCgkIBRYCAwEAAh4FAheAAAoJEKcI
+  PX9uIHqXNigBAIyZt0iuwFDtX7xCEBBQLE/Xhpy+iLJV2Q7A5H6zlwaBAP9Ip4ip
+  kJUN4B7ukjQAGeg3dfkbtuC3rnqmDDiSIs6UDrg4BGrY0p0SCisGAQQBl1UBBQEB
+  B0CZ7ykd4jz29TE4ur5HRnGoKqLyt4bT1rOPV8pXijX1WwMBCAeIfgQYFgoAJhYh
+  BBcySsWrCn6K9V5zn6cIPX9uIHqXBQJq2NKdAhsMBQkDwmcAAAoJEKcIPX9uIHqX
+  0kcBAN4i7/scPxUmyZcPvFLsYRDExbcyle2ZBtKtRZDsmBH2AP9yc0fj75lFXQT4
+  yXvEvqyd2FU64JsH9cxn2v4WhLoSBA==
+  =LDif
+  -----END PGP PUBLIC KEY BLOCK-----

@@ -1,0 +1,4 @@
+repo: https://github.com/frrouting/frr
+primary_contact: security@lists.frrouting.org
+homepage: https://frrouting.org
+dockerfile: docker/ubuntu-ci/Dockerfile

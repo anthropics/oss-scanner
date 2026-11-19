@@ -1,0 +1,13 @@
+repo: https://github.com/harfbuzz/harfrust#main
+primary_contact: behdad.esfahbod@gmail.com
+auto_ccs:
+  - rsheeter@google.com
+  - colin.rofls@gmail.com
+  - cbrokaw@gmail.com
+  - grieger@google.com
+  - clupo@google.com
+  - qxliu@google.com
+homepage: https://github.com/harfbuzz/harfrust
+output_format:
+  github_security_advisory:
+    min_severity: high

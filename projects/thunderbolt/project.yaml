@@ -1,0 +1,9 @@
+repo: https://github.com/thunderbird/thunderbolt#main
+primary_contact: croth@thunderbird.net
+auto_ccs:
+  - imenezes@thunderbird.net
+  - skosman@thunderbird.net
+  - radriano@thunderbird.net
+  - jkab@thunderbird.net
+homepage: https://thunderbolt.io
+disabled: false

@@ -1,0 +1,4 @@
+repo: https://github.com/nestjs/swagger#master
+primary_contact: support@nestjs.com
+homepage: https://docs.nestjs.com/openapi/introduction
+disabled: false

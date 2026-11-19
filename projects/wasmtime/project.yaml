@@ -6,7 +6,7 @@ primary_contact: wasmtime-security@bytecodealliance.org
 
 # Optional. Additional email addresses we will CC on disclosure reports.
 # auto_ccs:
-#   - 
+#   -
 
 # Optional. The project's home page.
 homepage: https://wasmtime.dev/
@@ -18,6 +18,12 @@ homepage: https://wasmtime.dev/
 #   -----BEGIN PGP PUBLIC KEY BLOCK-----
 #   mDMEZ...
 #   -----END PGP PUBLIC KEY BLOCK-----
+
+output_format:
+  email:
+    min_severity: none
+  github_security_advisory:
+    min_severity: low
 
 # Optional. true pauses reports without removing the enrolment; false (or omitting it) enables your project.
 disabled: false

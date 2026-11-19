@@ -1,0 +1,7 @@
+# Medusa: open-source, headless commerce platform.
+repo: https://github.com/medusajs/medusa#develop
+primary_contact: security@medusajs.com
+homepage: https://medusajs.com
+disabled: false
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md

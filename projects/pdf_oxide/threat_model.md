@@ -56,3 +56,19 @@ The editor and writer take the same untrusted documents as their starting point.
   intended even when it surprises.
 - Please send reports privately to the primary contact; fixes ship with a synthetic regression
   test, never the reporter's file.
+
+## How we rate severity
+- **Critical / high:** memory-safety violations (out-of-bounds read or write, use-after-free,
+  or any bug in `unsafe` code or a codec/FFI dependency that corrupts memory) reachable from a
+  crafted PDF; signature-verification bypass (an invalid or tampered signature reported as
+  valid); remote code execution or arbitrary file read/write triggered by opening, extracting,
+  rendering or editing a document.
+- **Medium:** a crafted PDF that causes a panic, unbounded memory growth (decompression or
+  object-count bombs that bypass the documented limits), an infinite loop or stack overflow in
+  the library's default configuration; incorrect decryption or permission handling.
+- **Low:** denial of service that needs an unusually large input or is already covered by the
+  documented resource limits; wrong extraction or rendering output with no security impact;
+  issues only reachable through non-default or caller-misused APIs.
+- Without a demonstrated crash or reproducer, a suspected memory-safety issue is capped at medium.
+- A report should include a minimal PDF (or a script that builds one) and the command that
+  reproduces it. A patch with a regression test is welcome.

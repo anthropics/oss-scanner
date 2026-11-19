@@ -1,0 +1,16 @@
+# REQUIRED. The ONE git repository to scan, as an https:// URL. Optionally add #branch or #tag to pin one.
+repo: https://github.com/apache/cloudstack#main
+
+# REQUIRED. Who should we email our reports to, and use as the primary contact for questions.
+# This is the Apache CloudStack PMC private list.
+primary_contact: private@cloudstack.apache.org
+
+# Optional. The project's home page.
+homepage: https://cloudstack.apache.org
+
+# Optional. true pauses reports without removing the enrolment; false (or omitting it) enables your project.
+disabled: false
+
+# The Dockerfile is next to this file, so dockerfile: is omitted.
+# The project-wide threat model lives in the CloudStack repository.
+threat_model: THREAT_MODEL.md

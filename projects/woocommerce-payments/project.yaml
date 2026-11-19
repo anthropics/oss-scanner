@@ -1,0 +1,4 @@
+repo: https://github.com/Automattic/woocommerce-payments#develop
+primary_contact: security@automattic.com
+homepage: https://woocommerce.com/payments/
+disabled: false

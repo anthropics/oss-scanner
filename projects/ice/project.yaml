@@ -1,0 +1,13 @@
+# Ice: RPC framework (C++, C#, Java, JavaScript, Python, PHP, Ruby, Swift, MATLAB) and its services.
+# main is the development branch; fixes are cherry-picked to the release branches.
+repo: https://github.com/zeroc-ice/ice#main
+
+primary_contact: security@zeroc.com
+
+homepage: https://zeroc.com
+
+disabled: false
+
+dockerfile: .oss-scanner/Dockerfile
+
+threat_model: .oss-scanner/threat_model.md
