@@ -1,3 +1,8 @@
 repo: https://github.com/near/nearcore#master
 primary_contact: security@near.org
 homepage: https://near.org
+output_format:
+  email:
+    min_severity: low
+  github_security_advisory:
+    min_severity: low

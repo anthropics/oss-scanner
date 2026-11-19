@@ -3,3 +3,8 @@ primary_contact: security@nearone.org
 auto_ccs:
   - ricky@nearone.org
 homepage: https://borsh.io
+output_format:
+  email:
+    min_severity: low
+  github_security_advisory:
+    min_severity: low

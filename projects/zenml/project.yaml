@@ -1,0 +1,9 @@
+# The open-source ZenML framework and self-hostable server. The develop branch is where all changes land
+# before release, so scanning it catches issues before they ship.
+repo: https://github.com/zenml-io/zenml#develop
+
+primary_contact: security@zenml.io
+
+homepage: https://zenml.io
+
+disabled: false

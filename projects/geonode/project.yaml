@@ -1,0 +1,5 @@
+repo: https://github.com/GeoNode/geonode
+primary_contact: infosec@geosolutionsgroup.com
+auto_ccs:
+  - giovanni.allegri@geosolutionsgroup.com
+homepage: https://geonode.org

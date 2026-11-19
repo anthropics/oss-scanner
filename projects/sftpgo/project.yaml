@@ -1,0 +1,9 @@
+repo: https://github.com/drakkan/sftpgo#main
+primary_contact: nicola.murino@gmail.com
+disabled: false
+threat_model: SECURITY.md
+output_format:
+  email:
+    min_severity: low
+  github_security_advisory:
+    min_severity: none

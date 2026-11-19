@@ -1,0 +1,12 @@
+# ecCodes: ECMWF's library and tools to decode and encode the WMO meteorological data formats GRIB (editions 1
+# and 2) and BUFR (editions 3 and 4), plus GTS, METAR and TAF. National weather services, ECMWF, the WMO
+# Information System, Copernicus and most GRIB/BUFR software (cfgrib, xarray, pdbufr, MetPy, Magics, MIR, ...)
+# use it to read data that often comes from third parties.
+repo: https://github.com/ecmwf/eccodes
+primary_contact: eccodes-security-reports@mailbox.org
+homepage: https://github.com/ecmwf/eccodes
+output_format:
+  email:
+    min_severity: low
+  github_security_advisory:
+    min_severity: none

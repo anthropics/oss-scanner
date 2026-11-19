@@ -28,9 +28,8 @@ Untrusted:
   - lib/pdump, lib/pcapng, lib/bpf when run on packet data
   - lib/hash, lib/acl, lib/lpm, lib/fib, lib/rib, lib/member when keys come
     from packet headers (the tables themselves are trusted)
-  - software parsing in drivers/net (virtual PMDs, tunnel and ptype
-    parsing done in software, Tx prepare paths that read packet headers
-    forwarded from the network)
+  - software parsing on the Rx side of drivers/net (virtual PMDs, tunnel
+    and ptype parsing done in software)
   - cryptodev and compressdev input data: ciphertext, AAD, digests,
     compressed streams (drivers/crypto/{openssl,ipsec_mb,null,scheduler},
     drivers/compress/{isal,zlib})
@@ -47,6 +46,11 @@ Untrusted:
 * VF to PF mailbox messages when DPDK runs as the PF host
   (drivers/net/intel/ixgbe/ixgbe_pf.c, drivers/net/intel/i40e/i40e_pf.c,
   ice DCF, bnx2x vfpf). The VF may be owned by a hostile guest.
+* The memif client, when DPDK is the memif server (drivers/net/memif,
+  role=server). The client controls the shared regions, rings,
+  descriptors, region index, offset and length. A client must not be able
+  to make the server read or write outside the shared regions, return an
+  invalid mbuf, or crash or hang the server process.
 
 Trusted:
 
@@ -59,10 +63,9 @@ Trusted:
   header supplied by the host. Confidential computing (TDX, SEV-SNP) where
   the host is the adversary is out of scope.
 * The kernel: tap, af_packet, af_xdp metadata, VFIO, uio, hugetlbfs.
-* memif peers. memif is for cooperating processes that share trust; the
-  peer can write to shared regions (and to mbufs with zero-copy). Missing
-  validation of region index, offset or descriptor chain is a bug, not a
-  vulnerability.
+* The memif server, when DPDK is the memif client (role=client, the
+  default). The client has to trust the server. Missing validation of
+  what the server writes is a bug, not a vulnerability.
 * Primary and secondary processes of the same application (EAL multi
   process channel, shared hugepage memory), including dpdk-pdump,
   dpdk-dumpcap and dpdk-proc-info.
@@ -76,21 +79,123 @@ Trusted:
 
 * Data path APIs trust their arguments for performance. rx/tx burst,
   ring, mempool, mbuf, hash lookup, crypto enqueue and similar calls do not
-  validate pointers, queue ids, counts or mbuf metadata (l2_len, l3_len,
-  ol_flags, nb_segs, pkt_len vs data_len). A crash from inconsistent
-  arguments or mbuf fields supplied by the application is not a
-  vulnerability. It is in scope when DPDK itself derived the bad value from
-  packet contents (e.g. header lengths computed by rte_net_get_ptype and
-  then trusted by gso or a Tx path).
+  validate pointers, queue ids, counts or mbuf metadata; see "Mbuf
+  contract". A crash from inconsistent arguments or mbuf metadata supplied
+  by the application is not a vulnerability. It is in scope when DPDK
+  itself derived the bad value from untrusted input (e.g. header lengths
+  computed by rte_net_get_ptype, nb_segs overflowing in gro or
+  reassembly). Report it against the code that derived the value, not the
+  code that later consumed it.
 * Control path misuse (bad config, NULL where not allowed, wrong order of
   calls, invalid devargs) is a bug, not a security problem. Report these
   as ordinary bugs at LOW at most.
 
+## Mbuf contract
+
+Earlier scans blamed the consumer of an invalid mbuf instead of the code
+that produced it. Read this before reporting anything that involves an
+mbuf.
+
+Two things are distinguished:
+
+* Mbuf metadata: buf_addr, buf_len, data_off, data_len, pkt_len, nb_segs,
+  next, refcnt, pool, l2_len/l3_len/l4_len, tso_segsz, ol_flags,
+  packet_type.
+* Packet data: the bytes the metadata points to.
+
+A valid mbuf is one rte_mbuf_check() accepts: sane pool, buffer address
+and refcnt; data_off and data_off + data_len within buf_len for every
+segment; the chain has exactly nb_segs segments; pkt_len equals the sum
+of data_len.
+
+Rules:
+
+1. Received packet data is never trusted. Anything that processes
+   receive data must validate it strictly. This is where findings are
+   wanted. Examples:
+   - lib/ip_frag reassembly: fragment offset and length, overlapping and
+     duplicate fragments, total length beyond 65535, IPv6 extension
+     header chains, fragment count and nb_segs limits, table exhaustion.
+   - lib/gro: IP total length versus pkt_len, TCP data offset, sequence
+     and length arithmetic, tunnel nesting, merged pkt_len and nb_segs
+     limits.
+   - lib/net ptype and header parsing, lib/ipsec and lib/pdcp inbound,
+     lib/node, software Rx parsing in drivers.
+   Such code must handle truncated or partial headers, a header split
+   across segments, and length fields that exceed data_len or pkt_len or
+   disagree with each other. Every read must be bounded by the mbuf
+   metadata, not by what the packet claims. These libraries may trust
+   the metadata of the mbufs they are given, but nothing inside the
+   packet.
+
+2. Producers must emit valid mbufs. A driver must not return from rx
+   burst an mbuf with wrong nb_segs, pkt_len or data_len, a broken chain,
+   or data outside the buffer. The same applies to libraries that build
+   or modify mbufs: vhost dequeue, ip_frag reassembly and fragmentation,
+   gro merge, gso split, ipsec and pdcp processing.
+   - Hardware drivers may assume the device returns valid results
+     (descriptor lengths, completion entries, segment counts). An invalid
+     mbuf that needs the device or firmware to misbehave is not reported.
+   - Virtual drivers with a trusted peer (virtio, vmxnet3, netvsc, tap,
+     af_packet, af_xdp, memif in the client role) may trust the peer in
+     the same way. Only the framing the peer supplies is trusted; the
+     packet bytes still fall under rule 1.
+   - Virtual drivers with an untrusted peer (vhost facing a guest, memif
+     in the server role) must validate everything the peer supplies:
+     lengths, offsets, region and descriptor indexes, chain length. An
+     invalid mbuf or an out-of-bounds access caused by the peer is a
+     vulnerability.
+   - In any driver or library, invalid metadata caused by packet
+     contents, packet size or packet sequence is a vulnerability.
+
+3. Tx trusts the mbuf. tx burst and tx prepare may assume the mbufs they
+   are given are valid, that l2_len/l3_len/l4_len/tso_segsz describe the
+   packet, and that the headers those lengths cover are present.
+   Validation is the caller's job. A Tx path that crashes or reads out
+   of bounds on an invalid mbuf is not a vulnerability and not a finding.
+
+4. Blame the producer, never the consumer. When an invalid mbuf passes
+   from one component to another, the only defect is in the component
+   that created or corrupted it. Example: a guest makes net_vhost return
+   an mbuf with bad nb_segs or data_len, the application forwards it,
+   and net_af_xdp Tx reads out of bounds. That is one finding, against
+   vhost. af_xdp is correct and must not be reported, even though the
+   crash or ASan trace is in af_xdp. If no producer inside DPDK can be
+   identified (only the application or a trusted device or peer could
+   have created the mbuf), there is no finding.
+
+5. Offload flags. A driver should ignore ol_flags it does not support or
+   that were not enabled at configure time. An application should not
+   set them. Either side getting this wrong is a bug, not a security
+   issue. The same holds for a driver setting Rx flags (checksum good,
+   RSS hash valid, timestamp valid) incorrectly.
+
+Debug-only checks are not validation. These compile to nothing unless
+the named macro is defined, and no meson build type defines them; they
+are off in /src/build, in /src/build-asan and in production:
+
+* __rte_mbuf_sanity_check() in lib/mbuf (RTE_LIBRTE_MBUF_DEBUG)
+* Tx mbuf and offload checks in drivers (RTE_ETHDEV_DEBUG_TX)
+* RTE_ASSERT() (RTE_ENABLE_ASSERT)
+
+So:
+
+* Never conclude that an mbuf is valid at some point because
+  __rte_mbuf_sanity_check() or RTE_ASSERT() is called there. The call
+  does nothing in these builds. Do not treat such a check as a
+  mitigation when deciding whether a bug on a receive path is reachable.
+* Do not report that such a check is missing in release builds, and do
+  not report a debug-only panic as a denial of service.
+* Their absence on a Tx or consumer path is by design (rules 3 and 4).
+* rte_mbuf_check() is always compiled in; use it in a reproducer to show
+  that the mbuf was already invalid when the producer returned it.
+
 ## Components that matter most / least
 
 Highest: lib/vhost, lib/net, lib/ip_frag, lib/gro, lib/gso, lib/ipsec,
-lib/pdcp, lib/mbuf (chain handling), drivers/net/vhost, PF mailbox handlers,
-software crypto and compress drivers on the decrypt/decompress side.
+lib/pdcp, lib/mbuf (chain handling), drivers/net/vhost, drivers/net/memif
+in the server role, PF mailbox handlers, software crypto and compress
+drivers on the decrypt/decompress side.
 
 Medium: lib/node, lib/pdump, lib/pcapng, lib/bpf (interpreter and JIT on
 packet data), lib/reorder, lookup libraries on packet-derived keys, software
@@ -120,6 +225,12 @@ kernel/, out-of-tree drivers, stable branches that are end of life.
   - net_vhost + net_virtio_user over a unix socket for vhost; a hostile
     guest is best modelled with a small C program or a patched
     virtio_user that writes bad descriptors
+  - net_memif role=server with a small C program acting as a hostile
+    client
+* When a reproducer forwards between two ports (vhost Rx to another
+  driver's Tx, pcap Rx through gro to Tx), the faulting frame shows where
+  the bad mbuf was used, not where the bug is. Find the producer: call
+  rte_mbuf_check() on what rx burst or the library returned.
 * testpmd: `/src/build-asan/app/dpdk-testpmd -l 0-1 --no-huge -m 512
   --no-pci --vdev ... -- -i`; forwarding modes csum, io, rxonly; `set
   verbose 1` decodes packets via rte_net_get_ptype; `set port 0 gro on`,
@@ -145,17 +256,22 @@ must call) and whether a default build is affected.
   a remote packet in a common configuration; guest to host escape through
   vhost (write outside guest memory regions into the host process).
 * HIGH: out-of-bounds write, use-after-free or double free reachable from
-  packet data or from a guest without a demonstrated exploit; guest able to
-  read host process memory; a single packet or a guest causing crash,
-  infinite loop or livelock of a data path core; per-packet mbuf or memory
-  leak that lets a remote sender exhaust a mempool.
+  packet data, from a guest or from a memif client without a demonstrated
+  exploit; guest or memif client able to read host process memory; a
+  single packet, a guest or a memif client causing crash, infinite loop or
+  livelock of a data path core; a driver or library producing an invalid
+  mbuf (bad nb_segs, lengths or chain) from any of those sources;
+  per-packet mbuf or memory leak that lets a remote sender exhaust a
+  mempool.
 * MEDIUM: out-of-bounds read with limited disclosure; DoS that needs a
   high packet rate, non-default offloads or a rarely used library; packet
   data leaking between flows or queues; PF mailbox issues limited to the
   attacking VF.
 * LOW: anything only in examples/ or app/; control path bugs; bugs that
   need application misuse of the data path API; undefined behaviour
-  without demonstrated impact; leaks on error paths of setup code.
+  without demonstrated impact; leaks on error paths of setup code;
+  offload flag handling (a driver acting on an unsupported or not enabled
+  flag, or setting an Rx flag incorrectly).
 
 ## How we would like reports and patches
 
@@ -168,15 +284,22 @@ must call) and whether a default build is affected.
   the bug and the fix, `Fixes: <12 char sha> ("subject")` and
   `Cc: stable@dpdk.org`. Minimal, no unrelated cleanups.
 * Fix at the point where the untrusted value is first parsed rather than
-  adding checks at each use. Do not add argument checks to data path
-  functions; that is not a fix.
+  adding checks at each use. For an invalid mbuf that is the Rx driver or
+  library that produced it. Do not add argument or mbuf checks to Tx or
+  other data path functions; that is not a fix.
 * A unit test in app/test is welcome when practical.
 
 ## Anything to leave alone
 
 * Missing argument validation in data path APIs.
+* Missing validation of mbuf metadata or headers in tx burst, tx prepare
+  or any library that consumes mbufs. Report the producer of the invalid
+  mbuf only.
+* Debug-only checks (RTE_LIBRTE_MBUF_DEBUG, RTE_ETHDEV_DEBUG_TX,
+  RTE_ASSERT) being absent from release builds.
+* Requests to make drivers check offload flags per packet.
 * Bugs that need a malicious device, firmware, hypervisor, kernel, memif
-  peer or secondary process.
+  server or secondary process.
 * Hash table collision attacks on rte_hash, lookup performance under
   crafted keys, unless they cause a crash or unbounded memory use.
 * Unaligned access on x86, strict aliasing warnings, and UBSan reports

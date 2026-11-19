@@ -1,0 +1,12 @@
+repo: https://github.com/laurent22/joplin#dev
+primary_contact: oss-scanner@joplinapp.org
+homepage: https://joplinapp.org
+
+output_format:
+  email:
+    min_severity: none
+  github_security_advisory:
+    min_severity: low
+
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md

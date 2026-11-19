@@ -1,0 +1,21 @@
+# smolvm: an open-source microVM runtime that boots OCI images and packed machines in their own
+# VM and kernel on macOS, Linux and Windows, used locally and as the engine behind smol cloud.
+
+repo: https://github.com/smol-machines/smolvm#main
+
+# Lead maintainer. SECURITY.md routes reports to GitHub private vulnerability reporting, which is
+# enabled on the repository and selected below as a second channel.
+primary_contact: hebinsquared@gmail.com
+
+homepage: https://smolmachines.com
+
+output_format:
+  email:
+    min_severity: low
+  github_security_advisory:
+    min_severity: low
+
+disabled: false
+
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md

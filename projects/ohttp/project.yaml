@@ -1,0 +1,10 @@
+repo: https://github.com/martinthomson/ohttp#main
+primary_contact: mt@lowentropy.net
+auto_ccs:
+  - necko@mozilla.com
+homepage: https://github.com/martinthomson/ohttp
+disabled: false
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
+report_guidelines: .oss-scanner/report_guidelines.md
+patch_guidelines: .oss-scanner/patch_guidelines.md
