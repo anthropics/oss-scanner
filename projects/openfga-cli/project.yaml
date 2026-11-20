@@ -1,0 +1,5 @@
+# OpenFGA CLI (`fga`): command-line client to manage stores, models and tuples and to run checks and model tests against an OpenFGA server.
+# The Dockerfile and threat_model.md sit next to this file, so neither key is set here.
+repo: https://github.com/openfga/cli#main
+primary_contact: security@openfga.dev
+homepage: https://openfga.dev
