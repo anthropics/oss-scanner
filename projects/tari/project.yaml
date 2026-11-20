@@ -1,0 +1,5 @@
+# Tari: a Mimblewimble-based proof-of-work blockchain (base node, console wallet, comms/DHT p2p stack, mempool,
+# consensus). The Dockerfile and threat_model.md sit next to this file, so neither key is set here.
+repo: https://github.com/tari-project/tari#development
+primary_contact: security@tari.com
+homepage: https://tari.com
