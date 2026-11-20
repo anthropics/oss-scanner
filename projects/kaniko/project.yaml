@@ -1,0 +1,8 @@
+repo: https://github.com/osscontainertools/kaniko#main
+primary_contact: security@osscontainertools.org
+homepage: https://osscontainertools.org
+output_format:
+  email:
+    min_severity: low
+  github_security_advisory:
+    min_severity: high
