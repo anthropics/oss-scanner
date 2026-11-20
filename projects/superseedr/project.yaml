@@ -1,0 +1,6 @@
+# superseedr: a BitTorrent client (TCP/uTP peer wire, DHT, PEX, HTTP/UDP trackers, web seeds, WebTorrent) with a
+# terminal UI. The Dockerfile and threat_model.md sit next to this file, so neither key is set here.
+repo: https://github.com/Jagalite/superseedr#main
+primary_contact: jagatranvo@gmail.com
+homepage: https://github.com/Jagalite/superseedr
+disabled: false
