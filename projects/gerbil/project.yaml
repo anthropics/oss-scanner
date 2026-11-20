@@ -1,0 +1,14 @@
+# Gerbil Scheme, v0.19 development branch.
+# The live v0.19 branch is on git.cons.io; the GitHub mirror's v0.19-staging lags behind.
+repo: https://git.cons.io/mighty-gerbils/gerbil#v0.19-staging
+
+primary_contact: fahree@gmail.com
+
+auto_ccs:
+  - vyzo@hackzen.org
+
+homepage: https://cons.io
+
+disabled: false
+
+# Dockerfile and threat_model.md live next to this file, in projects/gerbil/.
