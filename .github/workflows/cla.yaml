@@ -14,6 +14,11 @@ permissions:
 
 jobs:
   CLAAssistant:
+    # Not for pull requests the maintainers open (terms.yaml has the same list), except to lock them once merged.
+    if: >-
+      github.event.action == 'closed' ||
+      !contains(fromJSON('["sb-", "punitshah", "srxzr-ant", "carlini"]'),
+      github.event.pull_request.user.login || github.event.issue.user.login)
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
