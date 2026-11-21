@@ -1,0 +1,7 @@
+# SubTrackr: self-hosted subscription tracker (Go + Gin + SQLite + HTMX).
+repo: https://github.com/bscott/subtrackr#main
+primary_contact: security@byte-mail.xyz
+homepage: https://github.com/bscott/subtrackr
+disabled: false
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
