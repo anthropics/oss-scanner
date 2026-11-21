@@ -1,0 +1,27 @@
+
+repo: https://gitlab.com/lightning-signer/validating-lightning-signer#main
+
+primary_contact: llm-security@vls.tech
+
+homepage: https://vls.tech/
+
+pgp: |
+  -----BEGIN PGP PUBLIC KEY BLOCK-----
+
+  mDMEavzxThYJKwYBBAHaRw8BAQdASxYY03tyadQfYoZHAs/z25ggymOqmnT/yVof
+  sLEGeh20J1ZMUyBPU1MgU2Nhbm5lciA8bGxtLXNlY3VyaXR5QHZscy50ZWNoPoiZ
+  BBMWCgBBFiEEN0XDmK/GIialEQzC9eSf04tdp6MFAmr88U4CGwEFCQPCZwAFCwkI
+  BwICIgIGFQoJCAsCBBYCAwECHgcCF4AACgkQ9eSf04tdp6OgOgEAiVKijssl17kR
+  ZVF+3CvbWuR3IpNPEluLlpVYbk+RwooA/3oC6aODwo4DJIMxNlQSVbiPa6ynLohq
+  R93/oRsCn/UKuDgEavzxgRIKKwYBBAGXVQEFAQEHQLdE9BSLDqyHUw3QPhd+Urod
+  bIrNulHgOTr4A7deZqUeAwEIB4h+BBgWCgAmFiEEN0XDmK/GIialEQzC9eSf04td
+  p6MFAmr88YECGwwFCQPCZwAACgkQ9eSf04tdp6OvawEAgJcTYyb9Mxb2q7SbTxZv
+  5yh5EzcLsDWN7+x80hzA2YMBAL+prtlbqIIhlGhfd4UPr5O9Mk+n1uGNmXymVyYV
+  gFgP
+  =pMSI
+  -----END PGP PUBLIC KEY BLOCK-----
+
+disabled: false
+
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
