@@ -1,0 +1,11 @@
+repo: https://github.com/solidtime-io/solidtime#main
+
+primary_contact: security@solidtime.io
+
+homepage: https://www.solidtime.io
+
+disabled: false
+
+dockerfile: .oss-scanner/Dockerfile
+
+threat_model: .oss-scanner/threat_model.md
