@@ -153,6 +153,9 @@ TLS handshake, while parsing a public key or X.509 certificate, or while decrypt
 CVE-2016-2196 (one-word overwrite in P-521 reduction), CVE-2016-2195 (heap overflow during ECC point decoding),
 and the 2026 scrypt 32-bit heap overflow advisory.
 
+**Read-only memory errors that might leak application data to a remote party.** For example a Heartbleed style issue,
+including Botan's CVE-2026-118770 (asio heap disclosure)
+
 **TLS protocol guarantee violations.** A core guarantee of the protocol fails: authentication bypass, downgrade, key
 or plaintext exposure. Examples: CVE-2026-34582 (TLS 1.3 client authentication bypass), OpenSSL's CVE-2014-0224 (CCS
 injection) as the kind of thing meant.
@@ -179,16 +182,21 @@ decoding not constant-time). Variable time on entirely public data is not a bug,
 RSA decryption first checks that the ciphertext has the right length and is in range and throws if not, and that
 early return depends only on the ciphertext and the public modulus.
 
-**Read-only memory errors** that do not obviously disclose data. A Heartbleed-style bug that returns raw memory to the
-attacker may be High depending on context. Examples: CVE-2018-9860 (over-read in TLS CBC decryption), CVE-2026-32877
-(heap over-read during SM2 decryption) both of which crashed without disclosing information.
+**Read-only memory errors** that do not obviously disclose data. Examples: CVE-2018-9860 (over-read in TLS CBC decryption),
+CVE-2026-32877 (heap over-read during SM2 decryption) both of which crashed without disclosing information.
 
 **Denial of service.** Quadratic behaviour, allocation of unbounded memory, arbitrarily large computation, an infinite
 loop, a null dereference, or a crash that seems unlikely to lead to code execution. Not included: inefficiency that is
-linear in the input (an unnecessary copy of N bytes is a cleanup, not a security issue). Examples: CVE-2026-44378
-(quadratic CPU in BER decoding), CVE-2024-34702 (excessive name constraints), CVE-2024-34703 (oversized elliptic curve
-parameters), CVE-2015-7825 (infinite loop in path validation), CVE-2015-5727 (excess allocation in BER decoder),
-CVE-2015-5726 (null dereference in BER decoder), CVE-2016-2194 (infinite loop in modular square root).
+linear in the input (an unnecessary copy of N bytes is a cleanup, not a security issue). The trigger must be somehow
+reachable from a remote party, not something that an application does to itself. For example BigInt decimal formatting
+is quadratic time, consuming significant time for integers over a million bits. This in itself is not a security issue.
+Any path by which an attacker could cause the library or a plausible application to format such an integer is a security
+issue, so do report that. Also report (as a regular bug) any code which has quadratic behavior and is not clearly
+documented as such, even if no attacker-reachable path to it can be found, since lacking the warning it would be easy to
+accidentally introduce such a path later. Examples: CVE-2026-44378 (quadratic CPU in BER decoding), CVE-2024-34702
+(excessive name constraints), CVE-2024-34703 (oversized elliptic curve parameters), CVE-2015-7825 (infinite loop in path
+validation), CVE-2015-5727 (excess allocation in BER decoder), CVE-2015-5726 (null dereference in BER decoder),
+CVE-2016-2194 (infinite loop in modular square root).
 
 ### Low
 
