@@ -1,0 +1,12 @@
+repo: https://github.com/EdouardCourty/rustle#main
+primary_contact: edouard.courty2@gmail.com
+homepage: https://github.com/EdouardCourty/rustle
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
+report_guidelines: .oss-scanner/report_guidelines.md
+patch_guidelines: .oss-scanner/patch_guidelines.md
+output_format:
+  email:
+    min_severity: low
+  github_security_advisory:
+    min_severity: medium
