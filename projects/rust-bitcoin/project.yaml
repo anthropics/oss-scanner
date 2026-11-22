@@ -1,0 +1,14 @@
+# rust-bitcoin: the Rust library for de/serialization, parsing and handling of
+# Bitcoin data structures and network messages. The Dockerfile and
+# threat_model.md sit next to this file, so no `dockerfile:` / `threat_model:`
+# keys are set.
+
+repo: https://github.com/rust-bitcoin/rust-bitcoin#master
+primary_contact: rust-bitcoin-security@wpsoftware.net
+homepage: https://github.com/rust-bitcoin/rust-bitcoin
+output_format:
+  email:
+    min_severity: low
+  github_security_advisory:
+    min_severity: none
+disabled: false

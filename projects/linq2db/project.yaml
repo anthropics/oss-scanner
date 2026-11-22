@@ -1,0 +1,11 @@
+repo: https://github.com/linq2db/linq2db#master
+primary_contact: security@linq2db.com
+homepage: https://linq2db.github.io
+output_format:
+  email:
+    min_severity: low
+  github_security_advisory:
+    min_severity: low
+disabled: false
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md

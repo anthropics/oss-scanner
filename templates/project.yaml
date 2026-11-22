@@ -42,3 +42,13 @@ dockerfile: .oss-scanner/Dockerfile
 #   - in your repository (recommended), in which case you should provide the path of the file in your repo below
 #   - in this repository, next to this file, as projects/<name>/threat_model.md, in which case you should delete the line below
 threat_model: .oss-scanner/threat_model.md
+
+# Optional, but strongly recommended: a report_guidelines.md (start from templates/report_guidelines.md) goes in one of two places:
+#   - in your repository (recommended), in which case you should uncomment the line below and set it to the path of the file in your repo
+#   - in this repository, next to this file, as projects/<name>/report_guidelines.md, in which case you should leave the line below commented out
+# report_guidelines: .oss-scanner/report_guidelines.md
+
+# Optional, but strongly recommended: a patch_guidelines.md (start from templates/patch_guidelines.md) goes in one of two places:
+#   - in your repository (recommended), in which case you should uncomment the line below and set it to the path of the file in your repo
+#   - in this repository, next to this file, as projects/<name>/patch_guidelines.md, in which case you should leave the line below commented out
+# patch_guidelines: .oss-scanner/patch_guidelines.md

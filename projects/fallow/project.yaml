@@ -1,0 +1,5 @@
+repo: https://github.com/fallow-rs/fallow#main
+primary_contact: security@fallow.tools
+homepage: https://fallow.tools
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md

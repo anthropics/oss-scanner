@@ -1,0 +1,13 @@
+repo: https://github.com/crewjam/saml#main
+primary_contact: ross@kndr.org
+homepage: https://pkg.go.dev/github.com/crewjam/saml
+output_format:
+  email:
+    min_severity: low
+  github_security_advisory:
+    min_severity: none
+disabled: false
+# These files live in the crewjam/saml repository; threat_model defaults to .oss-scanner/threat_model.md.
+dockerfile: .oss-scanner/Dockerfile
+report_guidelines: .oss-scanner/report_guidelines.md
+patch_guidelines: .oss-scanner/patch_guidelines.md

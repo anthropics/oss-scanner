@@ -1,0 +1,16 @@
+# OSS Scanner enrolment for lnd. Schema: templates/project.yaml.
+repo: https://github.com/lightningnetwork/lnd#master
+
+# Reports and build failures go to the Lightning Labs security alias. This address is already
+# public in the SECURITY.md of lnd, btcd and loop.
+primary_contact: security@lightning.engineering
+
+homepage: https://lightning.engineering
+
+output_format:
+  email:
+    min_severity: low
+  github_security_advisory:
+    min_severity: none
+
+disabled: false

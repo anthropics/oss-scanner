@@ -64,7 +64,10 @@ def load(project):
         repo=repo,
         ref=ref,
         dockerfile="" if "Dockerfile" in beside else config["dockerfile"],
-        threat_model="" if "threat_model.md" in beside else config.get("threat_model") or ".oss-scanner/threat_model.md",
+        **{
+            field: "" if f"{field}.md" in beside else config.get(field) or check_build.DEFAULT_PATHS.get(field)
+            for field in check_build.OPTIONAL_FILES
+        },
     )
 
 

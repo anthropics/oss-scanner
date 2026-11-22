@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 # Copyright 2026 Anthropic PBC
 # SPDX-License-Identifier: Apache-2.0
-"""Write the triage comment for an enrolment pull request, as Markdown on standard output.
+"""Write the triage comment for an enrolment pull request, as Markdown on standard output, and the comments that tell
+whoever opened it about its license, contact address or checklist, if there is something to say.
 
     GITHUB_TOKEN=... .github/scripts/triage.py --repo anthropics/oss-scanner --pr 123
 
@@ -10,15 +11,17 @@ does not touch projects/.
 
 The pull request is read as data through the GitHub API: nothing from it is checked out or executed, and a read-only
 token is enough. The token goes to api.github.com alone; the only other hosts contacted are pypi.org, crates.io and
-packages.ecosyste.ms (an index of the registries), which are asked about public packages. Text from the pull
-request, the enrolled repository or one of those hosts reaches the comment only through code(), so it cannot
-inject Markdown.
+packages.ecosyste.ms (an index of the registries), which are asked about public packages, and the hosts in FORGES,
+which are asked about a repository there. Text from the pull request, the enrolled repository or one of those hosts
+reaches the comment only through code(), so it cannot inject Markdown. Any other repository URL gets one row saying
+that none of its checks ran.
 
 Requires PyYAML, as tools/validate.py does.
 """
 from __future__ import annotations
 
 import argparse
+import functools
 import http.client
 import json
 import math
@@ -29,6 +32,7 @@ import sys
 import tempfile
 import time
 import traceback
+import unicodedata
 import urllib.error
 import urllib.request
 from datetime import datetime, timedelta, timezone
@@ -40,13 +44,21 @@ import validate
 
 API = "https://api.github.com"
 RAW = "application/vnd.github.raw"
+TEXT = "text/plain"  # Accept for a file from a host in FORGES: as with RAW, only its start is read
 MAX_RATE_LIMIT_WAIT = 65  # seconds
 # A larger answer is refused. A file we only search (a license, a security policy) is read up to the smaller limit.
 MAX_RESPONSE_BYTES = 16 * 1024 * 1024
 MAX_TEXT_BYTES = 256 * 1024
-# The workflow finds the comment to update by this first line.
+# The workflow finds each comment to update by its first line.
 MARKER = "<!-- oss-scanner-triage -->"
+CONTACT_MARKER = "<!-- oss-scanner-contact -->"
+LICENSE_MARKER = "<!-- oss-scanner-license -->"
+MIXED_LICENSE_MARKER = "<!-- oss-scanner-mixed-license -->"
+CHECKLIST_MARKER = "<!-- oss-scanner-checklist -->"
 CRITERIA = "https://red.anthropic.com/oss-scanner"
+OPEN_SOURCE = "[as defined by the Open Source Initiative](https://opensource.org/osd)"
+TEMPLATE = "https://github.com/anthropics/oss-scanner/blob/main/.github/PULL_REQUEST_TEMPLATE.md"
+OUTPUT_FORMAT_DOCS = "https://github.com/anthropics/oss-scanner#projectyaml"
 
 OK, WARN, FAIL, INFO = "✅", "⚠️", "❌", "ℹ️"
 NOW = datetime.now(timezone.utc)
@@ -67,11 +79,36 @@ FEW_STARS = 100
 LOW_CRITICALITY = 0.4
 
 GITHUB_REPO = re.compile(r"https://(?:www\.)?github\.com/([A-Za-z0-9_.-]+)/([A-Za-z0-9_.-]+?)(?:\.git)?/?(?:#(.+))?")
+# The other hosts whose API is read, and which API each has. A fixed list, because the URL comes from a pull request
+# and a host of its author's choosing could answer anything.
+FORGES = {
+    "gitlab.com": "gitlab",
+    "codeberg.org": "gitea",  # Codeberg runs Forgejo, which has Gitea's API
+}
+# A repository's URL on any host; Forge.at() keeps those on a host in FORGES. GitLab nests groups in groups.
+FORGE_REPO = re.compile(r"https://([a-z0-9.-]+)/((?:[A-Za-z0-9_.-]+/)+[A-Za-z0-9_.-]+?)(?:\.git)?/?(?:#(.+))?")
+# A license file at the top of a repository, read when its host cannot name the license or names one not on our list.
+LICENSE_FILE = re.compile(r"(?:[\w.-]{1,20}[._-])?(?:LICEN[CS]E|COPYING|UNLICENSE)(?:[._-][\w.-]{1,20})?", re.I | re.A)
+# GitLab's accounts for access tokens, which are bots.
+GITLAB_BOT = re.compile(r"(?:project|group)_\d+_bot\w*")
 LOGIN = re.compile(r"[A-Za-z0-9-]+")
 # These two run on text anyone can write (a description, a SECURITY.md), so nothing in them is unbounded or
 # crosses a line: a long run of one character must not make them slow.
 CHECKBOX = re.compile(r"^[ \t]*[-*][ \t]+\[([ xX])\][ \t]+(.+)$", re.MULTILINE)
+# The boxes no other check can verify, by words that descriptions keep when they reword the rest.
+REQUIRED_BOXES = {
+    "core maintainer": "I am a core maintainer of this project.",
+    "oss scanner terms": "I accept the OSS Scanner terms.",
+    "inclusion criteria": "I confirm that I believe my project meets the inclusion criteria.",
+}
 EMAIL = re.compile(r"(?<![A-Za-z0-9._%+-])[A-Za-z0-9._%+-]{1,64}@[A-Za-z0-9-]{1,63}(?:\.[A-Za-z0-9-]{1,63}){1,8}")
+# A security policy that mentions GitHub's private reporting. "GHSA-" is the id of a past advisory.
+GITHUB_REPORTING = re.compile(
+    r"/security/advisories(?!/GHSA)|private\svulnerability\sreport"
+    r"|github(?:'s)?\s(?:private\s|repository\s)?(?:security\s)?advisor"
+    r"|report\sa\svulnerability\W{0,4}button|security\W{0,3}tab|\bGHSA\b(?!-)",
+    re.IGNORECASE,
+)
 # How many OSS-Fuzz projects with a name like the repository's are read to see whether one is for it.
 OSS_FUZZ_CANDIDATES = 5
 # A GitHub repository as OSS-Fuzz's project.yaml files name it in main_repo: any scheme, often with .git.
@@ -79,8 +116,7 @@ MAIN_REPO = re.compile(r"(?:\w+://|git@)?(?:www\.)?github\.com[/:]([^/\s]+/[^/\s
 # Where GitHub looks for a repository's security policy.
 SECURITY_POLICY_PATHS = ("SECURITY.md", ".github/SECURITY.md", "docs/SECURITY.md")
 # The files we read from a project's directory, and the size above which validate.py refuses each.
-PROJECT_FILES = dict.fromkeys(validate.FILE_KEYS, validate.MAX_FILE_BYTES)
-PROJECT_FILES["project.yaml"] = validate.MAX_CONFIG_BYTES
+PROJECT_FILES = validate.FILE_LIMITS | {"project.yaml": validate.MAX_CONFIG_BYTES}
 
 # GitHub's author_association values that mark a maintainer rather than a contributor, and how the comment words them.
 ASSOCIATIONS = {
@@ -113,8 +149,52 @@ SOURCE_AVAILABLE = (
     "Confluent Community License", "Redis Source Available License", "Attribution-NonCommercial",
     "Innovation-Enabling Source Code License",
 )
+# How the text of each license on our list begins, for a host that does not name licenses (Codeberg). Matched in
+# lower case against the first lines of a license file, joined by single spaces.
+LICENSE_TITLES = (
+    (r"gnu affero general public license version 3(?![.\d])", "AGPL-3.0"),
+    (r"gnu lesser general public license version 2\.1(?![.\d])", "LGPL-2.1"),
+    (r"gnu lesser general public license version 3(?![.\d])", "LGPL-3.0"),
+    (r"gnu general public license version 2(?![.\d])", "GPL-2.0"),
+    (r"gnu general public license version 3(?![.\d])", "GPL-3.0"),
+    (r"apache license,? version 2\.0(?![.\d])", "Apache-2.0"),
+    (r"mozilla public license,? version 2\.0(?![.\d])", "MPL-2.0"),
+    (r"eclipse public license - v 2\.0(?![.\d])", "EPL-2.0"),
+    (r"boost software license - version 1\.0(?![.\d])", "BSL-1.0"),
+    (r"\bbsd 3-clause\b", "BSD-3-Clause"),
+    (r"\bbsd 2-clause\b", "BSD-2-Clause"),
+    (r"\bbsd zero clause license\b", "0BSD"),
+    (r"\bmit no attribution\b", "MIT-0"),
+    (r"\bmit license\b", "MIT"),
+    (r"\bisc license\b", "ISC"),
+    (r"\bzlib license\b", "Zlib"),
+    (r"\bpostgresql licen[cs]e\b", "PostgreSQL"),
+    (r"this is free and unencumbered software released into the public domain", "Unlicense"),
+)
 # Wording of a repository that is open source only in part, such as one with an enterprise directory.
 PARTLY_OPEN = ("Enterprise License", "proprietary license", "commercial license")
+SOURCE_AVAILABLE_NAME = "|".join(re.escape(name) for name in SOURCE_AVAILABLE)
+# The line a source-available license begins with.
+SOURCE_AVAILABLE_TITLE = re.compile(rf"\W*(?:the |creative commons )?({SOURCE_AVAILABLE_NAME})\b", re.I)
+# A license file that puts some directories or files under another license. A choice of two licenses for everything
+# does not read like this. Matched in lower case, with single spaces.
+OTHER_LICENSE_FOR_PART = re.compile(
+    r"(?<![\w-])(?:[\w.-]+/){0,4}(?:ee|enterprise)/?[\"'”’`]? (?:sub)?(?:director|folder)"
+    r"|\b(?:certain|some) (?:files|parts|portions|features)\b[^.]{0,80} licensed under"
+    rf"[^.]{{0,60}}\b(?:commercial|enterprise|proprietary|{SOURCE_AVAILABLE_NAME.lower()})"
+)
+# The directory of an enterprise edition, and what its license says.
+ENTERPRISE_DIRECTORY = re.compile(r"ee|enterprise|commercial|[\w.]+-ee|ee-[\w.]+", re.I)
+COMMERCIAL_TERMS = re.compile(
+    r"commercial license|enterprise license|proprietary license|license key|source[- ]available"
+    r"|may only be used in production|license agreement|all rights reserved", re.I,
+)
+OTHERS_CODE = {  # directories with other projects' code, or with no code that ships
+    "node_modules", "vendor", "third_party", "third-party", "thirdparty", "external", "deps", "test", "tests",
+    "testdata", "fixtures", "examples", "docs",
+}
+TEXT_FILE = re.compile(r"[^.]+(?:\.(?:md|txt|rst|enterprise|commercial))?", re.I)  # not license.py
+LICENSE_FILES_READ = 4  # at the top of a repository, and as many below it
 
 CRITICALITY_SOURCE = "https://github.com/ossf/criticality_score"
 # The signals of the OpenSSF criticality score (Rob Pike's formula), each with its (weight, threshold).
@@ -160,7 +240,7 @@ class ApiError(Exception):
 
     def __init__(self, api: str, status: int, path: str, problem: str = ""):
         super().__init__(f"{api}: {problem or status or 'no response'} for {path}")
-        self.status = status
+        self.status, self.problem = status, problem
 
 
 def retry_delay(error: urllib.error.HTTPError) -> float | None:
@@ -206,7 +286,7 @@ class Api:
     ) -> tuple[bytes, str]:
         """GET a path, or POST `body` to it. Return the response's body and its Link header. Of a file asked for
         as text, only the start is read, unless all of it is asked for with `whole`."""
-        cut = accept == RAW and not whole
+        cut = accept in (RAW, TEXT) and not whole
         limit = MAX_TEXT_BYTES if cut else MAX_RESPONSE_BYTES
         query = urlencode({key: value for key, value in params.items() if value is not None})
         headers = {**self.headers, "Accept": accept} if accept else self.headers
@@ -296,6 +376,215 @@ class GitHub(Api):
 PYPI = Api("PyPI", "https://pypi.org")
 CRATES = Api("crates.io", "https://crates.io/api/v1")
 ECOSYSTEMS = Api("ecosyste.ms", "https://packages.ecosyste.ms/api/v1", {"Accept": "application/json"})
+
+
+class Forge(Api):
+    """The API of a host in FORGES, read without a token, and one repository on it."""
+
+    def __init__(self, host: str, slug: str, ref: str | None):
+        self.kind, self.host, self.ref, self.down = FORGES[host], host, ref, False
+        self.name_as(slug)
+        parts = slug.split("/")
+        if self.kind == "gitlab":
+            super().__init__(f"{host} API", f"https://{host}/api/v4", {"Accept": "application/json"})
+            self.repo = f"projects/{quote(slug, safe='')}"
+        else:
+            super().__init__(f"{host} API", f"https://{host}/api/v1", {"Accept": "application/json"})
+            self.repo = f"repos/{quote(parts[0], safe='')}/{quote(parts[1], safe='')}"
+
+    def name_as(self, slug: str):
+        """Show and match the repository as `slug`. Requests keep the path they were made with (self.repo)."""
+        self.slug, self.url = slug, f"https://{self.host}/{slug}"
+        parts = slug.split("/")
+        self.short = f"{parts[0]}/{parts[-1]}"  # the owner and the name, as likeness() compares them
+
+    @staticmethod
+    def at(url: object) -> Forge | None:
+        """The repository a project.yaml's repo names, if it is on a host in FORGES; None for anything else."""
+        match = FORGE_REPO.fullmatch(url) if isinstance(url, str) else None
+        if not match or match.group(1) not in FORGES:
+            return None
+        host, slug, ref = match.groups()
+        parts = slug.split("/")
+        # "-" starts the pages within a GitLab project (/-/tree/main), which are not a repository.
+        if any(part in (".", "..", "-") for part in parts) or (FORGES[host] == "gitea" and len(parts) != 2):
+            return None
+        return Forge(host, slug, ref)
+
+    def fetch(self, path: str, **kwargs) -> tuple[bytes, str]:
+        """As Api.fetch, but after a request gets no answer, or a server error or rate limit that outlasts the retry,
+        the host is not asked again: each request could wait a minute, and the workflow is stopped after ten."""
+        if self.down:
+            raise ApiError(self.name, 0, path, "skipped (the host failed an earlier request)")
+        try:
+            return super().fetch(path, **kwargs)
+        except ApiError as error:
+            # Of the errors Api.fetch raises, only "answer too large" sets problem. It says nothing of the host.
+            self.down = (error.status == 0 and not error.problem) or error.status == 429 or error.status >= 500
+            raise
+
+    def meta(self) -> dict:
+        """The repository's metadata under GitHub's keys, plus "project" (the host's own answer) and, on Gitea,
+        "licenses". On GitLab subscribers_count is None, as is the owner of a group's project, and so are archived
+        and fork when GitLab does not show them. Also calls name_as()."""
+        if self.kind == "gitlab":
+            # Without a login GitLab gives a short answer that leaves out whether the project is archived or a fork,
+            # and whether its issues and merge requests are turned on.
+            project = self.get(self.repo, license="true")
+            namespace = project["namespace"]
+            # Only the full (signed-in) answer has "archived"; in it, no forked_from_project means not a fork.
+            full = "archived" in project
+            meta = {
+                "name": project["path_with_namespace"],
+                # GitLab's own clock, unlike a commit's date, which its author sets. New issues and merge requests
+                # also move it.
+                "pushed_at": project.get("last_activity_at"),
+                "archived": project.get("archived"),
+                "fork": bool(project.get("forked_from_project")) if full else None,
+                "stargazers_count": project.get("star_count"),
+                "subscribers_count": None,
+                "owner": {"login": namespace["path"] if namespace["kind"] == "user" else None},
+            }
+        else:
+            project = self.get(self.repo)
+            meta = {
+                "name": project["full_name"],
+                "pushed_at": project.get("updated_at"),  # the host's own clock, like GitLab's last_activity_at
+                "archived": project["archived"],
+                "fork": project["fork"],
+                "stargazers_count": project.get("stars_count"),
+                "subscribers_count": project.get("watchers_count"),
+                # Gitea lists the licenses it finds. Forgejo, which Codeberg runs, may not have the field (None).
+                "licenses": project.get("licenses"),
+                "owner": {"login": project["owner"]["login"]},
+            }
+        # Use the host's spelling of the path, as the GitHub rows do: the URL may give an old name or other letter
+        # case. Only a path made of the characters FORGE_REPO allows is used.
+        if isinstance(meta["name"], str) and re.fullmatch(r"[A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)+", meta["name"]):
+            self.name_as(meta["name"])
+        return meta | {"created_at": project.get("created_at"), "forks_count": project.get("forks_count"),
+                       "project": project}
+
+    def text(self, path: str, ref: str | None = None) -> str | None:
+        """The text of a file in the repository (its first 256 KiB), or None if it is not there."""
+        if self.kind == "gitlab":
+            where = f"{self.repo}/repository/files/{quote(path, safe='')}/raw"
+            params = {"ref": ref or "HEAD"}
+        else:
+            where, params = f"{self.repo}/raw/{quote(path)}", {"ref": ref}
+        try:
+            return self.fetch(where, accept=TEXT, **params)[0].decode("utf-8", "replace")
+        except ApiError as error:
+            if error.status == 404:
+                return None
+            raise
+
+    def listing(self, path: str = "", ref: str | None = None) -> list[str] | None:
+        """The names in a directory of the repository (by default its top), a directory's ending in "/", or None if
+        it is not there."""
+        if self.kind == "gitlab":
+            # The query is written out: find() has an argument of its own named path.
+            query = urlencode({"per_page": 100, **({"path": path} if path else {}), **({"ref": ref} if ref else {})})
+            entries = self.find(f"{self.repo}/repository/tree?{query}")
+        else:
+            entries = self.find(f"{self.repo}/contents" + (f"/{quote(path)}" if path else ""), ref=ref)
+        if not isinstance(entries, list):
+            return None
+        return [entry["name"] + ("/" if entry.get("type") in ("tree", "dir") else "") for entry in entries]
+
+    def openers(self, meta: dict) -> tuple[list[tuple[str, str]], list[tuple[str, int]], list[str]]:
+        """Who opened each of the latest issues and merge or pull requests, as (account, name shown) in lower case:
+        the name only on GitLab ("" on Gitea), and ("", "") for a deleted account or a GitLab token bot. Also how many
+        of each kind were read, and which kinds could not be: turned off, members only, or on another tracker."""
+        project = meta["project"]
+        if self.kind == "gitlab":
+            kinds = {
+                "issues": (f"{self.repo}/issues", {}, project.get("issues_enabled")),
+                "merge requests": (f"{self.repo}/merge_requests", {}, project.get("merge_requests_enabled")),
+            }
+            order, login = {"order_by": "created_at", "sort": "desc", "per_page": RECENT_THREADS}, "username"
+        else:
+            issues_here = project.get("has_issues") and not project.get("external_tracker")
+            kinds = {
+                "issues": (f"{self.repo}/issues", {"type": "issues"}, issues_here),
+                "pull requests": (f"{self.repo}/issues", {"type": "pulls"}, project.get("has_pull_requests")),
+            }
+            order, login = {"state": "all", "limit": RECENT_THREADS}, "login"  # newest first, by default
+        people, read, unread = [], [], []
+        for kind, (path, params, enabled) in kinds.items():
+            try:
+                threads = self.find(path, **params, **order) if enabled is not False else None
+            except ApiError as error:
+                if error.status not in (401, 403):
+                    raise
+                threads = None
+            if threads is None:
+                unread.append(kind)
+                continue
+            read.append((kind, len(threads)))
+            for thread in threads:
+                author = thread.get("author" if self.kind == "gitlab" else "user") or {}
+                person = (author.get(login) or "").lower()
+                # "ghost" stands for a deleted account on both; GitLab's access tokens act through bot accounts.
+                if person == "ghost" or GITLAB_BOT.fullmatch(person):
+                    person = ""
+                people.append((person, (author.get("name") or "").lower() if person and self.kind == "gitlab" else ""))
+        return people, read, unread
+
+    def insiders(self, meta: dict) -> tuple[set[str], str, bool]:
+        """The project's own people, as accounts or names in lower case; a description of them for the row; and
+        whether they are known well enough that the row need not warn about its count."""
+        owner = meta["owner"]["login"]
+        people = {owner.lower()} if owner else set()
+        if self.kind == "gitlab":
+            # Members who can push (Developer, level 30, or above), like the roles GitHub shows; also through the
+            # project's groups. Only the first 100 are read. gitlab.com shows them only to a signed-in reader.
+            try:
+                members = self.find(f"{self.repo}/members/all", per_page=100)
+            except ApiError as error:
+                if error.status not in (401, 403):
+                    raise
+                members = None
+            if isinstance(members, list):
+                pushers = [m for m in members if m.get("access_level", 0) >= 30]
+                people |= {m["username"].lower() for m in pushers if m.get("username")}
+                complete = len(members) < 100
+                return people, "members who can push" + ("" if complete else ", of the first 100 listed"), complete
+            # Failing that, whoever wrote or committed many of the latest commits. A GitLab commit names no account,
+            # only the names its author and committer gave, which are compared with the account and the name shown of
+            # each opener. A name spelled differently there is missed, so the row still warns.
+            try:
+                commits = self.find(f"{self.repo}/repository/commits", per_page=100)
+            except ApiError as error:
+                if error.status not in (401, 403):
+                    raise
+                commits = None
+            commits = commits if isinstance(commits, list) else []
+            wrote = [fold(commit.get("author_name") or "") for commit in commits]
+            committed = [c.get("committer_name") for c in commits if c.get("committer_name") != c.get("author_name")]
+            wrote += [fold(name or "") for name in committed]
+            verb, matched, complete = "wrote or committed", ", matched to openers by name", False
+            why = f"; {self.host} lists members only to signed-in readers, so some of the project's own people may be "
+            why += "counted here as outsiders"
+        else:
+            # Gitea shows no roles to a reader without a token, but links commits to accounts. It answers 50 at most.
+            commits = self.get(f"{self.repo}/commits", limit=50, stat="false", verification="false", files="false")
+            wrote = [((commit.get("author") or {}).get("login") or "").lower() for commit in commits]
+            verb, matched, complete, why = "wrote", "", True, ""
+        regulars = {person for person in set(wrote) if person and wrote.count(person) >= REGULAR_COMMITS}
+        people |= regulars
+        who = ["its owner"] if owner else []
+        if regulars:
+            who.append(f"whoever {verb} {REGULAR_COMMITS} or more of its last {len(commits)} commits{matched}")
+        how = " and ".join(who) if regulars else ("its owner only" if owner else "none known")
+        return people, how + why, complete
+
+    def is_ours(self, url: object) -> bool:
+        """Does a URL from OSS-Fuzz or a package's metadata name this repository, or a page within it?"""
+        # GitLab's pages of a project are under /-/; a further name would be a project in a subgroup.
+        end = r"(?:/-/|/?[#?]|/?$)" if self.kind == "gitlab" else r"(?:[/#?]|$)"
+        pattern = rf"(?:[\w+.-]+://|git@)?(?:www\.)?{re.escape(self.host)}[/:]{re.escape(self.slug)}(?:\.git)?{end}"
+        return isinstance(url, str) and re.match(pattern, url[:300].strip(), re.IGNORECASE) is not None
 
 
 def code(text: object, limit: int = 120) -> str:
@@ -429,10 +718,15 @@ def validate_row(problems: list[str]) -> tuple[str, str]:
     return OK, "passes"
 
 
-def checklist_row(body: str) -> tuple[str, str]:
+def checklist(body: str) -> tuple[list[str], list[str]]:
+    """The text of each box in a pull request's description, and of those that are not ticked."""
     # The template marks the threat model's box as optional: left empty, it is not counted.
     boxes = [(mark, text) for mark, text in CHECKBOX.findall(body) if mark != " " or "optional" not in text]
-    unticked = [text for mark, text in boxes if mark == " "]
+    return [text for _, text in boxes], [text for mark, text in boxes if mark == " "]
+
+
+def checklist_row(body: str) -> tuple[str, str]:
+    boxes, unticked = checklist(body)
     if not boxes:
         return WARN, "the pull request template's checklist is missing from the description"
     if unticked:
@@ -441,9 +735,9 @@ def checklist_row(body: str) -> tuple[str, str]:
     return OK, f"all {len(boxes)} ticked"
 
 
-def standing_row(meta: dict) -> tuple[str, str]:
+def standing_row(meta: dict, activity: str = "push") -> tuple[str, str]:
     created, pushed = parse_time(meta["created_at"]), parse_time(meta["pushed_at"])
-    result = f"created {ago(created)}, last push {ago(pushed)}"
+    result = f"created {ago(created)}, last {activity} {ago(pushed)}"
     if meta["archived"]:
         return FAIL, f"archived; {result}"
     concerns = []
@@ -452,16 +746,17 @@ def standing_row(meta: dict) -> tuple[str, str]:
     if months_since(created) < ESTABLISHED_MONTHS:
         concerns.append(f"under {ESTABLISHED_MONTHS} months old")
     if months_since(pushed) >= STALE_MONTHS:
-        concerns.append(f"no push in {STALE_MONTHS} months")
+        concerns.append(f"no {activity} in {STALE_MONTHS} months")
     if concerns:
         return WARN, f"{'; '.join(concerns)} ({result})"
     return OK, result
 
 
 def popularity_row(meta: dict) -> tuple[str, str]:
-    forks, watchers = meta["forks_count"], meta["subscribers_count"]
-    result = f"{meta['stargazers_count']:,} stars · {forks:,} forks · {watchers:,} watching"
-    absent = [what for what, count in (("forks", forks), ("watchers", watchers)) if not count]
+    forks, watchers = meta["forks_count"], meta["subscribers_count"]  # watchers: None where they are not counted
+    result = f"{meta['stargazers_count']:,} stars · {forks:,} forks"
+    result += f" · {watchers:,} watching" if watchers is not None else ""
+    absent = [what for what, count in (("forks", forks), ("watchers", watchers)) if count == 0]
     if absent:
         return WARN, f"no {' and no '.join(absent)}: little sign that others use it ({result})"
     return INFO, result
@@ -500,13 +795,19 @@ def outsiders_row(gh: GitHub, slug: str, meta: dict, login: str) -> tuple[str, s
 
 def license_row(gh: GitHub, slug: str, meta: dict) -> tuple[str, str]:
     spdx = (meta.get("license") or {}).get("spdx_id")
+    return license_result("GitHub", spdx, lambda: gh.text(f"repos/{slug}/license"))
+
+
+def license_result(host: str, spdx: str | None, license_text) -> tuple[str, str]:
+    """Judge the license `host` names (an SPDX id, or NOASSERTION when it cannot name it); `license_text` reads the
+    license file, which is only needed when the license has no name."""
     if not spdx:
-        return FAIL, "GitHub finds no license file"
+        return FAIL, f"{host} finds no license file"
     if spdx in COMMON_LICENSES:
         return OK, code(spdx)
     if spdx != "NOASSERTION":
         return WARN, f"{code(spdx)} is not on our list of common open-source licenses; check it"
-    text = gh.text(f"repos/{slug}/license") or ""
+    text = license_text() or ""
     found = next((name for name in SOURCE_AVAILABLE if name.lower() in text.lower()), None)
     if found:
         return FAIL, f"the license file mentions “{found}”, a source-available license"
@@ -516,7 +817,7 @@ def license_row(gh: GitHub, slug: str, meta: dict) -> tuple[str, str]:
     # GitHub also fails to name a plain license with a line added, so show the reviewer what the file says.
     lines = [line.strip() for line in text.splitlines() if line.strip()]
     says = next((line for line in lines if "licens" in line.lower()), lines[0] if lines else "nothing")
-    return WARN, f"GitHub cannot name the license; its file says {code(says, 80)}"
+    return WARN, f"{host} cannot name the license; its file says {code(says, 80)}"
 
 
 def maintainer_row(gh: GitHub, slug: str, meta: dict, login: str) -> tuple[str, str]:
@@ -561,6 +862,7 @@ def maintainer_row(gh: GitHub, slug: str, meta: dict, login: str) -> tuple[str, 
     return (WARN if roles or recent else FAIL), evidence
 
 
+@functools.cache  # read by contact_row(), maintainer_notes() and contact_differences()
 def security_policy(gh: GitHub, slug: str, owner: str) -> tuple[str, str] | None:
     """Find the security policy that applies to the repository: its own, or else the one its owner keeps for all
     their repositories in <owner>/.github. Return the policy's repository and its text, or None."""
@@ -572,30 +874,72 @@ def security_policy(gh: GitHub, slug: str, owner: str) -> tuple[str, str] | None
     return None
 
 
+def policy_name(repo: str, slug: str) -> str:
+    return "`SECURITY.md`" if repo == slug else f"`SECURITY.md` of {code(repo)}"
+
+
+def policy_addresses(text: str) -> list[str]:
+    """The addresses a security policy gives. Whole addresses, so that security@example.org is not found inside
+    another address."""
+    return sorted({address.lower() for address in EMAIL.findall(text)})
+
+
+def shown_addresses(addresses: list[str]) -> str:
+    return ", ".join(code(address) for address in addresses[:3]) + (" …" if len(addresses) > 3 else "")
+
+
 def contact_row(gh: GitHub, slug: str, meta: dict, config: dict) -> tuple[str, str]:
     """Does the repository's own security policy name the address that reports would go to?"""
     contact = config.get("primary_contact")
     if not isinstance(contact, str):
         return WARN, "project.yaml names no contact"
-    policy = security_policy(gh, slug, meta["owner"]["login"])
+    return contact_result(contact, security_policy(gh, slug, meta["owner"]["login"]), slug)
+
+
+def contact_result(contact: str, policy: tuple[str, str] | None, slug: str) -> tuple[str, str]:
+    """Does the security policy found (its repository and its text) give `contact`?"""
     if policy is None:
         return INFO, f"no `SECURITY.md` to check {code(contact)} against"
     repo, text = policy
-    where = "`SECURITY.md`" if repo == slug else f"`SECURITY.md` of {code(repo)}"
-    # Whole addresses are compared, so that security@example.org is not found inside another address.
-    given = sorted({address.lower() for address in EMAIL.findall(text)})
+    where = policy_name(repo, slug)
+    given = policy_addresses(text)
     if contact.lower() in given:
         return OK, f"{code(contact)} is in {where}"
     # Many policies ask for reports through GitHub and give no address at all; that is not a mismatch.
     if not given:
         return INFO, f"{where} gives no email address to check {code(contact)} against"
-    shown = ", ".join(code(address) for address in given[:3]) + (" …" if len(given) > 3 else "")
-    return WARN, f"{code(contact)} is not in {where}, which gives {shown}"
+    return WARN, f"{code(contact)} is not in {where}, which gives {shown_addresses(given)}"
+
+
+def maintainer_notes(gh: GitHub, slug: str, meta: dict, config: dict) -> list[str]:
+    """What to tell whoever opened the pull request, as Markdown."""
+    output_format = config.get("output_format")
+    advisories = output_format.get("github_security_advisory") if isinstance(output_format, dict) else None
+    try:
+        repo, text = security_policy(gh, slug, meta["owner"]["login"]) or (slug, "")
+    except ApiError:  # the contact row says it could not be checked
+        repo, text = slug, ""
+    where = policy_name(repo, slug)
+
+    notes = []
+    if advisories is None and GITHUB_REPORTING.search(text):
+        notes.append(
+            f"{where} mentions GitHub security advisories, but `project.yaml` does not configure them. "
+            f"As a reminder, this can be added with [`output_format`]({OUTPUT_FORMAT_DOCS})."
+        )
+    return notes
 
 
 def squash(name: str) -> str:
     """A name reduced to its letters and digits, so that PcapPlusPlus and pcap-plus-plus compare equal."""
     return re.sub(r"[^a-z0-9]", "", name.lower())
+
+
+def fold(name: str) -> str:
+    """A person's name or account without accents, case, spaces or punctuation, so that Zdeněk Kabeláč, Zdenek
+    Kabelac and zdenek.kabelac compare equal. A name with no Latin letters or digits is only put in lower case."""
+    plain = unicodedata.normalize("NFKD", name).encode("ascii", "ignore").decode()
+    return squash(plain) or name.lower()
 
 
 def likeness(slug: str, name: str) -> int | None:
@@ -621,9 +965,11 @@ def oss_fuzz_candidates(slug: str, names: list[str]) -> list[str]:
     return [name for _, _, name in ranked[:OSS_FUZZ_CANDIDATES]]
 
 
-def oss_fuzz_projects(gh: GitHub, slug: str) -> tuple[dict[str, dict], dict[str, object]]:
+@functools.cache  # read by oss_fuzz_row() and contact_differences()
+def oss_fuzz_projects(gh: GitHub, slug: str, is_ours=None) -> tuple[dict[str, dict], dict[str, object]]:
     """Find the OSS-Fuzz projects that fuzz this repository: each one's name and project.yaml. Also return the
-    main_repo of any project named exactly after the repository or its owner that is for some other repository."""
+    main_repo of any project named exactly after the repository or its owner that is for some other repository.
+    For a repository not on GitHub, `is_ours` says whether a main_repo names it."""
     listing = gh.get("repos/google/oss-fuzz/git/trees/HEAD:projects")["tree"]
     owner, name = (squash(part) for part in slug.split("/"))
     found, namesakes = {}, {}
@@ -636,16 +982,30 @@ def oss_fuzz_projects(gh: GitHub, slug: str) -> tuple[dict[str, dict], dict[str,
         # A name is only a guess: main_repo is what says the project is for this repository.
         main_repo = project.get("main_repo") if isinstance(project, dict) else None
         match = MAIN_REPO.fullmatch(main_repo.strip()) if isinstance(main_repo, str) else None
-        if match and match.group(1).lower() == slug.lower():
+        ours = is_ours(main_repo) if is_ours else bool(match) and match.group(1).lower() == slug.lower()
+        if ours:
             found[candidate] = project
         elif isinstance(project, dict) and squash(candidate) in (name, owner):
             namesakes[candidate] = main_repo
     return found, namesakes
 
 
-def oss_fuzz_row(gh: GitHub, slug: str, config: dict) -> tuple[str, str]:
+def oss_fuzz_contacts(projects: dict[str, dict]) -> tuple[set[str], set[str]]:
+    """The primary contacts of OSS-Fuzz projects, and the addresses they CC."""
+    primary, ccs = set(), set()
+    for project in projects.values():
+        if isinstance(project.get("primary_contact"), str):
+            primary.add(project["primary_contact"].lower())
+        for key in ("auto_ccs", "vendor_ccs"):
+            listed = project.get(key)
+            listed = [listed] if isinstance(listed, str) else listed if isinstance(listed, list) else []
+            ccs.update(address.lower() for address in listed if isinstance(address, str))
+    return primary, ccs
+
+
+def oss_fuzz_row(gh: GitHub, slug: str, config: dict, is_ours=None) -> tuple[str, str]:
     """Is the repository in OSS-Fuzz, whose criteria ours follow, and does OSS-Fuzz report to the same address?"""
-    projects, namesakes = oss_fuzz_projects(gh, slug)
+    projects, namesakes = oss_fuzz_projects(gh, slug, is_ours)
     if not projects and namesakes:
         others = "; ".join(f"{code(name)} there is for {code(main_repo)}" for name, main_repo in namesakes.items())
         return INFO, f"no OSS-Fuzz project is for this repository, but {others}"
@@ -656,37 +1016,268 @@ def oss_fuzz_row(gh: GitHub, slug: str, config: dict) -> tuple[str, str]:
     contact = config.get("primary_contact")
     if not isinstance(contact, str):
         return OK, result
-    primary, ccs = set(), set()
-    for project in projects.values():
-        if isinstance(project.get("primary_contact"), str):
-            primary.add(project["primary_contact"].lower())
-        for key in ("auto_ccs", "vendor_ccs"):
-            listed = project.get(key)
-            listed = [listed] if isinstance(listed, str) else listed if isinstance(listed, list) else []
-            ccs.update(address.lower() for address in listed if isinstance(address, str))
+    primary, ccs = oss_fuzz_contacts(projects)
     if contact.lower() in primary:
         return OK, f"{result}, with the same primary contact"
     theirs = ", ".join(code(address) for address in sorted(primary)) or "not given"
     if contact.lower() in ccs:
-        return OK, f"{result}, which CCs {code(contact)} (its primary contact is {theirs})"
+        return WARN, f"{result}, which only CCs {code(contact)} (its primary contact is {theirs})"
     return WARN, f"{result}, whose contacts do not include {code(contact)} (its primary contact is {theirs})"
+
+
+def policy_difference(slug: str, contact: str, policy: tuple[str, str] | None) -> str | None:
+    repo, text = policy or (slug, "")
+    given = policy_addresses(text)
+    if not given or contact.lower() in given:
+        return None
+    return f"{policy_name(repo, slug)} gives {shown_addresses(given)}"
+
+
+def oss_fuzz_difference(contact: str, projects: dict[str, dict]) -> str | None:
+    primary, _ = oss_fuzz_contacts(projects)
+    if not primary or contact.lower() in primary:
+        return None
+    names = ", ".join(code(name) for name in projects)
+    return f"OSS-Fuzz ({names}) has the primary contact {shown_addresses(sorted(primary))}"
+
+
+def contact_differences(slug: str, contact: str, read_policy, read_oss_fuzz) -> tuple[list[str], bool]:
+    """Where the project publishes other addresses than its contact, and whether every place could be read."""
+    checks = (
+        lambda: policy_difference(slug, contact, read_policy()),
+        lambda: oss_fuzz_difference(contact, read_oss_fuzz()),
+    )
+    differences, complete = [], True
+    for check in checks:
+        try:
+            differences.append(check())
+        except Exception as error:  # the row about it says it could not be checked
+            print(f"contact: {error!r}", file=sys.stderr)
+            complete = False
+    return [difference for difference in differences if difference], complete
+
+
+def same_contact(config: dict, before: dict) -> bool:
+    """Is the contact, for the same repository, the one already on the base branch?"""
+
+    def key(project: dict) -> tuple[str | None, ...]:
+        values = (project.get("repo"), project.get("primary_contact"))
+        return tuple(value.lower() if isinstance(value, str) else None for value in values)
+
+    return key(config) == key(before)
+
+
+def side_comment(marker: str, body: str, question: bool) -> dict:
+    """A comment of its own. One that is not a question only updates a comment already posted."""
+    return {"marker": marker, "question": question, "body": f"{marker}\n{body}\n"}
+
+
+def mention(login: str) -> str:
+    # A bot's login has brackets, and is not worth a mention anyway.
+    return f"@{login}, " if LOGIN.fullmatch(login) else ""
+
+
+def contact_comments(slug: str, config: dict, before: dict, login: str, read_policy, read_oss_fuzz) -> list[dict]:
+    """The comment that asks about a contact address the project does not publish. Empty: leave things as they are."""
+    contact = config.get("primary_contact")
+    if not isinstance(contact, str):
+        return []
+    if same_contact(config, before):
+        unchanged = "✅ This pull request does not change `primary_contact`: nothing to clarify."
+        return [side_comment(CONTACT_MARKER, unchanged, False)]
+    differences, complete = contact_differences(slug, contact, read_policy, read_oss_fuzz)
+    if differences:
+        listed = "".join(f"- {difference}\n" for difference in differences)
+        body = (
+            "### Contact address: please clarify\n\n"
+            f"{mention(login)}`primary_contact` in `project.yaml` is {code(contact)}, but for {code(slug)}:\n\n"
+            f"{listed}\n"
+            "Could you reply to clarify why they differ, and which address should get security reports? If "
+            "`primary_contact` should be another address, please change it in this pull request. Any discrepancy in "
+            "that email will delay review."
+        )
+        return [side_comment(CONTACT_MARKER, body, True)]
+    if not complete:
+        return []
+    resolved = f"✅ `primary_contact` ({code(contact)}) no longer differs from `SECURITY.md` or OSS-Fuzz."
+    return [side_comment(CONTACT_MARKER, f"{resolved} Nothing left to clarify.", False)]
+
+
+def source_available_title(text: str) -> str | None:
+    """The source-available license a license file begins with, or None."""
+    lines = [line.strip() for line in text[:4000].splitlines() if line.strip()]
+    for line in lines[:5]:
+        found = SOURCE_AVAILABLE_TITLE.match(line)
+        if found and not re.search(r"\bor\b", line, re.I):  # "or" offers a choice
+            name = next(name for name in SOURCE_AVAILABLE if name.lower() == found.group(1).lower())
+            return name if name.endswith("License") else f"{name} license"
+    return None
+
+
+def gives_part_another_license(text: str) -> bool:
+    plain = " ".join(text[:6000].lower().split())
+    return bool(OTHER_LICENSE_FOR_PART.search(plain))
+
+
+def enterprise_license_paths(paths: list[str]) -> list[str]:
+    """The license files in a repository that an enterprise edition would have, shallowest first."""
+    found, has_edition = [], False
+    for path in paths:
+        *directories, name = path.split("/")
+        if not directories or OTHERS_CODE & {directory.lower() for directory in directories}:
+            continue
+        if any(ENTERPRISE_DIRECTORY.fullmatch(directory) for directory in directories):
+            has_edition = True
+            if LICENSE_FILE.fullmatch(name) and TEXT_FILE.fullmatch(name):
+                found.append(path)
+        elif len(directories) == 1 and directories[0].lower() == "licenses":
+            # A list of the licenses in use. It also counts other projects' licenses, so only with an edition.
+            if re.match(r"elastic|busl|bsl-1\.1|sspl|commons-?clause|polyform|commercial|enterprise", name, re.I):
+                found.append(path)
+    if not has_edition:
+        found = []
+    return sorted(found, key=lambda path: (path.count("/"), path))[:LICENSE_FILES_READ]
+
+
+def license_findings(top: list[str], paths: list[str], read) -> tuple[str | None, list[str]]:
+    """From the names of the license files at the top of a repository and the paths below it: the source-available
+    license all of it is under, if it is; and what says that part of it is not open source."""
+    texts = {name: read(name) or "" for name in sorted(top, key=len)[:LICENSE_FILES_READ]}
+    split = [f"{code(name)} puts part of it under another license"
+             for name, text in texts.items() if gives_part_another_license(text)]
+    titles = {name: source_available_title(text) for name, text in texts.items()}
+    title = next(filter(None, titles.values()), None)
+    # A second license file may offer a choice.
+    if title and not split and all(titles[name] or not license_title(texts[name]) for name in texts):
+        return title, []
+    parts = []
+    for path in paths:
+        text = read(path) or ""
+        named = source_available_title(text)
+        if named:
+            parts.append(f"{code(path)} is the {named}")
+        elif not license_title(text) and COMMERCIAL_TERMS.search(text):
+            parts.append(f"{code(path)} is a commercial license")
+    return None, parts or split
+
+
+def license_comments(slug: str, login: str, read_files) -> list[dict]:
+    """The comments that say all or part of the project is not open source. `read_files` returns the names of the
+    license files at the top, the paths of those below, a function that reads one, and whether nothing was left out."""
+    try:
+        top, paths, read, complete = read_files()
+        title, parts = license_findings(top, paths, read)
+    except Exception as error:
+        print(f"license: {error!r}", file=sys.stderr)
+        return []
+    if title:
+        body = (
+            "### License: not open source\n\n"
+            f"{mention(login)}thanks for the submission. OSS Scanner is only for open-source projects, {OPEN_SOURCE}. "
+            f"{code(slug)} does not appear to meet this: its license is the {title}.\n\n"
+            "We can't enroll it under this license. If we got this wrong, please reply."
+        )
+        return [side_comment(LICENSE_MARKER, body, True)]
+    if not top:  # no license file is not an open-source license
+        return []
+    open_again = "✅ The license check no longer finds a license that isn't open source."
+    comments = [side_comment(LICENSE_MARKER, open_again, False)]
+    if parts:
+        body = (
+            "### License: open-source components only\n\n"
+            f"{mention(login)}part of {code(slug)} does not appear to be open source: {'; '.join(parts)}. OSS Scanner "
+            f"is for open-source components only, {OPEN_SOURCE}. We will review this manually. If we got this wrong, "
+            "please reply."
+        )
+        comments.append(side_comment(MIXED_LICENSE_MARKER, body, True))
+    elif complete:
+        all_open = "✅ The license check no longer finds components that aren't open source."
+        comments.append(side_comment(MIXED_LICENSE_MARKER, all_open, False))
+    return comments
+
+
+def github_license_files(gh: GitHub, slug: str, ref: str | None):
+    path, below = f"repos/{slug}/git/trees/{quote(ref or 'HEAD', safe='')}", True
+    try:
+        tree = gh.get(path, recursive=1)
+    except ApiError as error:
+        if not error.problem:
+            raise
+        tree, below = gh.get(path), False  # too large: only its top
+    paths = [entry["path"] for entry in tree["tree"] if entry["type"] == "blob"]
+    top = [path for path in paths if LICENSE_FILE.fullmatch(path)]
+    read = lambda path: gh.text(f"repos/{slug}/contents/{quote(path)}", ref=ref)
+    return top, enterprise_license_paths(paths), read, below and not tree.get("truncated")
+
+
+def forge_license_files(forge: Forge):
+    """As github_license_files(), but of the directories only those at the top are looked at."""
+    names = forge.listing(ref=forge.ref) or []
+    paths = list(names)
+    for name in names:
+        if name.endswith("/") and (ENTERPRISE_DIRECTORY.fullmatch(name[:-1]) or name.lower() == "licenses/"):
+            paths += [name + below for below in forge.listing(name[:-1], forge.ref) or []]
+    top = [name for name in names if LICENSE_FILE.fullmatch(name)]
+    files = [path for path in paths if not path.endswith("/")]
+    return top, enterprise_license_paths(files), lambda path: forge.text(path, forge.ref), True
+
+
+def checklist_comments(body: str, login: str, draft: bool) -> list[dict]:
+    """The comment that says the description's checklist is not complete. A draft has until it is ready."""
+    boxes, unticked = checklist(body)
+    if not boxes:
+        text = (
+            "### Checklist missing\n\n"
+            f"{mention(login)}this pull request won't be accepted without the [pull request template's checklist]"
+            f"({TEMPLATE}) in its description. Please add it and tick every required box. This comment updates when "
+            "you do."
+        )
+        return [side_comment(CHECKLIST_MARKER, text, not draft)]
+    missing = [line for words, line in REQUIRED_BOXES.items() if not any(words in box.lower() for box in boxes)]
+    if not unticked and not missing:
+        return [side_comment(CHECKLIST_MARKER, "✅ Every required box is ticked.", False)]
+    plain = [re.sub(r"\[([^\[\]]*)\]\([^()]*\)", r"\1", text) for text in unticked]
+    listed = "".join(f"- {code(line, 160)}\n" for line in [*plain, *missing][:10])
+    text = (
+        "### Checklist not complete\n\n"
+        f"{mention(login)}this pull request won't be accepted until every required box in its description is ticked. "
+        f"Not ticked:\n\n{listed}\n"
+        "Please edit the description to tick them. This comment updates when you do."
+    )
+    return [side_comment(CHECKLIST_MARKER, text, not draft)]
 
 
 def scanner_files_row(gh: GitHub, slug: str, ref: str | None, config: dict, beside: set[str]) -> tuple[str, str]:
     """Has the project set up .oss-scanner/ in its own repository, and are the files project.yaml names there?"""
-
-    def in_repo(path: object) -> bool:
-        if not (isinstance(path, str) and validate.REPO_PATH.fullmatch(path)):
-            return False
-        return gh.find(f"repos/{slug}/contents/{quote(path)}", ref=ref) is not None
-
     listing = gh.find(f"repos/{slug}/contents/.oss-scanner", ref=ref)
     names = [entry["name"] for entry in listing] if isinstance(listing, list) else []
+
+    def exists(path: str) -> bool:
+        return gh.find(f"repos/{slug}/contents/{quote(path)}", ref=ref) is not None
+
+    return scanner_files_result(names, exists, ref, config, beside)
+
+
+def scanner_files_result(
+    names: list[str] | None, exists, ref: str | None, config: dict, beside: set[str]
+) -> tuple[str, str]:
+    """Judge what `.oss-scanner/` holds (`names`, None if it could not be listed), and whether `exists` finds the
+    files project.yaml names."""
+
+    def in_repo(path: object) -> bool:
+        return isinstance(path, str) and bool(validate.REPO_PATH.fullmatch(path)) and exists(path)
+
     result = f"present ({', '.join(code(name) for name in names[:6])})" if names else "not present"
+    if names is None:
+        result = "its files could not be listed (check by hand)"
 
     threat_model = config.get("threat_model") or ".oss-scanner/threat_model.md"
     if "threat_model.md" not in beside and not in_repo(threat_model):
         result += "; no threat model (optional)"
+    # Unlike the threat model, only a path that leads nowhere is mentioned: most projects have no guidelines.
+    for key in ("report_guidelines", "patch_guidelines"):
+        if config.get(key) and not in_repo(config[key]):
+            result += f"; no {key.replace('_', ' ')} at {code(config[key])} (optional)"
 
     if "Dockerfile" in beside:
         return (OK if names else INFO), f"{result}; the Dockerfile is in this pull request"
@@ -779,7 +1370,7 @@ def is_repository(url: object, slug: str) -> bool:
     return bool(match) and match.group(1).lower() == slug.lower()
 
 
-def pypi_rank(slug: str, names: list[str]) -> tuple[str, int] | None:
+def pypi_rank(slug: str, names: list[str], is_ours) -> tuple[str, int] | None:
     """Of PyPI's most downloaded packages, most downloaded first, the one from the repository that is most its
     namesake, and that package's place in the list.
 
@@ -791,17 +1382,16 @@ def pypi_rank(slug: str, names: list[str]) -> tuple[str, int] | None:
     for _, place, name in ranked[:PYPI_CANDIDATES]:
         info = (PYPI.find(f"pypi/{quote(name, safe='')}/json") or {}).get("info") or {}
         urls = (info.get("home_page"), *(info.get("project_urls") or {}).values())
-        if any(is_repository(url, slug) for url in urls):
+        if any(is_ours(url) for url in urls):
             return name, place
     return None
 
 
-def npm_rank(slug: str) -> tuple[str, int] | None:
+def npm_rank(url: str) -> tuple[str, int] | None:
     """The most downloaded npm package that is from the repository, and its place among all of npm's. ecosyste.ms
     knows each package's repository, so there is nothing to guess from names."""
     order = {"sort": "downloads", "order": "desc"}
     # The first few say enough, and each comes with all that ecosyste.ms knows about the package.
-    url = f"https://github.com/{slug}"
     packages = ECOSYSTEMS.get("registries/npmjs.org/lookup", repository_url=url, per_page=10, **order)
     ours = {package["name"] for package in packages}
     if not ours:
@@ -810,7 +1400,7 @@ def npm_rank(slug: str) -> tuple[str, int] | None:
     return next(((name, place) for place, name in enumerate(names, 1) if name in ours), None)
 
 
-def crates_rank(slug: str) -> tuple[str, int] | None:
+def crates_rank(is_ours) -> tuple[str, int] | None:
     """The most downloaded crate that is from the repository, and its place among all crates. crates.io gives each
     crate's repository in its listing, so there is nothing to guess from names."""
     for page in range(1, CRATES_PAGES + 1):
@@ -818,7 +1408,7 @@ def crates_rank(slug: str) -> tuple[str, int] | None:
             time.sleep(1)  # crates.io asks for no more than one request a second
         crates = CRATES.get("crates", sort="recent-downloads", per_page=100, page=page)["crates"]
         for place, crate in enumerate(crates, (page - 1) * 100 + 1):
-            if is_repository(crate.get("repository"), slug):
+            if is_ours(crate.get("repository")):
                 return crate["name"], place
     return None
 
@@ -827,14 +1417,20 @@ def package_rank_row(gh: GitHub, slug: str) -> tuple[str, str]:
     """Where do the repository's packages stand among the most downloaded of PyPI, npm and crates.io? A registry
     is looked at only for a repository with code in one of its languages."""
     languages = gh.get(f"repos/{slug}/languages")
+    return package_ranks(gh, languages, slug, lambda url: is_repository(url, slug), f"https://github.com/{slug}")
+
+
+def package_ranks(gh: GitHub, languages: dict, slug: str, is_ours, url: str) -> tuple[str, str]:
+    """package_rank_row() for the repository at `url`, whose languages are given. `is_ours` says whether a URL from
+    a package's metadata is this repository; `slug` is its owner and name, which packages are often named after."""
     ranks = []  # (the registry, the package found and its place, how many places were looked at)
     if "Python" in languages:
         names = [row["project"] for row in json.loads(gh.fetch(PYPI_TOP, accept=RAW, whole=True)[0])["rows"]]
-        ranks.append((f"[PyPI]({PYPI_TOP_PAGE})", pypi_rank(slug, names), len(names)))
+        ranks.append((f"[PyPI]({PYPI_TOP_PAGE})", pypi_rank(slug, names, is_ours), len(names)))
     if "JavaScript" in languages or "TypeScript" in languages:
-        ranks.append((f"[npm]({NPM_TOP_PAGE})", npm_rank(slug), NPM_TOP))
+        ranks.append((f"[npm]({NPM_TOP_PAGE})", npm_rank(url), NPM_TOP))
     if "Rust" in languages:
-        ranks.append((f"[crates.io]({CRATES_TOP_PAGE})", crates_rank(slug), CRATES_PAGES * 100))
+        ranks.append((f"[crates.io]({CRATES_TOP_PAGE})", crates_rank(is_ours), CRATES_PAGES * 100))
     if not ranks:
         return INFO, "no Python, JavaScript or Rust in the repository, so not looked for on PyPI, npm or crates.io"
 
@@ -843,6 +1439,182 @@ def package_rank_row(gh: GitHub, slug: str) -> tuple[str, str]:
     if missing:
         found.append(f"nothing from this repository found in {' or '.join(missing)}")
     return INFO, f"by downloads: {' · '.join(found)}"
+
+
+# --- the same checks for a repository on a host in FORGES ---
+
+
+def forge_standing_row(forge: Forge, meta: dict) -> tuple[str, str]:
+    mark, result = standing_row(meta, "activity")
+    unknown = [what for key, what in (("archived", "archived"), ("fork", "a fork")) if meta[key] is None]
+    if not unknown:
+        return mark, result
+    result += f"; {forge.host} shows whether it is {' or '.join(unknown)} only to signed-in readers: check its page"
+    return (WARN if mark == OK else mark), result
+
+
+def forge_outsiders_row(forge: Forge, meta: dict) -> tuple[str, str]:
+    """outsiders_row() for a repository on another host. Unlike on GitHub, whoever opened this pull request is
+    counted like anyone else: nothing links their GitHub account to an account on the other host."""
+    openers, read, unread = forge.openers(meta)
+    if unread:
+        why = "turned off, members only, or on another tracker"
+        unread = f"{' and '.join(unread)} could not be read on {forge.host} ({why})"
+    if not read:
+        return WARN, unread
+    unread = f"; {unread}" if unread else ""
+    if not openers:
+        return WARN, f"the repository has no {' or '.join(kind for kind, _ in read)}{unread}"
+    # latest: "7 issues and 2 merge requests", "1 issue and no merge requests"
+    latest = " and ".join(f"{n or 'no'} {kind[:-1] if n == 1 else kind}" for kind, n in read)
+    if not any(account for account, _ in openers):
+        bots = "bots or deleted accounts"
+        return WARN, f"none from outside the project: the latest {latest}, all opened by {bots}{unread}"
+    insiders, how, complete = forge.insiders(meta)
+    # Folded as well as plain: a commit's "Zdenek Kabelac" is the account zdenek.kabelac, shown as Zdeněk Kabeláč.
+    def is_own(account: str, name: str) -> bool:
+        return bool(({account, name, fold(account), fold(name)} - {""}) & insiders)
+
+    theirs = [account for account, name in openers if account and not is_own(account, name)]
+    if not theirs:
+        own = f"the project's own people ({how}), bots or deleted accounts"
+        return WARN, f"none from outside the project: the latest {latest}, all opened by {own}{unread}"
+    outsiders = len(set(theirs))
+    people = "1 person" if outsiders == 1 else f"{outsiders} people"
+    were = "was" if len(theirs) == 1 else "were"
+    result = f"of the latest {latest}, {len(theirs)} {were} opened by {people} from outside the project"
+    result += f" (counted as its own: {how}){unread}"
+    return (WARN if outsiders < FEW_OUTSIDERS or not complete else INFO), result
+
+
+def is_common(spdx: object) -> bool:
+    """Is a license GitLab or Gitea names on our list? GitLab writes its ids in lower case and marks "or later" with
+    a "+" ("gpl-2.0+"); Gitea's SPDX ids may end in -only or -or-later. COMMON_LICENSES lists them without these
+    endings and in mixed case, so both are compared in lower case with the ending removed."""
+    plain = re.sub(r"(?:\+|-only|-or-later)\Z", "", spdx.lower()) if isinstance(spdx, str) else None
+    return plain in {name.lower() for name in COMMON_LICENSES}
+
+
+def license_title(text: str) -> str | None:
+    """The license on our list whose title heads a license file, or None. Only the title is read, not the terms
+    under it, so this is weaker than a host naming the license."""
+    lines = [line.strip(" \t#*=-") for line in text[:4000].splitlines()]
+    head = " ".join(" ".join(line for line in lines if line).lower().split()[:60])
+    return next((spdx for title, spdx in LICENSE_TITLES if re.search(title, head)), None)
+
+
+def forge_license_row(forge: Forge, meta: dict) -> tuple[str, str]:
+    license = None
+    if forge.kind == "gitlab":
+        # GitLab gives no license when it finds no license file at the top, and the key "other" when it cannot
+        # name the license. Either way the files there are looked at.
+        license = meta["project"].get("license")
+        key = license.get("key") if license else None
+        names = [key] if key and key != "other" else []
+    else:
+        names = meta["licenses"] or []  # Gitea names only the licenses it recognises, and Forgejo may name none
+    uncommon = [name for name in names if not is_common(name)]
+    if names and not uncommon:
+        return OK, ", ".join(code(name) for name in names)
+    named = license_result(forge.host, uncommon[0], lambda: "") if uncommon else None
+    if named and named[0] != WARN:
+        return named
+    # A license the host cannot name, or names but is not on our list: its file may show it is source-available.
+    top = [name for name in forge.listing() or [] if isinstance(name, str)]
+    files = sorted((name for name in top if LICENSE_FILE.fullmatch(name)), key=len)
+    if named and not files:
+        return named
+    if not files and "LICENSES/" in top:  # the REUSE layout: a file per license in LICENSES/
+        return WARN, "the licenses are in `LICENSES/`; check them by hand"
+    if not files and forge.kind == "gitlab" and license:  # found by GitLab, under a name LICENSE_FILE does not match
+        return WARN, f"{forge.host} found a license file but cannot name the license; check it by hand"
+    if not files:
+        return FAIL, f"no license file at the top of the repository on {forge.host}"
+    # Any of them may be the one with a source-available license in it.
+    texts = [forge.text(name) or "" for name in files[:3]]
+    text = "\n".join(texts)
+    verdict = license_result(forge.host, "NOASSERTION", lambda: text)
+    if named:
+        return verdict if verdict[0] == FAIL else named
+    # The host named nothing. If every file is headed by the title of a license on our list, and none mentions a
+    # source-available or commercial one, say which: not a tick, as only the titles were read.
+    titles = [license_title(each) for each in texts if each.strip()]
+    flagged = any(name.lower() in text.lower() for name in (*SOURCE_AVAILABLE, *PARTLY_OPEN))
+    if titles and all(titles) and not flagged:
+        shown = ", ".join(code(spdx) for spdx in dict.fromkeys(titles))
+        return INFO, f"{shown}, going by the title of its license file: {forge.host} does not name the license"
+    return verdict
+
+
+def forge_policy(forge: Forge) -> tuple[str, str] | None:
+    texts = ((forge.slug, forge.text(path)) for path in SECURITY_POLICY_PATHS)
+    return next((policy for policy in texts if policy[1] is not None), None)
+
+
+def forge_contact_row(forge: Forge, config: dict) -> tuple[str, str]:
+    contact = config.get("primary_contact")
+    if not isinstance(contact, str):
+        return WARN, "project.yaml names no contact"
+    return contact_result(contact, forge_policy(forge), forge.slug)
+
+
+def forge_package_rank_row(gh: GitHub, forge: Forge) -> tuple[str, str]:
+    languages = forge.get(f"{forge.repo}/languages")
+    return package_ranks(gh, languages, forge.short, forge.is_ours, forge.url)
+
+
+def forge_scanner_files_row(forge: Forge, config: dict, beside: set[str]) -> tuple[str, str]:
+    try:
+        names = forge.listing(".oss-scanner", forge.ref) or []
+    except ApiError:
+        names = None  # e.g. too many files to list: the files project.yaml names are still looked for
+    return scanner_files_result(names, lambda path: forge.text(path, forge.ref) is not None, forge.ref, config, beside)
+
+
+def adds_project(config: dict, before: dict) -> bool:
+    """Does the pull request add a project, or point one at another repository?"""
+    return not before or before.get("repo") != config.get("repo")
+
+
+def forge_rows(
+    gh: GitHub, forge: Forge, repo: str, config: dict, before: dict, beside: set[str], login: str
+) -> tuple[str, list[tuple], list[dict]]:
+    """repository_rows() for a repository on a host in FORGES, without notes. The rows that need GitHub's data say
+    so."""
+    try:
+        meta = forge.meta()
+    except ApiError as error:
+        if error.status == 404:
+            return code(repo), [(FAIL, "Repository", f"not found on {forge.host}, or not public")], []
+        return code(repo), [(WARN, "Repository", f"could not be checked: {code(str(error))}")], []
+    except Exception as error:  # an answer shaped as we did not expect: the workflow's log has the traceback
+        traceback.print_exc()
+        return code(repo), [(WARN, "Repository", f"could not be checked: {code(type(error).__name__)}")], []
+
+    criticality = "not scored: the OpenSSF score needs GitHub's data; judge criticality by hand"
+    maintainer = f"not checked: nothing links the GitHub account {code(login)} to the project's accounts on "
+    maintainer += f"{forge.host}; confirm by hand that they maintain it"
+    described = f"[{code(forge.host + '/' + forge.slug)}]({forge.url})"
+    described += f" at {code(forge.ref)}" if forge.ref else ""
+    rows = [
+        row("Repository", forge_standing_row, forge, meta),
+        row("Stars / forks", popularity_row, meta),
+        row("Outside participants", forge_outsiders_row, forge, meta),
+        (WARN, "Criticality score", criticality),
+        row("Package rank", forge_package_rank_row, gh, forge),
+        row("License", forge_license_row, forge, meta),
+        (WARN, "Opened by an active maintainer", maintainer),
+        row("Contact in `SECURITY.md`", forge_contact_row, forge, config),
+        row("OSS-Fuzz", oss_fuzz_row, gh, forge.short, config, forge.is_ours),
+        row("`.oss-scanner/` in the repository", forge_scanner_files_row, forge, config, beside),
+    ]
+    comments = contact_comments(
+        forge.slug, config, before, login, lambda: forge_policy(forge),
+        lambda: oss_fuzz_projects(gh, forge.short, forge.is_ours)[0],
+    )
+    if adds_project(config, before):
+        comments += license_comments(forge.slug, login, lambda: forge_license_files(forge))
+    return described, rows, comments
 
 
 # --- putting the comment together ---
@@ -860,26 +1632,38 @@ def row(check: str, function, *arguments) -> tuple[str, str, str]:
     return mark, check, result
 
 
-def repository_rows(gh: GitHub, config: dict, beside: set[str], login: str) -> tuple[str, list[tuple]]:
-    """Return a Markdown description of the repository being enrolled, and the rows about it."""
+def repository_rows(
+    gh: GitHub, config: dict, before: dict, beside: set[str], login: str
+) -> tuple[str, list[tuple], list[str], list[dict]]:
+    """Return a Markdown description of the repository being enrolled, the rows about it, the notes for whoever
+    opened the pull request, and the comments about its contact address and license."""
     repo = config.get("repo")
     if not repo:
-        return "unknown", [(WARN, "Repository", "no project.yaml that names one")]
+        return "unknown", [(WARN, "Repository", "no project.yaml that names one")], [], []
     match = GITHUB_REPO.fullmatch(repo) if isinstance(repo, str) else None
+    forge = None if match else Forge.at(repo)
+    if forge:
+        described, rows, comments = forge_rows(gh, forge, repo, config, before, beside, login)
+        return described, rows, [], comments
     if not match:
-        note = "not a github.com repository: check stars, maintainer, license and criticality by hand"
-        return code(repo), [(WARN, "Repository", note)]
+        hosts = ["github.com", *FORGES]
+        note = f"not checked: only the plain https URL of a repository on {', '.join(hosts[:-1])} or {hosts[-1]} is "
+        note += "read, such as `https://gitlab.com/group/project` (no page path, port or login). Check by hand: age, "
+        note += "stars, outside participants, criticality, package rank, license, maintainer, `SECURITY.md` contact, "
+        note += "OSS-Fuzz, Dockerfile"
+        return code(repo), [(WARN, "Repository", note)], [], []
 
     owner, name, ref = match.groups()
     try:
         meta = gh.find(f"repos/{quote(owner, safe='')}/{quote(name, safe='')}")
     except ApiError as error:
-        return code(repo), [(WARN, "Repository", f"could not be checked: {code(str(error))}")]
+        return code(repo), [(WARN, "Repository", f"could not be checked: {code(str(error))}")], [], []
     if meta is None:
-        return code(repo), [(FAIL, "Repository", "not found on GitHub, or not public")]
+        return code(repo), [(FAIL, "Repository", "not found on GitHub, or not public")], [], []
 
     slug = meta["full_name"]  # from GitHub: the canonical name, also after a rename
-    return f"[{slug}]({meta['html_url']})" + (f" at {code(ref)}" if ref else ""), [
+    described = f"[{slug}]({meta['html_url']})" + (f" at {code(ref)}" if ref else "")
+    rows = [
         row("Repository", standing_row, meta),
         row("Stars / forks", popularity_row, meta),
         row("Outside participants", outsiders_row, gh, slug, meta, login),
@@ -891,14 +1675,29 @@ def repository_rows(gh: GitHub, config: dict, beside: set[str], login: str) -> t
         row("OSS-Fuzz", oss_fuzz_row, gh, slug, config),
         row("`.oss-scanner/` in the repository", scanner_files_row, gh, slug, ref, config, beside),
     ]
+    comments = contact_comments(
+        slug, config, before, login, lambda: security_policy(gh, slug, meta["owner"]["login"]),
+        lambda: oss_fuzz_projects(gh, slug)[0],
+    )
+    if adds_project(config, before):
+        comments += license_comments(slug, login, lambda: github_license_files(gh, slug, ref))
+    return described, rows, maintainer_notes(gh, slug, meta, config), comments
 
 
-def triage(gh: GitHub, repo: str, number: int) -> str:
-    """Return the comment for a pull request, or "" if it does not touch projects/."""
+def notes_section(login: str, notes: list[str]) -> str:
+    if not notes:
+        return ""
+    # A bot's login has brackets, and is not worth a mention anyway.
+    greeting = f"@{login}, please note:" if LOGIN.fullmatch(login) else "Please note:"
+    return greeting + "\n\n" + "".join(f"- {WARN} {note}\n" for note in notes) + "\n"
+
+
+def triage(gh: GitHub, repo: str, number: int) -> tuple[str, list[dict]]:
+    """Return the comment for a pull request, or "" if it does not touch projects/, and the comments beside it."""
     pull = gh.get(f"repos/{repo}/pulls/{number}")
     names, outside = split_paths(changed_paths(gh, repo, number))
     if not names:
-        return ""
+        return "", []
     name, login = names[0], pull["user"]["login"]
     heading = f"{MARKER}\n### Enrolment triage: {code('projects/' + name)}\n\n"
 
@@ -906,32 +1705,47 @@ def triage(gh: GitHub, repo: str, number: int) -> str:
         directory = pathlib.Path(scratch) / name
         # A name validate.py would refuse is not fetched; check_project() reports it without reading the directory.
         if validate.NAME.fullmatch(name) and not fetch_project(gh, repo, pull["head"]["sha"], name, directory):
-            return f"{heading}This pull request removes the project's directory: a withdrawal, nothing to triage.\n"
+            return f"{heading}This pull request removes the project's directory: a withdrawal, nothing to triage.\n", []
         problems, _ = validate.check_project(directory)
         config = read_config(directory)
         beside = {path.name for path in directory.glob("*")}
 
-    described, rows = repository_rows(gh, config, beside, login)
+    before = read_config(validate.PROJECTS / name) if validate.NAME.fullmatch(name) else {}
+    described, rows, notes, comments = repository_rows(gh, config, before, beside, login)
+    if adds_project(config, before):
+        comments += checklist_comments(pull.get("body") or "", login, bool(pull.get("draft")))
     rows += [
         row("Pull request scope", scope_row, names, outside, pull["changed_files"]),
         row("`tools/validate.py`", validate_row, problems),
         row("Checklist", checklist_row, pull.get("body") or ""),
     ]
     table = "\n".join(f"| {mark} | {check} | {result} |" for mark, check, result in rows)
-    return (
-        f"{heading}Repository: {described} · opened by {code(login)}\n\n"
+    comment = (
+        f"{heading}{notes_section(login, notes)}Repository: {described} · opened by {code(login)}\n\n"
         f"| | Check | Result |\n|:-:|---|---|\n{table}\n\n"
         f"<sub>Automated, from public data, to help reviewers. Enrolment is decided case by case against "
         f"the [criteria]({CRITERIA}). If you think we got something wrong, please tell us in a reply.</sub>\n"
     )
+    return comment, comments
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("--repo", required=True, help="the repository the pull request is in, as owner/name")
     parser.add_argument("--pr", required=True, type=int, help="the pull request's number")
+    parser.add_argument(
+        "--comments",
+        type=pathlib.Path,
+        metavar="FILE",
+        help="write the other comments here as one line of JSON, instead of printing those that would be posted",
+    )
     options = parser.parse_args()
-    sys.stdout.write(triage(GitHub(os.environ.get("GITHUB_TOKEN")), options.repo, options.pr))
+    comment, comments = triage(GitHub(os.environ.get("GITHUB_TOKEN")), options.repo, options.pr)
+    sys.stdout.write(comment)
+    if options.comments:
+        options.comments.write_text(json.dumps(comments), encoding="utf-8")
+    else:
+        sys.stdout.write("".join(f"\n{each['body']}" for each in comments if each["question"]))
     return 0
 
 

@@ -1,4 +1,9 @@
 repo: https://github.com/yfedoseev/pdf_oxide#main
 primary_contact: yfedoseev@gmail.com
 homepage: https://github.com/yfedoseev/pdf_oxide
+output_format:
+  email:
+    min_severity: low
+  github_security_advisory:
+    min_severity: medium
 disabled: false

@@ -3,3 +3,6 @@ primary_contact: security@weblate.org
 homepage: https://weblate.org/
 dockerfile: dev-docker/weblate-dev/Dockerfile
 threat_model: docs/security/threat-model.rst
+output_format:
+  github_security_advisory:
+    min_severity: critical

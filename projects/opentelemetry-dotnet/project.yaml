@@ -1,8 +1,7 @@
 repo: https://github.com/open-telemetry/opentelemetry-dotnet#main
 primary_contact: security@opentelemetry.io
 auto_ccs:
-  - martin.costello@grafana.com
-  - pkielkow@cisco.com
+  - dotnet-maintainers@opentelemetry.io
 homepage: https://opentelemetry.io/docs/languages/dotnet/
 disabled: false
 dockerfile: .oss-scanner/Dockerfile
