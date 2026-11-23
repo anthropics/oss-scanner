@@ -1,0 +1,4 @@
+repo: https://github.com/signalapp/Signal-Desktop#main
+primary_contact: oss-scanner+desktop@signal.org
+homepage: https://signal.org
+disabled: false
