@@ -82,7 +82,10 @@ The image does not build ClickHouse from source (it takes hours); it contains th
 - `/opt/clickhouse/COMMIT`: the commit the binaries were built from. It can be a few commits behind
   `git -C /src rev-parse HEAD` if CI had not finished the scanned commit; check with
   `git -C /src diff $(cat /opt/clickhouse/COMMIT) HEAD -- <path>` that the code you report on is the same in both.
-- `/src` has every submodule checked out, including third-party code under `contrib/`.
+- The binaries are stripped of debug info to keep the image small: sanitizer reports and stack traces show function
+  names, but not file names and lines.
+- The submodules under `/src/contrib/` are not checked out (the history of the repository is already about 16 GB);
+  `git -C /src submodule status` names the version of each third-party library.
 
 `clickhouse local --query "..."` runs any query without a server, including reading files with `file` and any input
 format, so it is the quickest way to test parsers, functions and codecs. `setsid clickhouse server &` started in an

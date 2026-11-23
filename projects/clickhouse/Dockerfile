@@ -4,16 +4,20 @@
 # A full build of ClickHouse takes hours on 16 CPUs, far beyond the 45-minute budget, so this image does not compile it.
 # Instead it takes the binaries that ClickHouse CI built for the scanned commit (or, if CI has not finished with it yet,
 # for its nearest first-parent ancestor on master that has them):
-#   /opt/clickhouse/release/clickhouse     the release build, as shipped to users (with symbols)
+#   /opt/clickhouse/release/clickhouse     the release build, as shipped to users
 #   /opt/clickhouse/asan/clickhouse        AddressSanitizer + UndefinedBehaviorSanitizer, to confirm memory-safety findings
 #   /opt/clickhouse/COMMIT                 the commit those binaries were built from; compare with `git -C /src rev-parse HEAD`
-# The source tree at /src has every submodule checked out. `clickhouse` on PATH is the release build.
+# `clickhouse` on PATH is the release build.
+#
+# The image is kept small, because the history of the repository alone is about 16 GB and the build machine keeps
+# several copies of it: the submodules (contrib/) are not checked out, and the binaries are stripped of debug info
+# (from 13 GB to 3 GB; stack traces keep function names, but not file names and lines).
 FROM ubuntu:24.04
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONUTF8=1
 
-# llvm-18 only for llvm-symbolizer, which turns sanitizer reports into stack traces with file names and lines.
+# llvm-18 for llvm-strip, and for llvm-symbolizer, which turns sanitizer reports into stack traces.
 RUN apt-get update && apt-get install -y --no-install-recommends \
       ca-certificates curl git python3 python3-jinja2 python3-termcolor llvm-18 \
       gdb file less procps psmisc netcat-openbsd zstd xz-utils \
@@ -28,14 +32,13 @@ ENV LLVM_SYMBOLIZER_PATH=/usr/bin/llvm-symbolizer-18 \
 COPY . /src
 WORKDIR /src
 
-# Third-party code under contrib/, to read the code that ClickHouse calls into with untrusted input.
-RUN git config --global --add safe.directory '*' \
-    && contrib/update-submodules.sh --max-procs 16
+RUN git config --global --add safe.directory '*'
 
 # Find the CI binaries for the scanned commit. Each master commit has a report, result_masterci.json, whose build jobs
 # either built the binary (status OK, the link points at it) or reused it from an earlier run with the same sources
 # (status SKIPPED, the link points at the report of that run, possibly a merge queue run). Walk the first-parent history
-# from HEAD to the first commit for which both binaries exist.
+# from HEAD to the first commit for which both binaries exist. Each binary is self-extracting: it is unpacked by its
+# first run and stripped in the same step, so the image does not keep the compressed or the unstripped copy.
 RUN <<'EOF' python3 -I -
 import json, os, re, subprocess, sys, urllib.error, urllib.parse, urllib.request
 
@@ -104,15 +107,17 @@ else:
 for kind, url in urls.items():
     os.makedirs(f"/opt/clickhouse/{kind}", exist_ok=True)
     print(f"{kind}: {url}", flush=True)
-    subprocess.run(["curl", "-fsS", "--retry", "5", "-o", f"/opt/clickhouse/{kind}/clickhouse", url], check=True)
-    os.chmod(f"/opt/clickhouse/{kind}/clickhouse", 0o755)
+    path = f"/opt/clickhouse/{kind}/clickhouse"
+    subprocess.run(["curl", "-fsS", "--retry", "5", "-o", path, url], check=True)
+    os.chmod(path, 0o755)
+    subprocess.run([path, "--version"], check=True)
+    subprocess.run(["llvm-strip-18", "--strip-debug", path], check=True)
 with open("/opt/clickhouse/COMMIT", "w") as file:
     file.write(sha + "\n")
 behind = subprocess.check_output(["git", "rev-list", "--count", f"{sha}..{head}"], text=True).strip()
 print(f"binaries are from {sha}; HEAD {head} is {behind} commits ahead of it")
 EOF
 
-# Self-extracting binaries unpack themselves on first run; do it now, while the disk is writable and time is plentiful.
 # The tool names (clickhouse-client, clickhouse-local, ...) are symlinks to the release build.
 RUN for kind in release asan; do /opt/clickhouse/$kind/clickhouse local --query "SELECT version()"; done \
     && ln -s /opt/clickhouse/release/clickhouse /usr/local/bin/clickhouse \
