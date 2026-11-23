@@ -41,6 +41,7 @@ RUN npm_config_node_gyp=echo pnpm install --frozen-lockfile \
 # Protobufs, emoji data, the bundle, styles and locales, as CI runs before its tests.
 RUN pnpm run generate
 
-# The scan has no network. The scanner runs as root, and Chromium refuses to start as root with its sandbox on.
-ENV npm_config_offline=true \
+# The scan has no network, so pnpm fails at once instead of retrying the registry (pnpm 11 reads pnpm_config_*, not
+# npm_config_*). The scanner runs as root, and Chromium refuses to start as root with its sandbox on.
+ENV pnpm_config_offline=true \
     ELECTRON_DISABLE_SANDBOX=1
