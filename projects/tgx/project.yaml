@@ -1,0 +1,21 @@
+repo: https://github.com/TGX-Android/Telegram-X#main
+primary_contact: tgx-android@pm.me
+homepage: https://play.google.com/store/apps/details?id=org.thunderdog.challegram
+disabled: false
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
+pgp: |
+  -----BEGIN PGP PUBLIC KEY BLOCK-----
+
+  xjMEYpezGhYJKwYBBAHaRw8BAQdAVZb/bJ2N5Nq3gAf4Pc8bE5uPnR0DatHb
+  3xNILcqUnI/NJXRneC1hbmRyb2lkQHBtLm1lIDx0Z3gtYW5kcm9pZEBwbS5t
+  ZT7CjwQQFgoAIAUCYpezGgYLCQcIAwIEFQgKAgQWAgEAAhkBAhsDAh4BACEJ
+  EAvzjrxqlJU5FiEEps2/e8qX5v1HQcj7C/OOvGqUlTkR+wD/Z26Kn1DCK4GH
+  w9Quy8yoF2xiJjCnbpIrgfA1T+wkn8ABAMIA2t1bgeKcUGAhipF4UKb+8w6h
+  DrhnwpCbHulG0CkEzjgEYpezGhIKKwYBBAGXVQEFAQEHQIomyG0JxndwRLsB
+  aFCoGs935mQ6y9BCvwfNrbPFOtUaAwEIB8J4BBgWCAAJBQJil7MaAhsMACEJ
+  EAvzjrxqlJU5FiEEps2/e8qX5v1HQcj7C/OOvGqUlTlptQEA0L3Z4T52sv5S
+  BgIcWTMSlyE5gUP9ebYY1foq9LuAE80BAICS0lpYgq64C9I0el0KZxMRo5vv
+  I56UA+2WesxlKe4D
+  =guI3
+  -----END PGP PUBLIC KEY BLOCK-----
