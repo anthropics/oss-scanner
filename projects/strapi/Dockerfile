@@ -17,7 +17,7 @@ ENV NX_DAEMON=false \
 # Uses the yarn version in package.json ("packageManager"); .yarnrc.yml pins the release in .yarn/.
 RUN corepack enable
 
-WORKDIR /app
+WORKDIR /src
 COPY . .
 
 RUN --mount=type=cache,target=/root/.yarn/berry/cache \
@@ -26,7 +26,7 @@ RUN --mount=type=cache,target=/root/.yarn/berry/cache \
 # Code only: skips the .d.ts build, which `strapi develop` does not need.
 RUN yarn build:code
 
-WORKDIR /app/examples/getstarted
+WORKDIR /src/examples/getstarted
 
 EXPOSE 1337
 
