@@ -1,1 +1,8 @@
-
+repo: https://github.com/slgpc/Json-linking-of-Snort-and-Heavy-dB-Immerce#main
+primary_contact: slgpc.sec@gmail.com
+homepage: https://github.com/slgpc/Json-linking-of-Snort-and-Heavy-dB-Immerce
+output_format:
+  github_security_advisory:
+    min_severity: medium
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
