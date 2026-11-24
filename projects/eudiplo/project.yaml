@@ -3,7 +3,7 @@ repo: https://github.com/EUDIPLO/eudiplo#main
 
 # REQUIRED. Who should we email our reports to, and use as the primary contact for questions.
 # This address is public. It is the email contact from SECURITY.md.
-primary_contact: security@lists.lfdecentralizedtrust.org
+primary_contact: eudiplo-security@lists.lfdecentralizedtrust.org
 
 # Optional. Additional email addresses we will CC on disclosure reports. Public as well.
 # auto_ccs:
