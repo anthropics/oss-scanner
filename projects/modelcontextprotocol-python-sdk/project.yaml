@@ -1,0 +1,11 @@
+# Model Context Protocol Python SDK: client and server libraries for MCP (v2, the stable line, on main).
+# The Dockerfile and threat_model.md sit next to this file, so neither key is set here.
+repo: https://github.com/modelcontextprotocol/python-sdk#main
+primary_contact: security@modelcontextprotocol.io
+homepage: https://py.sdk.modelcontextprotocol.io
+output_format:
+  email:
+    min_severity: none
+  github_security_advisory:
+    min_severity: low
+disabled: false
