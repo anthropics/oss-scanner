@@ -1,0 +1,12 @@
+# Anthropic OSS Scanner Enrollment: G1-Docket
+repo: https://github.com/cgilbert61/G1-Docket#main
+primary_contact: ops@g1163rt.ai
+homepage: https://g1163rt.ai/docket
+
+output_format:
+  email:
+    min_severity: low
+  github_security_advisory:
+    min_severity: medium
+
+disabled: false
