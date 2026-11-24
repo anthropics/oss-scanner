@@ -1,0 +1,6 @@
+repo: https://github.com/webpack/tapable#main
+primary_contact: webpack-tsc@lists.openjsf.org
+auto_ccs:
+  - webpack-security+tapable@openjsf.org
+homepage: https://github.com/webpack/tapable
+disabled: false
