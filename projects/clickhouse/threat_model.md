@@ -84,7 +84,8 @@ The image does not build ClickHouse from source (it takes hours); it contains th
   `git -C /src diff $(cat /opt/clickhouse/COMMIT) HEAD -- <path>` that the code you report on is the same in both.
 - The binaries are stripped of debug info to keep the image small: sanitizer reports and stack traces show function
   names, but not file names and lines.
-- The submodules under `/src/contrib/` are not checked out (the history of the repository is already about 16 GB);
+- The git history in `/src` covers only the last 14 days (`git log` stops at a shallow boundary).
+- The submodules under `/src/contrib/` are not checked out, to keep the image small;
   `git -C /src submodule status` names the version of each third-party library.
 
 `clickhouse local --query "..."` runs any query without a server, including reading files with `file` and any input

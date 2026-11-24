@@ -9,9 +9,9 @@
 #   /opt/clickhouse/COMMIT                 the commit those binaries were built from; compare with `git -C /src rev-parse HEAD`
 # `clickhouse` on PATH is the release build.
 #
-# The image is kept small, because the history of the repository alone is about 16 GB and the build machine keeps
-# several copies of it: the submodules (contrib/) are not checked out, and the binaries are stripped of debug info
-# (from 13 GB to 3 GB; stack traces keep function names, but not file names and lines).
+# The image is kept small: the git history at /src is only the last 14 days (the full history is about 16 GB), the
+# submodules (contrib/) are not checked out, and the binaries are stripped of debug info (from 13 GB to 3 GB; stack
+# traces keep function names, but not file names and lines).
 FROM ubuntu:24.04
 
 ENV DEBIAN_FRONTEND=noninteractive \
@@ -29,10 +29,17 @@ ENV LLVM_SYMBOLIZER_PATH=/usr/bin/llvm-symbolizer-18 \
     UBSAN_OPTIONS=print_stacktrace=1
 
 # scanner contract: the checkout lives inside the image, at /src
-COPY . /src
+# The working tree is copied without .git; the history is a shallow clone of the last 14 days of the checkout's own
+# .git, so /src is at exactly the scanned commit.
+COPY --exclude=.git . /src
 WORKDIR /src
-
-RUN git config --global --add safe.directory '*'
+RUN --mount=type=bind,source=.git,target=/tmp/history \
+    git config --global --add safe.directory '*' \
+    && git clone --quiet --bare --single-branch --shallow-since="14 days ago" file:///tmp/history /src/.git \
+    && git -C /src config core.bare false \
+    && git -C /src remote set-url origin https://github.com/ClickHouse/ClickHouse.git \
+    && git -C /src reset --quiet \
+    && du -sh /src/.git
 
 # Find the CI binaries for the scanned commit. Each master commit has a report, result_masterci.json, whose build jobs
 # either built the binary (status OK, the link points at it) or reused it from an earlier run with the same sources
