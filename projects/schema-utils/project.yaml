@@ -1,0 +1,6 @@
+repo: https://github.com/webpack/schema-utils#main
+primary_contact: webpack-tsc@lists.openjsf.org
+auto_ccs:
+  - webpack-security+schema-utils@openjsf.org
+homepage: https://github.com/webpack/schema-utils
+disabled: false

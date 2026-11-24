@@ -1,0 +1,6 @@
+repo: https://github.com/webpack/enhanced-resolve#main
+primary_contact: webpack-tsc@lists.openjsf.org
+auto_ccs:
+  - webpack-security+enhanced-resolve@openjsf.org
+homepage: https://www.npmjs.com/package/enhanced-resolve
+disabled: false
