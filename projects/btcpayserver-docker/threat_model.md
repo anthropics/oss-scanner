@@ -4,7 +4,7 @@ BTCPay Server Docker is the supported deployment and lifecycle tooling for self-
 
 ## Scope and priorities
 
-Prioritize vulnerabilities in the repository's shell scripts, `docker-compose-generator/`, `docker-compose-generator/docker-fragments/`, `nginx/`, generated Compose definitions, and installation or update workflows, especially:
+Prioritize vulnerabilities exploitable without pre-existing attacker access to the deployment host in the repository's shell scripts, `docker-compose-generator/`, `docker-compose-generator/docker-fragments/`, `nginx/`, generated Compose definitions, and installation or update workflows, especially:
 
 - Shell, command, environment-file, Compose, or configuration injection across trust boundaries.
 - Unsafe parsing or persistence of domains, environment variables, fragment names, paths, URLs, and other configuration values.
@@ -18,11 +18,15 @@ The Compose generator's source and generated output are both in scope. Third-par
 
 ## Attackers and trust boundaries
 
-The host administrator and a user already authorized to execute arbitrary root commands or control the Docker daemon are trusted for those intended powers. Do not report that such an operator can edit scripts, set arbitrary process environment, or replace images without demonstrating a less-privileged input path or an unintended security consequence.
+The official `btcpayserver/btcpayserver-docker` repository and its maintained contents are trusted, including its scripts, Compose generator, Docker fragments, and update code. Findings that require malicious repository contents, compromised maintainers or repository write access, or an operator installing or updating from an attacker-controlled fork or replacement repository are out of scope. Do not model repository-provided scripts or fragments as untrusted input that must be sandboxed. This does not exclude vulnerabilities in trusted code when processing genuinely attacker-controlled external input, or flaws that let an external attacker substitute code without first controlling the trusted repository or host.
 
-Treat Internet traffic, domain and HTTP data, remotely retrieved content, backup archives, imported configuration, plugin or fragment inputs from outside the trusted base repository, and values crossing from BTCPay's web application or another container into host tooling as potentially adversarial. Configuration entered directly by an administrator can still expose other users or secrets if ordinary documented values are rendered unsafely.
+The deployment host is trusted. Defending against an attacker who already has access to the host is not a security goal, including an attacker with an unprivileged local account or local code execution. Local privilege escalation and attacks requiring the attacker to create or modify host files, directories, symlinks, scripts, configuration, process environment, or local command lookup are out of scope. This includes planting files or symlinks for a privileged installation, update, backup, or restore script to consume. Do not assume an untrusted local user shares the deployment host.
 
-Containers, the Docker daemon, the host filesystem, reverse proxy, BTCPay Server, databases, Bitcoin nodes, and Lightning nodes are distinct trust boundaries. A finding should identify which actor can supply the malicious value and what additional privilege, data, host access, or service exposure results.
+The host administrator and users authorized to control the Docker daemon are trusted for those intended powers. Their ability to edit scripts, set arbitrary process environment, choose configuration or fragments, or replace images is not a vulnerability.
+
+Treat Internet traffic, domain and HTTP data, remotely retrieved content, backup archives, imported configuration, plugin or fragment inputs from outside the trusted base repository, and values crossing from BTCPay's web application or another container into host tooling as potentially adversarial when an attacker can supply them without existing host access. For example, an operator restoring an externally supplied backup can be an in-scope input path; an attacker first planting a malicious archive or symlink on the host is not. Configuration entered directly by an administrator can still expose other users or secrets if ordinary documented values are rendered unsafely.
+
+Containers, the Docker daemon, the host filesystem, reverse proxy, BTCPay Server, databases, Bitcoin nodes, and Lightning nodes are distinct trust boundaries. Remote attacks that gain host access, including through a remotely compromised service container, remain in scope; the host-access exclusion must not be used to dismiss the resulting host compromise. A finding should identify which actor can supply the malicious value, how they do so without pre-existing host access, and what additional privilege, data, host access, or service exposure results.
 
 ## Build and offline reproduction
 
@@ -32,7 +36,7 @@ The full installation test and tests that invoke real Docker Compose services re
 
 ## Findings, severity, and patches
 
-Prioritize remotely reachable host command execution, compromise of the Docker host or daemon, theft or corruption of wallet or Lightning secrets, malicious backup restoration that escapes its destination, and default exposure of sensitive internal services. Rate issues according to the actual attacker-controlled input, required operator action, default configuration, affected assets, and reliability. A dangerous result that requires a trusted root operator to deliberately supply arbitrary shell syntax is not by itself an injection vulnerability.
+Prioritize remotely reachable host command execution, compromise of the Docker host or daemon, theft or corruption of wallet or Lightning secrets, malicious backup restoration that escapes its destination, and default exposure of sensitive internal services, subject to the host-access and trusted-repository exclusions above. Rate issues according to the actual attacker-controlled input, required operator action, default configuration, affected assets, and reliability. A dangerous result that requires a trusted root operator to deliberately supply arbitrary shell syntax is not by itself an injection vulnerability. Findings whose exploit prerequisites include existing attacker access to the host or a malicious repository are out of scope, not merely lower severity.
 
 For each report, include the affected commit and source locations, deployment configuration, trust boundary, exact input path, a safe self-contained reproducer, expected versus observed behavior, and concrete impact. Prefer a focused regression test using mocked Docker commands and temporary directories, plus a minimal candidate patch. Group findings sharing one root cause and distinguish repository-owned configuration flaws from vulnerabilities in upstream images.
 
