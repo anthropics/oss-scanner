@@ -58,6 +58,9 @@ Out of scope:
 - Routes that exist only outside production (`config/routes/test.rb`, `TestsController`).
 - Third-party code vendored under `vendor/`, `public/assets/` and `app/assets/javascripts/app/lib/`
   (`base/`, `bootstrap/`, `flot/`, `rangy/`, `spine/`), unless Zammad's own use of it makes it exploitable.
+  The embeddable chat and web form widgets under `public/assets/chat/` and `public/assets/form/` are Zammad's
+  own code and in scope.
+- Behaviour you classify as a functional bug rather than a security issue.
 
 ## How to exercise it
 
@@ -91,6 +94,9 @@ zammad-services
   `/graphql`, with HTTP basic authentication for these users. `zammad-services` starts Elasticsearch empty;
   for search against the server, set `Setting.set('es_url', ENV['ES_URL'])` and
   `Setting.set('es_index', ENV['ES_INDEX'])`, then run `bundle exec rake zammad:searchindex:rebuild`.
+- S/MIME and PGP: certificates, keys and signed or encrypted sample mails are in `spec/fixtures/files/smime/`
+  and `spec/fixtures/files/pgp/`, and `spec/lib/secure_mailing/` shows how to drive the incoming and outgoing
+  checks with them.
 - Browsers and external mail servers are not available: `spec/system/` and the browser-based frontend specs do
   not run here. Frontend unit tests do (`pnpm test --run <path>`).
 
@@ -104,31 +110,89 @@ say whether the other API has the same gap. Merge findings that share one root c
 finding, in English. Patches should fix the check where it is enforced, follow the conventions in
 `.dev/agent_docs/`, and come with an RSpec example that fails without the fix.
 
+Before reporting, check that the finding is new and still present:
+
+- Scan the current `develop` branch, and look at the commits since the scanned one: findings are often fixed
+  shortly after the code that introduced them.
+- Check the published advisories. A finding one of them already covers is a duplicate; say so instead of
+  reporting it again.
+- Fixes reach the `stable` branches as cherry-picks with different commit hashes. Compare the code on the branch,
+  not commit ancestry, before concluding that a fix is missing from a release.
+- A finding that bypasses or extends the fix of a published advisory is a new finding. Name the advisory and
+  show the path its fix misses.
+- Variants that reach the same sink are one finding: different message structures, other ways to plant the same
+  reference, or other forms served by the same code. Merge them across the whole scan, not only within one
+  report.
+
 ## How we rate severity
 
+Every confirmed finding gets a GitHub security advisory with a CVSS v4.0 base vector, and its band is the one
+GitHub computes from that vector: low (0.1–3.9), moderate (4.0–6.9), high (7.0–8.9), critical (9.0–10.0).
+Propose a vector with every report and use these band names. The examples below show where typical findings
+land; when an example and the vector disagree, the vector decides, and the report should say why. Our published
+advisories (https://github.com/zammad/zammad/security/advisories) show how we rated past findings; follow them
+where this section is silent.
+
 Rate a finding by what it reaches, including any pivot, and by the least privileged role that can trigger it.
-Our published advisories (https://github.com/zammad/zammad/security/advisories) show how we rated past
-findings; follow them where this section is silent.
+Features that are on by default, such as customer self-registration, count as available to the attacker. A
+finding that needs a feature that is off by default, a specific hosting environment or a state the attacker
+cannot bring about still counts, but usually lands one band lower.
 
-- **Critical**: unauthenticated remote code execution; authentication bypass to any account; unauthenticated
-  access to tickets, users or attachments; account takeover of an agent or admin without user interaction;
-  SQL injection that reads all tickets or grants access.
-- **High**: remote code execution by a customer or agent; privilege escalation (customer to agent, agent to
-  admin); a customer reaching tickets or data of other customers or organisations; an agent reaching groups
-  they have no access to; other SQL injection; stored XSS that an external sender (email, form, chat,
-  messenger) can place into an agent's session; SSRF that reaches cloud metadata; local privilege escalation to
-  root through the packages or the container image; denial of service that an unauthenticated attacker causes
-  with a few requests.
-- **Medium**: stored XSS that needs an authenticated agent or customer to place; SSRF that a customer or agent
-  can trigger against internal hosts; CSRF on state-changing actions; disclosure of personal data to an
-  authenticated user who should not see it; an admin reading stored credentials or settings outside their
-  admin permissions; brute force of passwords or two-factor codes because a rate limit is missing; account
-  enumeration on login, signup or password reset.
-- **Low**: disclosure of non-personal metadata (counts, IDs, existence of records); issues that need unusual
-  user interaction; denial of service that needs authentication.
+- **Critical**: unauthenticated remote code execution; authentication bypass or takeover of an agent or admin
+  account by someone without an account; unauthenticated read and write access to tickets, users or
+  attachments; SQL injection reachable without an account.
+- **High**: remote code execution or SQL injection by any signed-in role; privilege escalation (customer to
+  agent, agent to admin, an admin with some granular permissions to the rights of a full admin);
+  unauthenticated read access to tickets, users or attachments; a customer reaching tickets or data of other
+  customers or organisations; an agent reading or changing tickets of groups they have no access to; script
+  that runs in another user's session, whoever places it; denial of service that stops the web application,
+  background jobs or email processing for everyone and that someone without an agent account causes with a few
+  requests or messages; local privilege escalation to root through the packages or the container image.
+- **Moderate**: HTML injection that the shipped Content Security Policy keeps from running script, when the
+  victim only has to open the page; disclosure of personal data, internal fields or internal metadata to an
+  authenticated user on a default installation; account enumeration on login, signup or password reset; missing
+  brute-force protection; an admin reading stored credentials or data outside their admin permissions; SSRF
+  that a customer or agent can trigger against internal hosts; denial of service that degrades one function but
+  leaves the service usable; CSRF on a state-changing action that any website can mount.
+- **Low**: findings of the kinds above whose impact stays small (one record, metadata, a single message) and
+  that also need a non-default setting, a specific setup of the victim, a race or a captured message; CSRF that
+  only a same-site page can mount; issues that need a deliberate or unusual action by the victim; denial of
+  service that needs an agent or admin account.
 
-An issue that needs full admin permissions is **low** at most, unless it breaks out of the application to the host
-(code execution, reading files outside the storage), which is **high**.
+An admin who holds only some granular admin permissions is not a full admin: rate what they reach beyond those
+permissions as above. An issue that needs full admin permissions is **low** at most, unless it reaches the host
+beyond what a full admin already reaches as the application user (code execution as root or another host user,
+reading files outside the installation), which is **high**.
+
+## CVSS v4 conventions
+
+We score base metrics against a default installation of the current release.
+
+- `AV:N` for anything reached over HTTP, email, messengers, webhooks or callbacks; `AV:L` only from a shell on
+  the host.
+- `AC:L` unless the attacker must defeat a protection they cannot influence. Preconditions go into `AT`, not
+  `AC`.
+- `AT:P` when the attack needs a feature or integration that is off by default (S/MIME, PGP, LDAP, SSO, the web
+  form, chat, monitoring, AI features, messenger channels and similar), a specific hosting environment, a state
+  the attacker cannot bring about (an admin action, a temporary state of the installation), a specific setup of
+  the victim (role combinations, several organisations, a message the attacker must have captured), a race or a
+  timing measurement, or a same-site position for CSRF. `AT:N` when a default installation is enough, including
+  features that are on by default such as self-registration.
+- `PR:N` for anonymous visitors and external senders. `PR:L` for customers (self-registered ones too), agents
+  and their API tokens. `PR:H` for any admin permission, also a single granular one, and for permissions that
+  only the Admin role holds by default, such as knowledge base editor.
+- `UI:N` when no person has to act, including the automatic processing of an incoming message. `UI:P` when the
+  victim only uses Zammad as usual: opens a ticket, record, public page or link, or relies on what Zammad shows.
+  `UI:A` when the victim has to take a deliberate step: sign in, send or confirm something, run a search, change
+  configuration, or click a link inside an email.
+- `VC`/`VI`/`VA`: `H` for data of all groups or organisations, a full session or account, script running in the
+  victim's session, forged content shown as authentic, or a stop of the service, background jobs or email
+  processing. `L` for limited reach (one record or field, metadata), HTML injection that cannot run script, or
+  one degraded function.
+- `SC`/`SI`/`SA` for impact outside Zammad: a website that embeds the chat widget, a connected external service
+  or directory, or a cloud account behind leaked credentials.
+- Chains: score the finding on its own. If you demonstrated that a second weakness raises the impact, give that
+  vector as well and name the weakness it needs.
 
 ## Anything to leave alone
 
@@ -138,12 +202,21 @@ The left column is intended behaviour. The right column says what would make it 
 |---|---|
 | Admins and the operator are trusted with what their permissions allow. | A lower role, or an admin without that permission, can do the same thing. |
 | Email cannot prove its sender: Zammad identifies the customer by the `From` address. | A signed or encrypted email (S/MIME, PGP) is accepted although its signature or encryption check fails. |
-| An email that names a ticket number in its subject is added to that ticket as a follow-up, whoever sends it. | The follow-up reaches a ticket whose number was not in the email, or a group that does not allow follow-ups. |
+| An email that names a ticket number in its subject is added to that ticket as a follow-up, whoever sends it. | The follow-up reaches a ticket whose number was not in the email. |
+| Whether an inbound message becomes an agent or a customer article follows the sender address, which is not authenticated. | The message gains more than a forged `From` and a known ticket number already give. |
+| Automatic replies and rejection notices go to the sender the inbound mail names. | A reply carries data of the installation or of another user. |
 | The web form, the chat and the public knowledge base accept or show content without login. | They expose internal content, or create data outside what their configuration allows. |
 | Customers of a shared organisation see all tickets of that organisation. | A customer sees tickets of an organisation they do not belong to, or of a non-shared one. |
 | An agent with `read` access to a group sees every ticket in it. | An agent changes a ticket with only `read` access, or reaches a group without access. |
 | Admins may point webhooks, integrations, LDAP and SSO at private and loopback addresses of their network. | The request reaches cloud metadata, or a non-admin can choose the destination. |
 | Operators can choose less safe settings than the defaults. | A default setting is insecure. |
+| Group and channel workflow settings decide how legitimate input is routed and shown: whether closed tickets accept follow-ups, how closed states are detected, whether a channel is active, whether agents may create new tag names, the chat's visitor restrictions. They are not access control. | Getting past one lets someone read data, or change a ticket, user or record that is not their own. |
+| A link between records a user can open is metadata of those records. | The link reveals a record the user cannot open, or changes its content. |
+| Aggregate counters and timestamps without personal data are not protected, and neither is metadata about records inside the user's own access. | The response contains personal data, content or credentials, or reveals records outside the requester's access. |
+| Admins decide which certificates and keys are trusted; one they import is trusted as imported. The descriptive text of a signature status is informational. | A message shows as validly signed for a sender whose key did not sign it, without an admin importing anything the attacker supplied. |
+| Messenger and social channels file messages under the sender's platform identity. Wrong author attribution, or one item failing to import, is a functional bug. | The sender reaches another user's data or account. |
+| Access an attacker keeps after first compromising the victim's session, mailbox or a mailed link belongs to that compromise. | The attacker gets the session, the mailbox content or the link without a prior compromise. |
+| A missing cleanup or guard that matters only after a separate bug has fired. | Report the bug that fires it, and add what the missing cleanup adds to its impact. |
 
 Also leave these alone:
 
@@ -151,7 +224,8 @@ Also leave these alone:
   rate limits outside authentication.
 - Missing security headers or cookie flags, self-XSS and clickjacking without a sensitive action, unless the
   report shows a concrete impact.
-- Attackers with direct access to the database, the file storage or the host.
+- Attackers with direct access to the database, the file storage or the host, including values that reach
+  only server-side logs or process output.
 - A vulnerable dependency, unless the report shows a working exploit through Zammad's own code.
 - External services (mail servers, LDAP, SSO providers, messengers) cannot be exercised
   offline; reason about them from the source and say so.
