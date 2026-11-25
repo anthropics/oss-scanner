@@ -1,0 +1,21 @@
+# REQUIRED. The ONE git repository to scan, as an https:// URL. Optionally add #branch or #tag to pin one.
+repo: https://github.com/avniproject/avni-client#master
+
+# REQUIRED. Who should we email our reports to, and use as the primary contact for questions.
+primary_contact: avni-infra@samanvayfoundation.org
+
+# Optional. The project's home page.
+homepage: https://avniproject.org
+
+# Optional. The lowest severity each channel receives. Reports come by email only.
+output_format:
+  email:
+    min_severity: low
+  github_security_advisory:
+    min_severity: none
+
+# Optional. true pauses reports without removing the enrolment; false (or omitting it) enables your project.
+disabled: false
+
+# The Dockerfile, threat_model.md and patch_guidelines.md are next to this file, so dockerfile:, threat_model: and
+# patch_guidelines: are omitted.
