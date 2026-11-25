@@ -1,0 +1,12 @@
+# The ONE git repository to scan. PostHog/posthog-foss is a generated mirror of this repository with ee/ removed.
+repo: https://github.com/PostHog/posthog#master
+
+# The address published in https://posthog.com/.well-known/security.txt
+primary_contact: security-reports@posthog.com
+
+homepage: https://posthog.com
+
+disabled: false
+
+# The Dockerfile, threat_model.md, report_guidelines.md and patch_guidelines.md are next to this file,
+# so dockerfile:, threat_model:, report_guidelines: and patch_guidelines: are omitted.
