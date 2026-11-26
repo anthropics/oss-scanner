@@ -1,0 +1,12 @@
+# Anthropic OSS Scanner Enrollment: G1-Manifest
+repo: https://github.com/cgilbert61/G1-Manifest#main
+primary_contact: ops@g1163rt.ai
+homepage: https://g1163rt.ai/manifest
+
+output_format:
+  email:
+    min_severity: low
+  github_security_advisory:
+    min_severity: medium
+
+disabled: false
