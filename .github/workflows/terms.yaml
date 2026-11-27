@@ -14,6 +14,8 @@ permissions: {}
 
 jobs:
   terms-accepted:
+    # The repository's maintainers do not enrol through this form. cla.yaml has the same list.
+    if: ${{ !contains(fromJSON('["sb-", "punitshah", "srxzr-ant", "carlini"]'), github.event.pull_request.user.login) }}
     runs-on: ubuntu-latest
     timeout-minutes: 2
     steps:
@@ -22,10 +24,10 @@ jobs:
           BODY: ${{ github.event.pull_request.body }}
           AUTHOR: ${{ github.event.pull_request.user.login }}
         run: |
-          # The repository's maintainers and bots (as in cla.yaml's allowlist) do not enrol through this form.
+          # Bots (as in cla.yaml's allowlist) do not enrol through this form.
           case "$AUTHOR" in
-            carlini|srxzr-ant|punitshah|dependabot\[bot\]|github-actions\[bot\])
-              echo "Opened by $AUTHOR, a maintainer or bot of this repository: no terms box needed."; exit 0 ;;
+            dependabot\[bot\]|github-actions\[bot\])
+              echo "Opened by $AUTHOR, a bot: no terms box needed."; exit 0 ;;
           esac
           if printf '%s\n' "$BODY" | grep -qiE '^[[:space:]]*[-*][[:space:]]+\[[xX]\][[:space:]]+I accept the \[OSS Scanner terms\]\(https://red\.anthropic\.com/oss-scanner/terms/?\)'; then
             echo "The OSS Scanner terms are accepted in the description."
