@@ -1,0 +1,18 @@
+repo: https://github.com/rocicorp/mono#main
+
+# This address is public. Switch to a security alias once one exists.
+primary_contact: arv@roci.dev
+
+homepage: https://zero.rocicorp.dev
+
+disabled: false
+
+# Findings go to the primary contact by email and are also filed as private GitHub security advisories
+# (private vulnerability reporting is on for rocicorp/mono).
+output_format:
+  email:
+    min_severity: low
+  github_security_advisory:
+    min_severity: low
+
+# Dockerfile and threat_model.md sit next to this file, so rocicorp/mono needs no changes.
