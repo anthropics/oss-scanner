@@ -1,0 +1,11 @@
+# Wings is the daemon behind Pelican Panel. It runs on each host, controls Docker to run every game
+# server in its own container, and serves file management, SFTP, backups and console websockets to
+# users on behalf of the panel, so isolation bugs reach the host and other tenants.
+repo: https://github.com/pelican/wings
+primary_contact: team@pelican.dev
+homepage: https://pelican.dev
+output_format:
+  email:
+    min_severity: low
+  github_security_advisory:
+    min_severity: none
