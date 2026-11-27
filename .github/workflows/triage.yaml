@@ -12,6 +12,7 @@ name: "Triage"
 # Comments of their own @-mention them when:
 #   - all or part of the project is not open source
 #   - primary_contact is not among the addresses in SECURITY.md, or not the primary contact in OSS-Fuzz
+#   - they do not look like an active maintainer of the repository (GitHub only)
 #   - a required box of the checklist is not ticked (on a draft, once it is ready for review)
 # Only if the pull request adds the project or changes its repo; the second also if it changes primary_contact.
 #

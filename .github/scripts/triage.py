@@ -2,7 +2,7 @@
 # Copyright 2026 Anthropic PBC
 # SPDX-License-Identifier: Apache-2.0
 """Write the triage comment for an enrolment pull request, as Markdown on standard output, and the comments that tell
-whoever opened it about its license, contact address or checklist, if there is something to say.
+whoever opened it about its license, contact address, maintainer or checklist, if there is something to say.
 
     GITHUB_TOKEN=... .github/scripts/triage.py --repo anthropics/oss-scanner --pr 123
 
@@ -55,6 +55,7 @@ CONTACT_MARKER = "<!-- oss-scanner-contact -->"
 LICENSE_MARKER = "<!-- oss-scanner-license -->"
 MIXED_LICENSE_MARKER = "<!-- oss-scanner-mixed-license -->"
 CHECKLIST_MARKER = "<!-- oss-scanner-checklist -->"
+MAINTAINER_MARKER = "<!-- oss-scanner-maintainer -->"
 CRITERIA = "https://red.anthropic.com/oss-scanner"
 OPEN_SOURCE = "[as defined by the Open Source Initiative](https://opensource.org/osd)"
 TEMPLATE = "https://github.com/anthropics/oss-scanner/blob/main/.github/PULL_REQUEST_TEMPLATE.md"
@@ -820,29 +821,30 @@ def license_result(host: str, spdx: str | None, license_text) -> tuple[str, str]
     return WARN, f"{host} cannot name the license; its file says {code(says, 80)}"
 
 
-def maintainer_row(gh: GitHub, slug: str, meta: dict, login: str) -> tuple[str, str]:
+@functools.cache  # read by its row and by maintainer_comments()
+def maintainer_row(gh: GitHub, slug: str, owner: str, login: str) -> tuple[str, str]:
     """Is the person who opened the pull request an active maintainer of the repository? Only public signals: a
     role GitHub shows (owner, member, collaborator) or, failing that, having merged recent pull requests."""
     if not LOGIN.fullmatch(login):
         return WARN, "not a user account"
 
     roles = []
-    if meta["owner"]["login"].lower() == login.lower():
+    if owner.lower() == login.lower():
         roles.append(ASSOCIATIONS["OWNER"])
     else:
         # GitHub labels each issue and pull request with what its author is to the repository.
         authored = gh.get("search/issues", q=f"repo:{slug} author:{login}", per_page=1)["items"]
         if authored and authored[0]["author_association"] in ASSOCIATIONS:
             roles.append(ASSOCIATIONS[authored[0]["author_association"]])
-    organisation = quote(meta["owner"]["login"], safe="")
+    organisation = quote(owner, safe="")
     if not roles and gh.find(f"orgs/{organisation}/public_members/{login}") is not None:
         roles.append("public member of the owning organisation")
 
     merged = 0
     if not roles:
         # A private member of the organisation shows no role, but merging takes write access.
-        owner, name = slug.split("/")
-        merges = gh.graphql(RECENT_MERGES, owner=owner, name=name)["repository"]["pullRequests"]["nodes"]
+        slug_owner, name = slug.split("/")
+        merges = gh.graphql(RECENT_MERGES, owner=slug_owner, name=name)["repository"]["pullRequests"]["nodes"]
         merged = sum(1 for pull in merges if ((pull["mergedBy"] or {}).get("login") or "").lower() == login.lower())
         if merged:
             roles.append(f"merged {merged} of the last {len(merges)} pull requests")
@@ -1220,6 +1222,26 @@ def forge_license_files(forge: Forge):
     top = [name for name in names if LICENSE_FILE.fullmatch(name)]
     files = [path for path in paths if not path.endswith("/")]
     return top, enterprise_license_paths(files), lambda path: forge.text(path, forge.ref), True
+
+
+def maintainer_comments(slug: str, login: str, read_maintainer) -> list[dict]:
+    """The comment that asks for a maintainer's word when whoever opened the pull request does not look like one."""
+    try:
+        mark, evidence = read_maintainer()
+    except Exception as error:  # the row about it says it could not be checked
+        print(f"maintainer: {error!r}", file=sys.stderr)
+        return []
+    if mark == OK:
+        resolved = "✅ Opened by an active maintainer, as far as public data shows. Nothing left to confirm."
+        return [side_comment(MAINTAINER_MARKER, resolved, False)]
+    body = (
+        "### Maintainer: please confirm\n\n"
+        f"{mention(login)}from public data we can't tell that you are an active maintainer of {code(slug)} "
+        f"({code(evidence)}). Could a clear maintainer of the project reply here to confirm that it wants to be "
+        "enrolled? If you are one and GitHub doesn't show it, please reply with a link that does, such as a "
+        "maintainers file."
+    )
+    return [side_comment(MAINTAINER_MARKER, body, True)]
 
 
 def checklist_comments(body: str, login: str, draft: bool) -> list[dict]:
@@ -1636,7 +1658,7 @@ def repository_rows(
     gh: GitHub, config: dict, before: dict, beside: set[str], login: str
 ) -> tuple[str, list[tuple], list[str], list[dict]]:
     """Return a Markdown description of the repository being enrolled, the rows about it, the notes for whoever
-    opened the pull request, and the comments about its contact address and license."""
+    opened the pull request, and the comments about its contact address, license and maintainer."""
     repo = config.get("repo")
     if not repo:
         return "unknown", [(WARN, "Repository", "no project.yaml that names one")], [], []
@@ -1670,7 +1692,7 @@ def repository_rows(
         row("Criticality score", criticality_row, gh, slug, meta),
         row("Package rank", package_rank_row, gh, slug),
         row("License", license_row, gh, slug, meta),
-        row("Opened by an active maintainer", maintainer_row, gh, slug, meta, login),
+        row("Opened by an active maintainer", maintainer_row, gh, slug, meta["owner"]["login"], login),
         row("Contact in `SECURITY.md`", contact_row, gh, slug, meta, config),
         row("OSS-Fuzz", oss_fuzz_row, gh, slug, config),
         row("`.oss-scanner/` in the repository", scanner_files_row, gh, slug, ref, config, beside),
@@ -1681,6 +1703,7 @@ def repository_rows(
     )
     if adds_project(config, before):
         comments += license_comments(slug, login, lambda: github_license_files(gh, slug, ref))
+        comments += maintainer_comments(slug, login, lambda: maintainer_row(gh, slug, meta["owner"]["login"], login))
     return described, rows, maintainer_notes(gh, slug, meta, config), comments
 
 
