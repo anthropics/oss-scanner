@@ -1,0 +1,14 @@
+repo: https://github.com/geosolutions-it/geostore#master
+primary_contact: infosec@geosolutionsgroup.com
+homepage: https://github.com/geosolutions-it/geostore
+# Reports go to the repository's private vulnerability reporting, where we triage advisories.
+output_format:
+  email:
+    min_severity: none
+  github_security_advisory:
+    min_severity: high
+disabled: false
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
+report_guidelines: .oss-scanner/report_guidelines.md
+patch_guidelines: .oss-scanner/patch_guidelines.md
