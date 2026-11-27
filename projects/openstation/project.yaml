@@ -1,0 +1,4 @@
+repo: https://github.com/WordPress/openstation#trunk
+primary_contact: security@automattic.com
+homepage: https://openstation.me
+disabled: false
