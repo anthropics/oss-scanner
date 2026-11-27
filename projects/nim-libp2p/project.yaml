@@ -1,0 +1,18 @@
+repo: https://github.com/iftech/nim-libp2p#master
+
+primary_contact: richard@status.im
+
+homepage: https://iftech.github.io/nim-libp2p/
+
+output_format:
+  email:
+    min_severity: low
+  github_security_advisory:
+    min_severity: none
+
+disabled: false
+
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
+report_guidelines: .oss-scanner/report_guidelines.md
+patch_guidelines: .oss-scanner/patch_guidelines.md
