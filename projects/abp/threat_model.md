@@ -26,7 +26,7 @@ Follow the actual authentication entry point through the whole request flow. Pas
 
 ## Build and offline reproduction
 
-The Dockerfile installs .NET 10 and builds selected backend security test projects and their referenced source projects in Debug mode. It also builds the dynamically loaded MVC test plugin, the Account Web/HTTP API and Identity/Permission Management HTTP API projects. Source, build outputs, restored NuGet packages, and SDK tools remain in the image.
+The Dockerfile installs .NET 11 and builds selected backend security test projects and their referenced source projects in Debug mode. It also builds the dynamically loaded MVC test plugin, the Account Web/HTTP API and Identity/Permission Management HTTP API projects. Source, build outputs, restored NuGet packages, and SDK tools remain in the image.
 
 Run `abp-oss-test` from `/src` to execute the prepared suites without restore or rebuild. Results are written to `/tmp/abp-oss-results`, or to the directory passed as the first argument. The test suites use in-process hosts and local SQLite/in-memory fixtures; the MongoDB suites start a local `mongod` from the MongoSandbox NuGet package (linux-x64 only). No external database or real account credentials are supplied.
 
