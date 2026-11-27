@@ -1,0 +1,11 @@
+# Pelican Panel is a self-hosted game server management panel (Laravel). Hosting providers and
+# communities run it to give users accounts, API keys, file access and console control over
+# game servers on their own nodes, so authorization bugs cross tenant boundaries.
+repo: https://github.com/pelican/panel
+primary_contact: team@pelican.dev
+homepage: https://pelican.dev
+output_format:
+  email:
+    min_severity: low
+  github_security_advisory:
+    min_severity: none
