@@ -1,0 +1,5 @@
+# Unpinned: follows the default branch, which is the current stable release line (v7.2 today).
+repo: https://github.com/ravendb/ravendb
+primary_contact: security@ravendb.net
+homepage: https://ravendb.net
+disabled: false
