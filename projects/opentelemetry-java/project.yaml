@@ -1,0 +1,11 @@
+repo: https://github.com/open-telemetry/opentelemetry-java#main
+primary_contact: security@opentelemetry.io
+homepage: https://opentelemetry.io/docs/languages/java/
+disabled: false
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
+output_format:
+  email:
+    min_severity: none
+  github_security_advisory:
+    min_severity: low
