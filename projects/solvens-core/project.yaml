@@ -2,7 +2,7 @@
 # The repository branch is pinned so the scanner uses the Dockerfile and
 # threat-model files prepared and validated for this enrollment.
 repo: https://github.com/SolvensAmoris/solvens-core#oss-scanner/docker-audit
-primary_contact: luis@solvens.amoris
+primary_contact: Luis.albm77@gmail.com
 homepage: https://github.com/SolvensAmoris/solvens-core
 disabled: false
 dockerfile: .oss-scanner/Dockerfile
