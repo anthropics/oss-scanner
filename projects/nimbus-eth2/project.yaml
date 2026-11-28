@@ -1,0 +1,18 @@
+repo: https://github.com/status-im/nimbus-eth2#unstable
+primary_contact: oss-scanner@nimbus.team
+pgp: |
+  -----BEGIN PGP PUBLIC KEY BLOCK-----
+
+  mDMEas0IghYJKwYBBAHaRw8BAQdAjKUUk2K/Jc2iUXK25EtJMCAChBJkLHUH+sYk
+  Jk1odbS0JU9TUyBTY2FubmVyIDxvc3Mtc2Nhbm5lckBuaW1idXMudGVhbT6IkwQT
+  FgoAOxYhBK48CI3njEwzu34Oon2JtHZ8pfebBQJqzQiCAhsDBQsJCAcCAiICBhUK
+  CQgLAgQWAgMBAh4HAheAAAoJEH2JtHZ8pfebCYUA/2Ht+tFU9GT2Y0cuPvuw0/b5
+  4QE+9m9uu1UrRGcILqerAP4nZr0FiSlE6yn9bOOwPBmNbjspkYHxqfk77FQRFxEg
+  Bbg4BGrNCIISCisGAQQBl1UBBQEBB0AbQMiwlLWV27E4Ld4Pzr2JvQMG0w4bIKUh
+  Kl4pEt2wbgMBCAeIeAQYFgoAIBYhBK48CI3njEwzu34Oon2JtHZ8pfebBQJqzQiC
+  AhsMAAoJEH2JtHZ8pfebXCgA/iaKBekqF1ZZnuYgXte/FzLc8M/j/B0HlwbaZuj7
+  erIOAP0fuIg54fJrBo2zW64Kt2GeF3P8b2PIB35GX9OkULO1Dg==
+  =dyMO
+  -----END PGP PUBLIC KEY BLOCK-----
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
