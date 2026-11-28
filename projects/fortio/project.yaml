@@ -1,0 +1,6 @@
+# fortio: load testing library and command line tool (HTTP/HTTPS/gRPC/TCP/UDP), plus echo server and web UI.
+# The Dockerfile and threat_model.md sit next to this file, so neither key is set here.
+repo: https://github.com/fortio/fortio#master
+primary_contact: ldemailly@gmail.com
+homepage: https://fortio.org
+disabled: false
