@@ -1,0 +1,18 @@
+# Archestra: an open-source platform for running AI agents in a company, with an MCP gateway, an LLM proxy and
+# guardrails. The platform under platform/ is what users deploy (Docker image and Helm chart).
+repo: https://github.com/archestra-ai/archestra#main
+
+# The security contact published at https://archestra.ai/docs/contributing#reporting-a-vulnerability
+primary_contact: security@archestra.ai
+
+homepage: https://archestra.ai
+
+output_format:
+  email:
+    min_severity: low
+  github_security_advisory:
+    min_severity: none
+
+disabled: false
+
+# The Dockerfile and threat_model.md are next to this file, so dockerfile: and threat_model: are omitted.
