@@ -1,0 +1,6 @@
+repo: https://github.com/maester365/maester#main
+primary_contact: maester.security@merill.net
+homepage: https://maester.dev
+disabled: false
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
