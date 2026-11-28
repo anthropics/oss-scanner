@@ -1,0 +1,6 @@
+repo: https://github.com/Kpa-clawbot/CoreScope#master
+primary_contact: security@fiten.eu
+homepage: https://github.com/Kpa-clawbot/CoreScope
+disabled: false
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
