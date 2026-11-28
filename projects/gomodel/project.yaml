@@ -1,0 +1,6 @@
+# GoModel: an OpenAI- and Anthropic-compatible AI gateway written in Go.
+# The Dockerfile lives in the GoModel repository; threat_model.md sits next to this file.
+repo: https://github.com/ENTERPILOT/GoModel#main
+primary_contact: abuse@enterpilot.io
+homepage: https://gomodel.enterpilot.io
+dockerfile: .oss-scanner/Dockerfile
