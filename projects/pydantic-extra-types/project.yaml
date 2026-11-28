@@ -1,0 +1,19 @@
+# pydantic-extra-types: extra types for Pydantic (phone numbers, payment cards, colors, coordinates and others).
+
+repo: https://github.com/pydantic/pydantic-extra-types#main
+
+# Pydantic's security alias.
+primary_contact: security@pydantic.dev
+
+homepage: https://github.com/pydantic/pydantic-extra-types
+
+# Reports go by email only: the scanner must not open GitHub security advisories on the repository.
+output_format:
+  email:
+    min_severity: low
+  github_security_advisory:
+    min_severity: none
+
+disabled: false
+
+# The Dockerfile and threat_model.md are next to this file, so dockerfile: and threat_model: are omitted.
