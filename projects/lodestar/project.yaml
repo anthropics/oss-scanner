@@ -1,0 +1,5 @@
+repo: https://github.com/ChainSafe/lodestar#unstable
+primary_contact: lodestar@chainsafe.io
+auto_ccs:
+  - cayman@chainsafe.io
+homepage: https://lodestar.chainsafe.io
