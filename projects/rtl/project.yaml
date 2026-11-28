@@ -1,0 +1,62 @@
+repo: https://github.com/Ride-The-Lightning/RTL#master
+primary_contact: security@ridethelightning.info
+homepage: https://ridethelightning.info
+pgp: |
+  -----BEGIN PGP PUBLIC KEY BLOCK-----
+
+  mQINBF19YKgBEACzt8iSH+7MFAQYKZNAtVNGFN6KAnsRYtPmwtLHg6A8xf3U3qu7
+  7EFi1vFALZdrP5GnJkaxqF1PcRfbNseQrmLzn/nnk04YeyXRDs9hoQFrbCYyZdn0
+  EEmoOC/eiqPvq8dMd51nNuubNy3oWJrRaKyvEkrGj1oMNlLYI8u/NWdruTEIGqE9
+  +uhp1XdlbIKDmryXaMS4UmMoGK7aOBg4EdCUQ5ARZeW62sfu6+f/lViQgsOMcnqH
+  BNEaQjHOt+CY9pEiQVu5Udb1CrIacjbw3XO6YKXtMArsxnNnL97pPAMFVPjiGaiW
+  5BckHiFufREt5lG3sUClQAQwWJgSQ7F/R6Zchbi9WoRq/wZUZpB47kun1iKzMDOk
+  ywjlEhTtoGmOsWPbF634y/XchHAKaAGVK29zNxoE+9MhHzxbJdYolRVxqWX5Vw4s
+  YvAy9fXdPMGMhUYQ0wFiR/McJw4n6xY79JNGnxXs+ZIYDjN5ifYfIn+C7Y+Uf247
+  3tI1RvEMeH97fV9VoT1WZRSrS3uoUfjihJOvpsd4twunO74bNYverppmp7cHDFDP
+  1SDW/GxPbn+9QG1apsN/81Drb2VTSvMJEX5eOF6P9xINlt8Lsx0vvuYrRdboGQbV
+  tpKTgYYoYophTxfWg+KtXIyBEjwSiHJUfdMsOifwJtk47NLVGyvbMQg+OwARAQAB
+  tC1SVEwgU2VjdXJpdHkgPHNlY3VyaXR5QHJpZGV0aGVsaWdodG5pbmcuaW5mbz6J
+  AlcEEwEIAEEWIQQ+m9RDbCiAOcqCepIAyeK8LkVmbwUCaoQvfgIbAwUJDyurEgUL
+  CQgHAgIiAgYVCgkICwIEFgIDAQIeBwIXgAAKCRAAyeK8LkVmbx2xD/9Ov02sJYvV
+  KulOojVmKdIxwShWxozGM9glmNNz8HZyRlRfD8TXOkPqrbpqus0sI9Oj5/JqoZ1N
+  uVjOC4ikzfJ5eCF19haYkyjYY1X+Yon72MQe/ygrMVSE0Q6spNyAPaXpQORYF2H4
+  /x11z1RQkyo/pQu5bS8c0tO1MzqAdrQYKHCU43NhrYeO9fHXUOgGVBtzG0Qi+Wwk
+  8NXFSXacB/tW6O9qH6qZ5IRWRK/Rcs037+a71/tWr/L99jbESvWT742D6uDSG7xW
+  X8ogbcUfex0OIwc0Yxxax1AK93DYiuaQeqAcPdkGaWoD+q0QLghPvFQhUfp33+eL
+  hC7U+pTJdO6eykwfiKjgPFpvWMiXQlw+s5qdduqZ1HdmxyIugCkjO1D2UaCfXJhM
+  Kqe5wtjqw2RHkoaXIWhNai7/sn+Yfi6v2qS88wzcz+K/CNve2O2yZl6ER8iBbHev
+  3OUY558ubQ9nmvPCP4mEfRJbb/bD9uvsNx6ldIB1FLADELX/LVAqJ7zz8pigk4p3
+  ecwlmpK9OIsB5abBuR5J+ujWQvNHWbYrobxXi5TIJH9bmuT5zhvCL4y6fNBbfCZw
+  r+0zS1fwAvsP4a1o8NEwBo1KNh7leytwK3ecrBfdSqBBXBKqn49MlydeTW47RUTI
+  w6yEoCFjL9DqeLTev3HoDkuQODejeBzExLkCDQRdfWCoARAAwppCAJ8vkADxEZ8o
+  VCMZ9Mkvu0oxvoew7+6WSnLtF4eNyJiRqW6Hu/l1EOJRA6rf+8XZlI8MGZqyaev1
+  SCvL+STZEtqemm7VOF+ltqb57vW/3qb/TjRXdEDZ42lKvdzWheqW2vLlTfHLuXCP
+  KRcdaThd5JvRLM/QGObm18eorqveaa6Mm9evIN3YEhiI1tlXXeXRIq2qLr0IjIdQ
+  FpbnVt204Zkegm8i/xV1vkfJGYYv5yZF6koHwZ3462VGe2OL6dNhp8V9BSdKjFht
+  i7+MSj8i/njugl4QL7iRKXRLabMjVwRWF6CEXRAUMWLSsMYMR/GkkLpd4+ZSPmos
+  bzu6Uuik9MfDZVzmMH3AT1c2bWM7KcWDy6/BKHx9KpXRmRWgqO9B1VFa9ESjAQzT
+  u/2t6KmenI53e6cF+ooylW+oy5qLNOyvNjVz23Pj+wnn3KJKaGr8MJ0isBV2hfCm
+  Ldk0jXem1EZ1mBKpHf8BGIaaGL3ePfDdE3pNvIBohdglX59EFl3W9CG/Aq8fZHRP
+  qLZ/lA+LsI5cL1O5C5EZvYP9XbVcXIYNFWrmgTqkiXUfx2FEDWTMaMHWfbyRUmIw
+  znc2bbQg2FnwQ5hsfE8YmOYQhJRbti78IaWueM/gEOdHXriGVTdB/pG7sXhrgrhz
+  c/bmOJ0PpYGvXxN5df0fCjIQjrMAEQEAAYkCPAQYAQgAJgIbDBYhBD6b1ENsKIA5
+  yoJ6kgDJ4rwuRWZvBQJo5qVPBQkPK6unAAoJEADJ4rwuRWZvKscP/3pkiajECAOt
+  FwEz9rDLjguQtH2wqebxOZO5T/13m5hJgpF8ecWMpZI9dueCoC4g7Xb7eC03oRn1
+  s/XWAqY9K3W6RxQQBqveBmgptg7D+oeIbcV19IPVmv86jg91vd6Vd+jt7wv8R83s
+  l+elMkwyMtrsyf4+pTMF0c+DRSMJlv/DW/raJxfDCb/4gPbhhaUmrQu23RLQ+bqc
+  lA3Zglcuee0xujGhZSW3JJ0xh3LG326/n6/bBzd00I4u2kO3YtHo6tH9J/1t4Abj
+  kMHFJMMk3+eAtcUCGb1BuFY5OWeMqtH2cL/MyzOaSuHGciE5JFBZZ3stRfDYwAFn
+  YEUz1RrR4RxdfIqLVUSdy2zwPA/ecJ+gqcjd8S3d7CKE5NhmSYSuhEKNIQ68ZxdQ
+  OueYIBZFC9SAQhG7g3cKweSHkUiw4ZhK0l9XTTzxsQoR2ZTWJbn5mwaAgzIf2zsv
+  NED8yuTlO4IZJ/xwByCexkeGlZhibpG1UslrUmoAAThFtueX77MbexvuLohfW72F
+  eWjDPRdHA3QbRvTWIH096aRKdQUyGJNg/1rdcLd+z0X4tKZ4xAQHJaaDbKKK2ehP
+  OyZJLmVDgsPTRVXTx+o8gSI4pLq8JNVuwc/PSIAZ5u87XdOXdTHVQK5oDXxvEA3U
+  MseYGbyqxH/Q2MoRNGVF6D7fPNNlrVB3
+  =FF01
+  -----END PGP PUBLIC KEY BLOCK-----
+output_format:
+  email:
+    min_severity: low
+  github_security_advisory:
+    min_severity: none
+disabled: false
