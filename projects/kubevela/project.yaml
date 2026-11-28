@@ -1,0 +1,7 @@
+# KubeVela: application delivery control plane for Kubernetes (CNCF incubating).
+repo: https://github.com/kubevela/kubevela#master
+primary_contact: anoop2811@aol.in
+homepage: https://kubevela.io
+disabled: false
+# Dockerfile and threat_model.md sit next to this file for the initial enrolment.
+# They can move into the repository under .oss-scanner/ in a later change.
