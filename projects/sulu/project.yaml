@@ -1,0 +1,5 @@
+repo: https://github.com/sulu/sulu#3.0
+primary_contact: security@sulu.io
+homepage: https://sulu.io
+disabled: false
+# Dockerfile and threat model live next to this file.
