@@ -1,0 +1,16 @@
+# SOLVENS CORE enrollment in Anthropic OSS Scanner.
+# The repository branch is pinned so the scanner uses the Dockerfile and
+# threat-model files prepared and validated for this enrollment.
+repo: https://github.com/SolvensAmoris/solvens-core#oss-scanner/docker-audit
+primary_contact: luis@solvens.amoris
+homepage: https://github.com/SolvensAmoris/solvens-core
+disabled: false
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
+report_guidelines: .oss-scanner/report_guidelines.md
+patch_guidelines: .oss-scanner/patch_guidelines.md
+output_format:
+  email:
+    min_severity: low
+  github_security_advisory:
+    min_severity: none
