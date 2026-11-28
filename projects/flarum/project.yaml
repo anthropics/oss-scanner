@@ -1,0 +1,13 @@
+repo: https://github.com/flarum/framework#2.x
+primary_contact: security@flarum.org
+homepage: https://flarum.org
+output_format:
+  email:
+    min_severity: low
+  github_security_advisory:
+    min_severity: none
+disabled: false
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
+report_guidelines: .oss-scanner/report_guidelines.md
+patch_guidelines: .oss-scanner/patch_guidelines.md
