@@ -1,0 +1,14 @@
+# GitOps Promoter: Kubernetes controller that promotes environment config across Git branches.
+# The Dockerfile and threat model are in the promoter repository.
+repo: https://github.com/argoproj-labs/gitops-promoter#main
+primary_contact: michael_crenshaw@intuit.com
+auto_ccs:
+  - zach_aller@intuit.com
+homepage: https://gitops-promoter.readthedocs.io/en/latest/
+dockerfile: .oss-scanner/Dockerfile
+threat_model: .oss-scanner/threat_model.md
+output_format:
+  email:
+    min_severity: none
+  github_security_advisory:
+    min_severity: high
