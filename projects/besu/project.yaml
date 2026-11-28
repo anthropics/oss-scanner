@@ -1,0 +1,11 @@
+repo: https://github.com/besu-eth/besu
+primary_contact: security-besu@lists.lfdecentralizedtrust.org
+homepage: https://www.lfdecentralizedtrust.org/projects/besu
+output_format:
+  email:
+    min_severity: low
+  github_security_advisory:
+    min_severity: none
+threat_model: .oss-scanner/threat_model.md
+report_guidelines: .oss-scanner/report_guidelines.md
+patch_guidelines: .oss-scanner/patch_guidelines.md
