@@ -1,0 +1,6 @@
+repo: https://github.com/webpack/webpack-sources#main
+primary_contact: webpack-tsc@lists.openjsf.org
+auto_ccs:
+  - webpack-security+webpack-sources@openjsf.org
+homepage: https://www.npmjs.com/package/webpack-sources
+disabled: false

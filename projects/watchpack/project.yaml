@@ -1,0 +1,6 @@
+repo: https://github.com/webpack/watchpack#main
+primary_contact: webpack-tsc@lists.openjsf.org
+auto_ccs:
+  - webpack-security+watchpack@openjsf.org
+homepage: https://github.com/webpack/watchpack
+disabled: false

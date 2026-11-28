@@ -1,0 +1,6 @@
+repo: https://github.com/webpack/webpack-cli#main
+primary_contact: webpack-tsc@lists.openjsf.org
+auto_ccs:
+  - webpack-security+webpack-cli@openjsf.org
+homepage: https://webpack.js.org/api/cli/
+disabled: false

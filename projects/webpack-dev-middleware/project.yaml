@@ -1,0 +1,6 @@
+repo: https://github.com/webpack/webpack-dev-middleware#main
+primary_contact: webpack-tsc@lists.openjsf.org
+auto_ccs:
+  - webpack-security+webpack-dev-middleware@openjsf.org
+homepage: https://github.com/webpack/webpack-dev-middleware
+disabled: false
