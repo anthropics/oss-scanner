@@ -1,0 +1,7 @@
+# Hatchet: a durable task queue and workflow engine on Postgres (Go engine and API, React dashboard,
+# Python/TypeScript/Ruby/Go SDKs). The Dockerfile and threat_model.md sit next to this file, so neither key is set.
+repo: https://github.com/hatchet-dev/hatchet#main
+primary_contact: security@hatchet.run
+auto_ccs:
+  - igor@hatchet.run
+homepage: https://hatchet.run
