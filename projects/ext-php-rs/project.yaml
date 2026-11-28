@@ -1,0 +1,5 @@
+# ext-php-rs: Rust bindings for the Zend API, used to write PHP extensions in safe Rust.
+# The Dockerfile and threat_model.md sit next to this file, so neither key is set here.
+repo: https://github.com/extphprs/ext-php-rs#master
+primary_contact: pierre.tondereau@protonmail.com
+homepage: https://ext-php.rs
