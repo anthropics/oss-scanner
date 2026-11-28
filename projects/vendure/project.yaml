@@ -1,0 +1,24 @@
+# REQUIRED. The ONE git repository to scan, as an https:// URL. Optionally add #branch or #tag to pin one.
+repo: https://github.com/vendurehq/vendure#master
+
+# REQUIRED. Who should we email our reports to, and use as the primary contact for questions.
+primary_contact: contact@vendure.io
+
+# Optional. The project's home page.
+homepage: https://vendure.io
+
+# Optional. The lowest severity each channel receives: low, medium, high, critical, or none to turn it off.
+# High and critical findings are also filed through GitHub private vulnerability reporting, which is how
+# Vendure tracks security reports (see SECURITY.md).
+output_format:
+  email:
+    min_severity: low
+  github_security_advisory:
+    min_severity: high
+
+# Optional. true pauses reports without removing the enrolment; false (or omitting it) enables your project.
+disabled: false
+
+dockerfile: .oss-scanner/Dockerfile
+
+threat_model: .oss-scanner/threat_model.md
